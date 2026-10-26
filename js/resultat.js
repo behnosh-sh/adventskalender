@@ -9,7 +9,7 @@
 // Om lägre eller högre är bättre står i js/luckor.js (lagreArBattre, standard true).
 (function () {
   // Webbappens adress från Apps Script (Distribuera > Hantera distributioner). Den är inte hemlig.
-  var ADRESS = '';
+  var ADRESS = 'https://script.google.com/macros/s/AKfycbz74yJoPNWyAhUPwBwA2-dFhQfr_6AgAZeKFXDW9MCLU-isx2EpocxdSqQdsK3Edgsd/exec';
 
   var KOD_NYCKEL = 'advent-kod';
   var NAMN_NYCKEL = 'advent-namn';
