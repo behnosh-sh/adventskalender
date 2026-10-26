@@ -1,33 +1,88 @@
-/* Gemensamt utseende för startsidan och spelen ("Granvimplar på snöre"). */
+/* Gemensamt utseende för alla sidor: midnattsblå himmel med snöfall, "sagobok"-typsnitt.
+   Sidorna laddar bara den här filen; typsnitten hämtas här. */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap");
+
 :root {
-  --vagg: #FBF4EA;
+  /* Himlen och text direkt på den. */
+  --himmel: #14233F;
+  --himmel-text: #EEF3FA;
+  --himmel-dampad: #A9B8CF;
+  --accent: #8FD3A8;
+  --accent-hover: #B4E4C4;
+
+  /* Text och detaljer på vita kort, brickor och knappar (mörkt för kontrast). */
   --text: #2F4A3A;
   --gron: #3E8A5E;
   --gron-mork: #2C6A46;
+  --dampad: #5E6F66;
+  --kort: #FFFFFF;
+  --kant: #C9D4E3;
+  --fel: #A23B2A;
+
+  /* Granar och dekor. */
   --gran-1: #5FAF7E;
   --gran-2: #4E9A6D;
   --gran-3: #6DBB8A;
   --oppnad: #C7E2CF;
   --snore: #8A6A55;
   --glod: #FFD66B;
-  --kort: #FFFFFF;
-  --kant: #E4D6C3;
-  --dampad: #6B7F72;
+
+  --rubrik-typsnitt: Fraunces, Georgia, serif;
+  --text-typsnitt: "Work Sans", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
-html, body {
+html {
+  background: var(--himmel);
+}
+body {
   margin: 0;
-  background: var(--vagg);
-  color: var(--text);
-  font-family: Fredoka, system-ui, sans-serif;
+  min-height: 100vh;
+  color: var(--himmel-text);
+  font-family: var(--text-typsnitt);
   -webkit-tap-highlight-color: transparent;
 }
 
-a { color: var(--gron); }
-a:hover { color: var(--gron-mork); }
+h1, h2, h3 {
+  font-family: var(--rubrik-typsnitt);
+  font-weight: 700;
+  letter-spacing: .005em;
+}
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-hover); }
+.kort a:not(.knapp) { color: var(--gron); }
+.kort a:not(.knapp):hover { color: var(--gron-mork); }
+
+/* Snöfall: tre lager prickar i olika storlek som faller olika fort. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.2px 1.2px at 14px 22px, rgba(255,255,255,.55) 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 71px 64px, rgba(255,255,255,.5) 50%, transparent 52%),
+    radial-gradient(1px 1px at 103px 9px, rgba(255,255,255,.45) 50%, transparent 52%),
+    radial-gradient(1.8px 1.8px at 38px 121px, rgba(255,255,255,.7) 50%, transparent 52%),
+    radial-gradient(1.6px 1.6px at 152px 47px, rgba(255,255,255,.65) 50%, transparent 52%),
+    radial-gradient(1.7px 1.7px at 117px 158px, rgba(255,255,255,.6) 50%, transparent 52%),
+    radial-gradient(2.4px 2.4px at 64px 33px, rgba(255,255,255,.85) 50%, transparent 52%),
+    radial-gradient(2.2px 2.2px at 211px 141px, rgba(255,255,255,.8) 50%, transparent 52%),
+    radial-gradient(2.6px 2.6px at 139px 226px, rgba(255,255,255,.75) 50%, transparent 52%);
+  background-size: 120px 120px, 120px 120px, 120px 120px, 190px 190px, 190px 190px, 190px 190px, 260px 260px, 260px 260px, 260px 260px;
+  animation: snofall 40s linear infinite;
+}
+@keyframes snofall {
+  from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 0 120px, 0 120px, 0 120px, 0 190px, 0 190px, 0 190px, 0 260px, 0 260px, 0 260px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+}
 
 /* Smal spalt, mobil först. */
 .spalt {
@@ -47,7 +102,8 @@ a:hover { color: var(--gron-mork); }
   background: var(--kort);
   border-radius: 20px;
   padding: 16px 18px;
-  box-shadow: 0 4px 0 var(--kant);
+  color: var(--text);
+  box-shadow: 0 4px 0 rgba(0,0,0,.25);
 }
 
 .knapp {
@@ -56,7 +112,7 @@ a:hover { color: var(--gron-mork); }
   border: 0;
   border-radius: 999px;
   padding: 14px 18px;
-  font: 700 17px Fredoka, system-ui, sans-serif;
+  font: 600 17px var(--text-typsnitt);
   color: #fff;
   background: var(--gron);
   box-shadow: 0 4px 0 var(--gron-mork);
@@ -64,15 +120,15 @@ a:hover { color: var(--gron-mork); }
   text-align: center;
   text-decoration: none;
 }
-.knapp:hover { color: #fff; filter: brightness(1.05); }
+.knapp:hover { color: #fff; filter: brightness(1.08); }
 .knapp:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--gron-mork); }
 .knapp.ljus {
   color: var(--text);
   background: var(--kort);
-  box-shadow: 0 4px 0 var(--kant);
+  box-shadow: 0 4px 0 rgba(0,0,0,.25);
 }
 .knapp.ljus:hover { color: var(--text); }
-.knapp.ljus:active { box-shadow: 0 2px 0 var(--kant); }
+.knapp.ljus:active { box-shadow: 0 2px 0 rgba(0,0,0,.25); }
 .knapp.gul {
   color: var(--text);
   background: var(--glod);
