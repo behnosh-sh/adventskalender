@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alla resultat</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../css/gemensam.css">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 16px; color: var(--himmel-dampad); font-size: 15px; }
+  /* Ligger direkt på himlen, inte på ett kort. */
+  #status, #vem { color: var(--himmel-dampad); }
+  #vem .lanklik { color: var(--accent); }
+  .dagar { display: grid; gap: 14px; }
+  .dag h2 { margin: 0; font-size: 17px; }
+  .dag .huvud { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .dag .antal { font-size: 13px; color: var(--dampad); white-space: nowrap; }
+  .dag .last { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; font-size: 15px; color: var(--dampad); }
+  .dag .last svg { flex: none; }
+  .tavla-rad { font-size: 15px; padding: 7px 2px; }
+  .tavla-rad .medalj { width: 22px; height: 22px; font-size: 11px; }
+  #kodruta { margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../">← Kalendern</a>
+  <h1>Alla resultat</h1>
+  <p class="under">Varje dag står för sig själv. Senaste luckan överst.</p>
+  <section id="kodruta" hidden></section>
+  <p class="tavla-info" id="status">Hämtar…</p>
+  <div class="dagar" id="dagar"></div>
+  <p class="tavla-vem" id="vem" hidden></p>
+</main>
+
+<script src="../js/gemensam.js"></script>
+<script src="../js/luckor.js"></script>
+<script src="../js/resultat.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var LAS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+  // Samma regel som startsidan: under bygget är alla luckor öppna, sedan bara t.o.m. dagens datum.
+  var nu = new Date();
+  var idag = nu.getFullYear() === 2026 && nu.getMonth() === 11 ? Math.min(nu.getDate(), 24) : (nu.getFullYear() > 2026 ? 24 : 0);
+  function synlig(n) { return window.LUCKOR[n] && (window.ALLA_OPPNA || n <= idag); }
+
+  function rita(svar) {
+    $('status').hidden = true;
+    var lista = $('dagar');
+    lista.textContent = '';
+    var totalt = svar.spelare.length;
+    var visade = 0;
+    for (var n = 24; n >= 1; n--) {
+      if (!synlig(n)) continue;
+      var d = svar.dagar[n];
+      var kort = document.createElement('section');
+      kort.className = 'dag kort';
+      var huvud = document.createElement('div');
+      huvud.className = 'huvud';
+      var rubrik = document.createElement('h2');
+      rubrik.textContent = 'Lucka ' + n + ' · ' + window.LUCKOR[n].titel;
+      var antal = document.createElement('span');
+      antal.className = 'antal';
+      antal.textContent = d.antal + ' av ' + totalt;
+      huvud.appendChild(rubrik);
+      huvud.appendChild(antal);
+      kort.appendChild(huvud);
+      if (d.harSpelat) {
+        var ol = document.createElement('ol');
+        ol.className = 'tavla-lista';
+        Advent.Resultat.ritaRader(ol, n, d, svar.spelare, svar.namn);
+        kort.appendChild(ol);
+      } else {
+        var last = document.createElement('p');
+        last.className = 'last';
+        last.innerHTML = LAS;
+        var lank = document.createElement('a');
+        lank.href = '../' + window.LUCKOR[n].sokvag + '?dag=' + n;
+        lank.textContent = 'Spela först för att se';
+        last.appendChild(lank);
+        kort.appendChild(last);
+      }
+      lista.appendChild(kort);
+      visade++;
+    }
+    if (!visade) { $('status').hidden = false; $('status').textContent = 'Inga luckor är öppna än.'; }
+    $('vem').hidden = false;
+    $('vem').textContent = 'Du är ' + svar.namn + '. ';
+    var byt = document.createElement('button');
+    byt.type = 'button';
+    byt.className = 'lanklik';
+    byt.textContent = 'Byt person';
+    byt.addEventListener('click', function () { Advent.Resultat.glomKod(); location.reload(); });
+    $('vem').appendChild(byt);
+  }
+
+  function ladda() {
+    if (!Advent.Resultat.arInkopplad()) { $('status').textContent = 'Resultattavlan är inte inkopplad än.'; return; }
+    if (!Advent.Resultat.kod()) { visaKodruta(); return; }
+    Advent.Resultat.alla().then(rita, function (fel) {
+      if (!Advent.Resultat.kod()) { visaKodruta(); return; }
+      $('status').textContent = fel.message;
+    });
+  }
+
+  // Samma kodruta som i luckorna. Tavlan för lucka 1 används bara för att logga in, sedan laddas sidan om.
+  function visaKodruta() {
+    $('status').hidden = true;
+    $('kodruta').hidden = false;
+    Advent.Resultat.tavla($('kodruta'), 1, {
+      vidStatus: function (d) { if (d) location.reload(); }
+    });
+    $('kodruta').querySelector('h2').textContent = 'Vem är du?';
+  }
+
+  ladda();
+})();
+</script>
+</body>
+</html>

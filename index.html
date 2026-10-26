@@ -18,6 +18,7 @@
   .datum { margin: 0; font-size: 15px; font-weight: 600; color: var(--accent); }
   .datum::first-letter { text-transform: uppercase; }
   h1 { margin: 4px 0 0; font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .resultatlank { display: inline-block; margin-top: 4px; padding: 6px 4px; font-size: 15px; font-weight: 600; }
 
   #kalender { display: block; width: 100%; height: auto; margin-top: 8px; overflow: visible; }
 
@@ -97,6 +98,7 @@
   <header>
     <p class="datum" id="datum"></p>
     <h1>Familjens adventskalender</h1>
+    <a class="resultatlank" href="resultat/">Alla resultat</a>
   </header>
   <svg id="kalender" viewBox="0 0 390 620" role="list" aria-label="Luckor 1 till 24"></svg>
   <p class="utv" id="utv" hidden>Byggläge: alla luckor är öppna. <button type="button" id="nollstall">Vänd tillbaka granarna</button></p>
