@@ -55,14 +55,14 @@
     font-variant-numeric: tabular-nums;
     color: var(--text);
     background: #fff;
-    transition: left .1s ease-in-out, top .1s ease-in-out;
+    transition: left 70ms ease-out, top 70ms ease-out;
     z-index: 1;
   }
   .bricka.s3 { font-size: 10.5cqw; }
   .bricka.s4 { font-size: 8cqw; }
   .bricka.s5 { font-size: 6.5cqw; }
-  .bricka.ny { animation: fram .18s ease-out .08s backwards; }
-  .bricka.ihop { z-index: 2; animation: pop .2s ease-out .08s backwards; }
+  .bricka.ny { animation: fram .12s ease-out 50ms backwards; }
+  .bricka.ihop { z-index: 2; animation: pop .14s ease-out 50ms backwards; }
   @keyframes fram { from { transform: scale(0); } to { transform: scale(1); } }
   @keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
   @media (prefers-reduced-motion: reduce) {
@@ -124,7 +124,7 @@
 
   <div class="matare">
     <div><span>Poäng</span><b id="poang">0</b></div>
-    <div id="tidRuta"><span>Tid kvar</span><b id="tid">5:00</b></div>
+    <div id="tidRuta"><span>Tid kvar</span><b id="tid">3:00</b></div>
     <div><span>Största</span><b id="storsta">2</b></div>
   </div>
   <p class="tips" id="tips" aria-live="polite"></p>
@@ -145,8 +145,8 @@
     <ol>
       <li>Svep åt något håll (eller använd piltangenterna). Alla brickor glider dit.</li>
       <li>Två brickor med samma tal slås ihop till en, och du får talet som poäng.</li>
-      <li>Du har 5 minuter. Klockan startar när du sveper första gången. När tiden är slut fryser brädet.</li>
-      <li>Alla får samma nya brickor i samma ordning. Högst poäng vinner, vid lika vinner största brickan. Guld från 7 000, silver från 4 500, brons från 2 500.</li>
+      <li>Du har 3 minuter. Klockan startar när du sveper första gången. När tiden är slut fryser brädet.</li>
+      <li>Alla får samma nya brickor i samma ordning. Högst poäng vinner, vid lika vinner största brickan. Guld från 4 000, silver från 2 800, brons från 1 800.</li>
     </ol>
     <p class="liten">Bara ditt första försök på dagens bräde räknas. Klockan går även om du stänger sidan.</p>
   </div>
@@ -163,8 +163,8 @@
 <script>
 (function () {
   var STORLEK = 4;
-  var SPELTID = 5 * 60 * 1000;
-  var GULD = 7000, SILVER = 4500, BRONS = 2500;
+  var SPELTID = 3 * 60 * 1000;
+  var GULD = 4000, SILVER = 2800, BRONS = 1800;
 
   var $ = function (id) { return document.getElementById(id); };
   var dag = Advent.hamtaDag() || 6;
@@ -322,7 +322,7 @@
           if (!gammal) return;
           placera(gammal, i);
           delete element[id];
-          setTimeout(function () { gammal.remove(); }, 110);
+          setTimeout(function () { gammal.remove(); }, 70);
         });
         placera(brickElement(b, 'ihop'), i);
       } else if (element[b.id]) {
@@ -410,22 +410,23 @@
     drag(r);
   });
 
-  // Svep: räknas från där fingret sattes ner till där det lyftes, minst 24 px.
+  // Svep: draget görs så fort fingret har rört sig 20 px, utan att vänta på att det lyfts.
   var nere = null;
   brade.addEventListener('pointerdown', function (e) {
     nere = { x: e.clientX, y: e.clientY, id: e.pointerId };
     try { brade.setPointerCapture(e.pointerId); } catch (fel) { /* ignorera */ }
   });
-  function slapp(e) {
+  brade.addEventListener('pointermove', function (e) {
     if (!nere || e.pointerId !== nere.id) return;
     var dx = e.clientX - nere.x, dy = e.clientY - nere.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
     nere = null;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
     if (Math.abs(dx) > Math.abs(dy)) drag(dx > 0 ? 'hoger' : 'vanster');
     else drag(dy > 0 ? 'ner' : 'upp');
-  }
+  });
+  function slapp() { nere = null; }
   brade.addEventListener('pointerup', slapp);
-  brade.addEventListener('pointercancel', function () { nere = null; });
+  brade.addEventListener('pointercancel', slapp);
   // Hindrar att sidan scrollar eller zoomar när man sveper på brädet (äldre Safari bryr sig inte om touch-action).
   brade.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
 
