@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mönsterdagen</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css">
+<style>
+  :root {
+    --ratt: #5FAF7E;
+    --ratt-ljus: #DDF0E3;
+    --fel-ljus: #F6DDD8;
+  }
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+
+  .start { display: grid; gap: 12px; margin-bottom: 16px; text-align: center; }
+  .start p { margin: 0; line-height: 1.4; }
+
+  .topp { display: flex; justify-content: space-between; align-items: center; margin: 0 0 12px; }
+  .prickar { display: flex; gap: 8px; }
+  .prickar span { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--himmel-dampad); }
+  .prickar span.nu { background: var(--himmel-text); box-shadow: none; }
+  .prickar span.ratt { background: var(--ratt); box-shadow: none; }
+  .prickar span.fel { background: var(--fel); box-shadow: none; }
+  .klocka { font-family: var(--rubrik-typsnitt); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .klocka.paus { color: var(--himmel-dampad); }
+
+  .serie-kort { margin-bottom: 16px; animation: fram .3s ease-out; }
+  .serie-kort .nr { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--dampad); }
+  @keyframes fram { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .serie-kort { animation: none; } }
+
+  /* Serien: rutor i rad, eller 3×3. */
+  .serie { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 0 16px; }
+  .ruta {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 44px; height: 52px; padding: 0 8px; border-radius: 12px;
+    background: #EEF3F0; font: 700 22px var(--text-typsnitt); color: var(--text);
+  }
+  .serie.figurer .ruta { width: 52px; padding: 4px; }
+  .ruta svg { width: 100%; height: 100%; display: block; }
+  .ruta.fraga { background: none; box-shadow: inset 0 0 0 2px var(--kant); color: var(--dampad); }
+  .ruta.fraga.ratt { background: var(--ratt-ljus); box-shadow: inset 0 0 0 2px var(--ratt); color: var(--text); }
+  .ruta.fraga.fel { background: var(--fel-ljus); box-shadow: inset 0 0 0 2px var(--fel); color: var(--text); }
+  .serie.matris { display: grid; grid-template-columns: repeat(3, 76px); gap: 8px; }
+  .serie.matris .ruta { width: 76px; height: 76px; padding: 8px; }
+
+  .val { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .val button {
+    display: flex; align-items: center; justify-content: center; min-height: 58px; padding: 8px;
+    border: 2px solid var(--kant); border-radius: 14px; background: var(--kort); color: var(--text);
+    font: 700 22px var(--text-typsnitt); cursor: pointer; overflow-wrap: anywhere;
+  }
+  .val.figurer button { height: 76px; }
+  .val button svg { width: 56px; height: 56px; }
+  .val button:hover:not(:disabled) { border-color: var(--gron); }
+  .val button:disabled { cursor: default; opacity: .45; }
+  .val button.ratt { opacity: 1; border-color: var(--ratt); background: var(--ratt-ljus); }
+  .val button.fel { opacity: 1; border-color: var(--fel); background: var(--fel-ljus); }
+
+  .forklaring { margin: 14px 0 0; }
+  .forklaring .omdome { margin: 0 0 6px; font-family: var(--rubrik-typsnitt); font-size: 22px; font-weight: 700; text-align: center; }
+  .forklaring .varfor { margin: 0; padding: 10px 12px; border-radius: 12px; background: #EEF3F0; line-height: 1.4; font-size: 15px; }
+  .forklaring .varfor b { display: block; margin-bottom: 2px; }
+  .forklaring .knapp { margin-top: 16px; }
+
+  .slut { display: grid; gap: 8px; margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0; font-size: 24px; }
+  .slut p { margin: 0; }
+  .poang { font-family: var(--rubrik-typsnitt); font-size: 44px; font-weight: 700; line-height: 1; }
+  .poang small { font-size: 18px; color: var(--dampad); }
+  .rutor { font-size: 24px; letter-spacing: 3px; }
+  .slut .info { font-size: 15px; color: var(--dampad); }
+  .slut .info:empty { display: none; }
+
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Mönsterdagen <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="start kort" id="start" hidden>
+    <p>Fem serier som blir svårare och svårare. Hitta mönstret och välj det som kommer härnäst. Flest rätt vinner, och vid lika vinner den snabbaste.</p>
+    <button class="knapp" id="startknapp" type="button">Starta</button>
+  </div>
+
+  <section id="spel" hidden>
+    <div class="topp">
+      <div class="prickar" id="prickar" aria-hidden="true"></div>
+      <div class="klocka" id="klocka" aria-label="Tid">0:00</div>
+    </div>
+
+    <div class="serie-kort kort" id="serieKort">
+      <p class="nr" id="serieNr"></p>
+      <div class="serie" id="serie"></div>
+      <div class="val" id="val"></div>
+      <div class="forklaring" id="forklaring" hidden>
+        <p class="omdome" id="omdome" aria-live="polite"></p>
+        <p class="varfor"><b>Mönstret</b><span id="varfor"></span></p>
+        <button class="knapp" id="nasta" type="button"></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2>Resultat</h2>
+    <p class="poang"><span id="antalRatt"></span> <small>av 5 rätt</small></p>
+    <p class="rutor" id="rutor"></p>
+    <p id="sluttid"></p>
+    <p id="sluttext"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <div class="knappar" id="gavuppRuta" hidden>
+    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+  </div>
+
+  <section id="tavla"></section>
+
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Du får fem serier, en i taget: tal, bokstäver eller figurer. Den sista är en ruta med 3×3 figurer där den nedre högra saknas.</li>
+      <li>Hitta mönstret och tryck på det av de fyra alternativen som kommer härnäst. Du har ett försök per serie.</li>
+      <li>Efter varje svar ser du om det blev rätt och vad mönstret var. Klockan står still medan du läser.</li>
+      <li>Flest rätt vinner. Vid lika antal rätt vinner den som var snabbast. Guld för 5 rätt, silver för 4, brons för 3.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök på dagens serier räknas.</p>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Öva med fem andra serier</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens serier</a></p>
+</main>
+
+<script src="../../js/gemensam.js"></script>
+<script src="../../js/luckor.js"></script>
+<script src="../../js/resultat.js"></script>
+<script>
+(function () {
+  // Varje serie är [nivå 1–5, typ, serie, alternativ, förklaring]. Första alternativet är det rätta.
+  // Nivå 1 tal, 2 figurer i rad, 3 bokstäver, 4 svårare tal, 5 en 3×3-ruta.
+  // typ 'text' visar strängarna som de är. 'figur' och 'matris' ritar figurkoder (se ritaFigur).
+
+  // Exempel som får visas. Används som övning och som dagens serier innan tävlingen börjar.
+  var TESTSET = [
+    [1, 'text', ['2', '6', '12', '20', '30'], ['42', '40', '44', '36'], 'Skillnaden ökar med 2 varje gång: +4, +6, +8, +10 och sedan +12.'],
+    [2, 'figur', ['P@0', 'P@45', 'P@90', 'P@135'], ['P@180', 'P@0', 'P@225', 'P@90'], 'Pilen vrids ett åttondels varv medurs varje gång.'],
+    [3, 'text', ['J', 'F', 'M', 'A', 'M', 'J'], ['J', 'A', 'S', 'O'], 'Månadernas första bokstav: januari, februari, mars, april, maj, juni och sedan juli.'],
+    [4, 'text', ['1', '1', '2', '3', '5', '8'], ['13', '11', '12', '16'], 'Varje tal är summan av de två före: 5 + 8 = 13.'],
+    [5, 'matris', ['Cfx1', 'Cfx2', 'Cfx3', 'Ttx1', 'Ttx2', 'Ttx3', 'Ktx1', 'Ktx2'], ['Ktx3', 'Kfx3', 'Ttx3', 'Ktx2'], 'Varje rad har sin egen form, och varje kolumn har sitt eget antal: 1, 2, 3.'],
+    [5, 'matris', ['G100000000', 'G000010000', 'G100010000', 'G001000000', 'G000000100', 'G001000100', 'G000000001', 'G010000000'], ['G010000001', 'G010000000', 'G011000001', 'G000000001'], 'I varje rad är tredje rutan de två första lagda på varandra.']
+  ];
+
+  // Tävlingsserierna, förvrängda så att ingen ser dem av misstag.
+  var FORVRANGT =
+    'DpU9OotxjZLWsDpluqAe0bKpIrNsFuV4g6GHJDxsuRGuBEon++kr/i76FTD+1cM4GTAI70ZFZmzzoOGHqr6+wUcZNVN7qopbfIxj' +
+    'jnnAKu8LtlrIguFRGlZS0S/vUD8z9rNMa54eODE7105ucUpuF+LXCIFMff2BwBEcPiiAcmc3g/dj+WWPPOvxqlctDkF88LCQFEBm' +
+    's9U7YYaYKalc8VDmsDUglD6cVecqW5VjoB6YcJlqQH6jIYX9w3N3pbpM16auG2zQ6MQxOoZFdkuQ6CuA0l+lNf+311OG0E3LUxDU' +
+    '2BNvKH8hqiy6sIDiU76OP4Hqci3qSNSn5gbcaDwk/F58CL4yxfPxr9SK5w2xKGd9G4eLiUZxocg3F6QEcm1p0AfrYOhh6mzPTdMW' +
+    'l/ueFoUWduFufDVdn64AOgettGPdeXR4u4bbPoySdusi6E93TcT6DRSy32gqLOQ+veEnBeUEMyqbI2eMnBE1/u2Z9RMFrzMNhLeB' +
+    '7X8Cmc2pfEVw9I6LL7SaE+RelsFZYdEKR3s0tzGuYZ1q2YmJscBTowMDY2Oo0krc96D3UIRCcavZzBnHR3lxs7rN77R0Zr4mRMcp' +
+    'WD3p7pwB364XXs/hQADGLRBetYZhtr2pDdqjwH0VUck6CMBV5l5qmqctff/eAycS+vNr0p5Juol6lJ6oNEezRMsTwrFyNX+RVzyf' +
+    'oiGo8wquK7Al+XN9QOfRftJPxIWPRqO0sKr9Ne4bc/HbqtrISa2R67h/f/ECxl630Jew7F3sGiNWBvLJZ2e4k21qlicC8LF/X/+8' +
+    'o7bqxpTbn/WL9pVXbNi5unD2vQ82BrM8D3orwa5gUuFCwFmb4VWlb5fEjYO4xoxem4vIuG2b2STHjAnsOyHzaAru4zPq55ccZicQ' +
+    'OV48UHszkqXlskbyQfNgpdBGbrRSk0fg/W/UStOPdp9hBP3BQnOa5rMnCzb/G31GgOGfJHRQgCf5yzvdSYzNB//MscjuRHemyGaF' +
+    'k3T2H976c+K/6X8JZLKexMMeQVZ2n9xBeKTgrDhk/7AmkrA7ZgpSYuxSi1ptUVnugFWhDo/j7RXCIkJFb+oNt/YtRXsabNKHkuO9' +
+    'XCgF2fSQnisq8KyU7BAO6oOUPrBCHkeugCMrPg6t3T23HllYs98mQ8xNLN1NIkv1KApx3NYZHU1NYpydGC/4AJzkt9NDp+gEkX3/' +
+    '+/dtPSfuKhzh+udtTF/Yk3OdEr3yAva/5KI8kQwsGdbGo+Ec4kitdB6rAA95GeTrkj8BsskmlxXZraeF+L39NZh+DtiuzD7b+KN4' +
+    'yX3P3c3b8SOK4nyT042FDWfAnMtwIX8WUlfTnfGe4oWSv8f11yeoWjcafdfVFuXUIuN7PmCgZVJQSqx6Hx0GYrq/CtoGrKleUeVN' +
+    'Yna7qpX1z8UEkXLQn9mMZ8ezyJHn+GbRuykECZwK7+cR1r4hkhI1Up7hFPrUulCicAAwi0NKxnhtrtINhw15OllTlb1gb0cm2RvU' +
+    'Qe60OmZYNMOWSbPafwaWwpAcepxt6jbxM+Tug9mMmsZtBnZVJqK3fBbGGFcjxRxpK0HXLWxoZSXNX8TAHkE7Je80wzITZgAnRxlK' +
+    '0vX2YORhLIfzekhW60B87ItAR50vl9dTgB97Xm8Q6aN7rDNnyF8kz+0iHjJm/BfuTcdlDC9pqwOHjEstqXJ/O+bf9wb8XK2ZHAfl' +
+    '9hj8lN8IECxK7Mep4F3z7LzN0fzLV7rL3pMp4W6muA+xCAvZz7SgjGgyTf1eTxo+z3hxnQbE52Lx4L243mAGBx/ZFps8UpKVB271' +
+    'V5pjEK4JbL64d3LVWAMkjmGwTcT8Zrt5goy1e8HuqBLqukdYcS+QlfsW1I97rywctKT2a4IrdnoARa1OK2fuyeogRkCcpvUCRkIE' +
+    'G1GVayWmxrAXeB9labCFlIK5sYvZpePzm27cBXWxNWEfVM6L1YgQTD3N9wM7oCZ9WO96iU5vWgmEO2W7WRVAxLSwxwqtq9OnCKs9' +
+    'E4xg7tOP17JC/fydGo9HOAehtofCUou/eBEj2HJhuhHv9PXumH496KTYsy2ETHPL/fvomAnbG6r+KV1YkbfvDWTwJQKAqG+67wCg' +
+    'OI/NYDoQ29catP44uYaO283D3ek+ZydtdLdDdXqpQCqw0YLBwBZ+N7j4CF+0ubVjUr5JP+JMpEOnCaD05c40/r/JxIBGGM9nsOeZ' +
+    'JF7uN66n2+kXDMvFe/GomwOI79IrpnxBSHcLIM79AvMBcL1zZxAfeVoueBwPrXzSgTpyRf3u9VUXsAZsg5R/0GmOUoRtvQ78GGNK' +
+    'zewl6HMcS0JTWsRszbQPSrh3MiSt4Z+gtVd8fTO2PLZW4PXD+QxBv/P4TdlSFBG1hrxY1JMi+tTu+i+6kSWF6mX0TL+BnhoCYuQu' +
+    'cQVB7goPHhqNw14nyJNB6Umawzaye31R4J15gBtGx9vg7WCIitQ/GZCEAHQ9mEGPQndQKUobUEKb9svdJa8U3Gr37EMf1RAxlHfy' +
+    'RxhnQyriRHvXC6wdgf5BIWXphwI+6peHvzo6PxobmULM6KtB4IdDA4WRrakYKzahuT5nLb90nGwFfs18Nwi0HBYsNedSXKtlVKwY' +
+    'kPThWdcnqPvJDVpqzOxhUxpvatD5dx05nyckuxM5d/qwH91y75ngNZZRaW0Kmq6AqdbBqlvBK49ftQ9U+nW6RAeyWBtgUatqWTu1' +
+    's2o0ccuyJ7T2kehh9MJ3K4HUK8tK6HBQW+MQhSODPH9MVJAkwkb2MA7UrUcTW7dZ+ooj49+tHJxQ/XtWBwAnaxika6lP5CwUcQ+i' +
+    'O6nDcPtPkF6EPDzzPmHTPX6zwrj2zn4TM8C+10KRT0gORr68lxKy2zlY2YGP75m+GNP0eQUDKKIo2mvrhAdmajtnllnQiTH9jaLy' +
+    'yVFehWPuzf5wfZfvQefWNi4MjcdltXccAvpwWmT5zbZvOzv0Bs9Xd0PqciQcDLBsNMk4Wq4mNNf83zvsAD7fOWlx7FaDq+cVJUhe' +
+    'dCBAwx5DYpKKt9xxYEtr8P4dBfQ+9htj3J1/WFA8O9VhbT0ph5WtvIw5wD0j2z6jNT6Yyf8Ff9tOOL6xXqeB/xtLGNWchBaPjdm8' +
+    'Uii0nr6eCa6Ed8coNOTKJxza2FUITyE+q7KXlT+asfKASV6opQobgyYvWl3oGvVMt2b2YXk07RuCSWr/X9rO/oyMmqXL2zDKzOj9' +
+    'ijoKogml2o3ZYJ3yHjPWrRXk5Bk01mUO7b0qSiPbXFoHnA3jGYO5HVEN+jAdhNZWNNEXXWRid9sC336Og9sEWsB1ExdWz/qOjHKI' +
+    'ZWFWRuUCN5ebuKkgaKK5kO50pIiwKPz7rXdQs/Izi5H5xoe0FRgL3i9I3/u/2Z2qBXmunY3bPd67HWzwZ2G/pDAbSyKAFODb05dc' +
+    'VY3mUw/f0tNmjnDaRdIRNUFK8WKH7cvAsjm62uEnaRn2mTUFRUrcHsDmaqipNg2X3zTPXHic6ULgaZhfpcRcOhgEU/nlEKcR7pu0' +
+    'QZ7sbMYmN6UoDd0rAnji0+HNLaHO1qaP4CZS6sDzDfIKC6Ia16Na9RAGbQ0ZNfjLReMcc+PL6iaRsygv6ygIapAwNA2ri6rJxESS' +
+    'Pp0oMn0MV8vct77iaRVjoJbUshvmepBxl/n6eihg3htjF8l8hYj7wpkN9i8cGUfMGF/LDk0TXW3UeqYgwRnga5KPIHB5eON6gvFV' +
+    'Gr4Iz+Xj/bnmWgpWmPwLFQHrAstzNQBgzY1K32iVnbue5vtnPimxqbuF1sQ1oOPSdqsxEqkdHpnwhCkDbjrkA9AT4PwkKZd4Hj7G' +
+    'x3ogOYKJpmnOWp8t0uGhPJrmORwmLYVnqUn/2nQ+MvGwBt0yaNelsWK5zD8W9EGEN8r9iPSlGlMJ2MrNXJqj+W3EQj06Cug7WxKV' +
+    'EmK11f4LCTzV9IH/tg5B1SE/VGLQHzT+JMC5oo+6RuZPtKXXDzwOXbGFSEdhKGjgRFDbfvJfTGRpHYr+xqusUyRBSrU4mnRwf6lQ' +
+    'X9zx0B0xEaBnILjzSbEB/FJbaLGtdr7eIxF5Qq9AgnVYBbSgK3d2mT2cmweKiaO0n2s7civDY1TzU3GoJpgvUfb8VPQK/aPc7yiu' +
+    'xizCeEATC5eTDYUo1PEN7xCLAtafR2L5yni67rI2NWl/NelnZ5JD9xu7D7/P4IuqNhoRzZim/pDy3sNJKkQ0bHbuBGl6QPKHjrs0' +
+    'it5MEju/U63glLSbSOos2+McIqqK74NPq26hEp5862cDg3t6khMcpA+QPRVBshCsb4fP9tf84+yFh4lsZ62b4mH2iuJD1RApIy7X' +
+    'wOhN2kyU4n1bpB92yifmN3bRHv882ElUT71up6Pbbllyn4aBx8kwXTYR57F896O8s/7irllvmNNnFD5GhOUy2s0yBtxvEoUp07+L' +
+    'ZhTWO2I57812sViivuobBY02xMwqGiARcxGROU/u9wty0nYyZwK80McXNclcjWPsV8cTq/tsJBYNyJ4t/1RC+TBTFnDO5GnJSW99' +
+    'Yl6MWVPLn5eZz85MNiTt8HcJt+zsvjr19CaFSUy39oTiG66sGZSGrt4uQeV8SPfOru2CsiUh3/zbqXgai+mMuSGR/3jdpO7CBH5c' +
+    'NkSB3AwrzV3O9XPUxdeIDFSXEYdKiXW6Xeos1TwpeEZH0ybko16Gia+P45RMpEMs+PjLUhhXOvgQJL2VTeahaAq44zm8HFy72IN8' +
+    '0TDH7Kzfic9L8fvdxmevOL6dtF7XrDYr4Sy3LnREWkFTZrOMN73RAmLaPNLqHQf+rckiAKGOazbH6Dh4bSYH6h1XY5gUNZsvBEHr' +
+    'z12E+IKcUjTysg2C3C7bALYejoy99MM4/TRqR307IjGKZUtgrywFpLNCiXtPLVGbxnaWjp+b7bZZbozzP7lkJbD0D0hapFgAuGRe' +
+    '0Or+iPWI8iDfKI/sG6SJ8Zrde9beBsODWVhXY6KyrWZCy0Y4qHwlZq739WdepVcHTL9ibNp2U5EeENe3LMw4+i8vvayrvLr0U9O8' +
+    'R+eOutj8Cu8do/u8mfzLpc2NwWhKZtb1/Ju8g6go/EwAruSEeYqAkuLedvnGzjc58ubTanGRNtYrEgE49v0IzK+1UR1kym8cXiYe' +
+    'iFosJeMPDnyZiSNLqYRBHJzeBhUo6UMmrFbP+t6l9/EpHJD3/EdwGiJFlclICzgf9CaWWBqHp4cxVXEQ4Zat/BXMa93IEAL2u4qZ' +
+    '2d0wiT5/1HMOGebTF6lo8UScPAZ0j9R87F2GIlEVajSBt4B85UP7jrW4Ua/1gPecm0UWC7tsnqoM9O/q+H8laoZy3HBNiAmhK6oe' +
+    'ackDvqriarpiDzJ4InrG0hJpD5HO4PHcG/7Yiz3XMH04k8v73yogVUaD7kQDecj+fYH9ud5EQcAh79IaswDGgSWQwP7M2Yk8lvRg' +
+    'N0Ys3PK1ZUPDWaSrB3+asoQd/2m3br+Swx334Pg=';
+
+  // Dagar med Mönsterdagen. Varje dag får en serie per nivå ur poolen, vald med dagens frö.
+  var TAVLINGSDAGAR = [7];
+  var NIVAER = [1, 2, 3, 4, 5];
+
+  function avvrang(text) {
+    var bin = atob(text), slump = Advent.skapaSlump('monster-forvrangning');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  var POOL = avvrang(FORVRANGT);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 7;
+  Advent.markeraOppnad(dag);
+
+  // Tävlingen gäller från luckans datum. Innan dess är dagens serier ur testsetet.
+  function harBorjat(d) { return new Date() >= new Date(2026, 11, d); }
+
+  function serie(id) { return (id[0] === 'p' ? POOL : TESTSET)[+id.slice(1)]; }
+  function poolIdn() { return POOL.map(function (_, i) { return 'p' + i; }); }
+  function testIdn() { return TESTSET.map(function (_, i) { return 't' + i; }); }
+
+  // En serie per nivå, i nivåordning. Saknas en nivå tas den inte med.
+  function valjPerNiva(idn, slump) {
+    var ut = [];
+    NIVAER.forEach(function (n) {
+      var kandidater = idn.filter(function (id) { return serie(id)[0] === n; });
+      if (kandidater.length) ut.push(kandidater[Math.floor(slump() * kandidater.length)]);
+    });
+    return ut;
+  }
+
+  // Tävlingsserier per dag, olika för varje dag: "p3" = POOL[3].
+  var tavlingsserier = {};
+  (function () {
+    var kvar = poolIdn();
+    TAVLINGSDAGAR.forEach(function (d) {
+      var valda = valjPerNiva(kvar, Advent.dagensSlump(d));
+      kvar = kvar.filter(function (id) { return valda.indexOf(id) === -1; });
+      tavlingsserier[d] = valda;
+    });
+  })();
+  var dagensIdn = harBorjat(dag) && tavlingsserier[dag]
+    ? tavlingsserier[dag]
+    : valjPerNiva(testIdn(), Advent.dagensSlump(dag));
+
+  // Övning: testsetet, och poolen utom tävlingsserier vars dag inte har kommit än.
+  function ovningsIdn() {
+    var idn = testIdn();
+    if (harBorjat(dag)) {
+      var sparade = {};
+      TAVLINGSDAGAR.forEach(function (d) {
+        if (!harBorjat(d)) tavlingsserier[d].forEach(function (id) { sparade[id] = true; });
+      });
+      poolIdn().forEach(function (id) { if (!sparade[id]) idn.push(id); });
+    }
+    return idn;
+  }
+
+  // Alternativens ordning blandas utifrån serien, så att alla får samma ordning.
+  function ordning(id) {
+    var slump = Advent.skapaSlump('monster-ordning-' + JSON.stringify(serie(id)[2]));
+    var o = [0, 1, 2, 3];
+    for (var i = o.length - 1; i > 0; i--) {
+      var j = Math.floor(slump() * (i + 1)), t = o[i];
+      o[i] = o[j]; o[j] = t;
+    }
+    return o;
+  }
+
+  // ===== Figurer =====
+  // En figurkod är en eller flera delar med mellanslag emellan. Varje del är:
+  //   form C (cirkel), T (triangel), K (kvadrat) eller P (pil, pekar uppåt utan vridning)
+  //   fyllning f (fylld), t (tom) eller h (vänstra halvan fylld), valfri för pilen
+  //   @grader för vridning medurs, valfritt
+  //   xN för N likadana, valfritt
+  // eller G följt av nio 0/1 för ett 3×3-rutnät, rad för rad.
+  var SVG = 'http://www.w3.org/2000/svg';
+  var klippNr = 0;
+  function svgEl(tagg, attr) {
+    var e = document.createElementNS(SVG, tagg);
+    for (var k in attr) e.setAttribute(k, attr[k]);
+    return e;
+  }
+
+  function formEl(form, r) {
+    if (form === 'C') return svgEl('circle', { cx: 0, cy: 0, r: r });
+    if (form === 'K') return svgEl('rect', { x: -r * .85, y: -r * .85, width: r * 1.7, height: r * 1.7 });
+    if (form === 'T') return svgEl('polygon', { points: [0, -r, r * .95, r * .75, -r * .95, r * .75].join(' ') });
+    // Pil uppåt.
+    return svgEl('polygon', { points: [0, -r, r * .8, -r * .05, r * .3, -r * .05, r * .3, r, -r * .3, r, -r * .3, -r * .05, -r * .8, -r * .05].join(' ') });
+  }
+
+  function ritaDel(g, del, cx, cy, r) {
+    var m = /^([CTKP])([fth])?(?:@(\d+))?(?:x(\d+))?$/.exec(del);
+    if (!m) return;
+    var form = m[1], fyll = form === 'P' ? 'f' : (m[2] || 'f'), vrid = +(m[3] || 0), antal = +(m[4] || 1);
+    // Med xN blir figurerna lika stora oavsett antal, så att storleken inte avslöjar något.
+    var kol = Math.min(antal, 3), rader = Math.ceil(antal / 3), sida = m[4] ? 3 : 1;
+    var steg = (2 * r) / sida, rr = steg * .4, streck = Math.max(2.5, rr * .16);
+    for (var i = 0; i < antal; i++) {
+      var rad = Math.floor(i / 3), iRad = Math.min(3, antal - rad * 3), k = i % 3;
+      var x = cx - (iRad * steg) / 2 + steg * (k + .5);
+      var y = cy - (rader * steg) / 2 + steg * (rad + .5);
+      var grupp = svgEl('g', { transform: 'translate(' + x + ' ' + y + ') rotate(' + vrid + ')' });
+      var yta = formEl(form, rr);
+      yta.setAttribute('fill', fyll === 'f' ? 'currentColor' : 'none');
+      yta.setAttribute('stroke', 'currentColor');
+      yta.setAttribute('stroke-width', streck);
+      yta.setAttribute('stroke-linejoin', 'round');
+      grupp.appendChild(yta);
+      if (fyll === 'h') {
+        var id = 'monster-klipp-' + (++klippNr);
+        var klipp = svgEl('clipPath', { id: id });
+        klipp.appendChild(svgEl('rect', { x: -rr * 1.2, y: -rr * 1.2, width: rr * 1.2, height: rr * 2.4 }));
+        grupp.appendChild(klipp);
+        var halva = formEl(form, rr);
+        halva.setAttribute('fill', 'currentColor');
+        halva.setAttribute('clip-path', 'url(#' + id + ')');
+        grupp.appendChild(halva);
+      }
+      g.appendChild(grupp);
+    }
+  }
+
+  function ritaRutnat(g, bitar) {
+    for (var i = 0; i < 9; i++) {
+      g.appendChild(svgEl('rect', {
+        x: 8 + (i % 3) * 29, y: 8 + Math.floor(i / 3) * 29, width: 26, height: 26, rx: 3,
+        fill: bitar[i] === '1' ? 'currentColor' : 'none', stroke: 'currentColor', 'stroke-width': 2.5
+      }));
+    }
+  }
+
+  function ritaFigur(kod) {
+    var svg = svgEl('svg', { viewBox: '0 0 100 100', 'aria-hidden': 'true' });
+    var delar = kod.split(' ');
+    if (/^G[01]{9}$/.test(kod)) { ritaRutnat(svg, kod.slice(1)); return svg; }
+    var bredd = 100 / delar.length;
+    delar.forEach(function (del, i) { ritaDel(svg, del, bredd * (i + .5), 50, Math.min(bredd, 100) / 2 - 4); });
+    return svg;
+  }
+
+  // Text som skärmläsare kan läsa upp för en figurkod.
+  var FORMNAMN = { C: 'cirkel', T: 'triangel', K: 'kvadrat', P: 'pil' };
+  var FYLLNAMN = { f: 'fylld', t: 'tom', h: 'halvfylld' };
+  function beskriv(kod) {
+    if (kod[0] === 'G') return 'rutnät, fyllda rutor ' + kod.slice(1).split('').map(function (b, i) { return b === '1' ? i + 1 : null; }).filter(Boolean).join(', ');
+    return kod.split(' ').map(function (del) {
+      var m = /^([CTKP])([fth])?(?:@(\d+))?(?:x(\d+))?$/.exec(del) || [];
+      return (m[4] ? m[4] + ' ' : '') + (m[1] !== 'P' && m[2] ? FYLLNAMN[m[2]] + ' ' : '') + FORMNAMN[m[1]] + (m[3] ? ' vriden ' + m[3] + ' grader' : '');
+    }).join(' och ');
+  }
+
+  function innehall(typ, varde) {
+    if (typ === 'text') return document.createTextNode(varde);
+    return ritaFigur(varde);
+  }
+
+  // ===== Spelets tillstånd =====
+  // Dagens serier sparas i telefonen, så att man inte kan börja om genom att ladda om sidan.
+  var sparNyckel = 'monster:' + dag + ':' + dagensIdn.join(',');
+  var s;          // { idn, svar, tider, steg, fragaStart, start, slut, skickad }
+  var ovning = false;
+
+  function nyttTillstand(idn) { return { idn: idn, svar: [], tider: [], steg: 0, fragaStart: null, start: null, slut: null, skickad: false }; }
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+  function arKlart() { return s.svar.length >= s.idn.length && s.steg >= s.idn.length; }
+  // svar[i] är index i seriens alternativlista, 0 är rätt.
+  function antalRatt(t) { return t.svar.filter(function (v) { return v === 0; }).length; }
+  function totalMs(t) {
+    var ms = t.tider.reduce(function (a, b) { return a + b; }, 0);
+    if (t.fragaStart) ms += Date.now() - t.fragaStart;
+    return ms;
+  }
+  function rutorText(t) { return t.svar.map(function (v) { return v === 0 ? '🟩' : '🟥'; }).join(''); }
+  function medalj(ratt) { return ratt >= 5 ? 'guld' : ratt === 4 ? 'silver' : ratt === 3 ? 'brons' : ''; }
+
+  // ===== Ritning =====
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ritaPrickar() {
+    var p = $('prickar');
+    p.textContent = '';
+    s.idn.forEach(function (_, i) {
+      var v = s.svar[i];
+      p.appendChild(el('span', v != null ? (v === 0 ? 'ratt' : 'fel') : i === s.steg ? 'nu' : ''));
+    });
+  }
+
+  function ritaKlocka() {
+    if (!s || !s.start || arKlart()) return;
+    $('klocka').textContent = Advent.formateraTid(Math.floor(totalMs(s) / 1000));
+    $('klocka').classList.toggle('paus', !s.fragaStart);
+  }
+  setInterval(ritaKlocka, 250);
+
+  function rita() {
+    $('slut').hidden = true;
+    if (arKlart()) {
+      $('spel').hidden = true;
+      visaSlut();
+      return;
+    }
+    $('spel').hidden = false;
+    ritaPrickar();
+    ritaKlocka();
+
+    var i = s.steg, id = s.idn[i], f = serie(id), typ = f[1];
+    var besvarad = s.svar.length > i, valt = s.svar[i];
+    var kort = $('serieKort');
+    kort.style.animation = 'none'; void kort.offsetWidth; kort.style.animation = '';
+    $('serieNr').textContent = 'Serie ' + (i + 1) + ' av ' + s.idn.length + (typ === 'matris' ? ': vad saknas nere till höger?' : ': vad kommer härnäst?');
+
+    var rad = $('serie');
+    rad.textContent = '';
+    rad.className = 'serie' + (typ === 'matris' ? ' matris' : typ === 'figur' ? ' figurer' : '');
+    f[2].forEach(function (v) {
+      var r = el('div', 'ruta');
+      r.appendChild(innehall(typ, v));
+      if (typ !== 'text') r.setAttribute('aria-label', beskriv(v));
+      rad.appendChild(r);
+    });
+    var fragaRuta = el('div', 'ruta fraga' + (besvarad ? (valt === 0 ? ' ratt' : ' fel') : ''));
+    if (besvarad) {
+      fragaRuta.appendChild(innehall(typ, f[3][0]));
+      if (typ !== 'text') fragaRuta.setAttribute('aria-label', beskriv(f[3][0]));
+    } else {
+      fragaRuta.textContent = '?';
+    }
+    rad.appendChild(fragaRuta);
+
+    var val = $('val');
+    val.textContent = '';
+    val.className = 'val' + (typ === 'text' ? '' : ' figurer');
+    ordning(id).forEach(function (a) {
+      var b = el('button');
+      b.type = 'button';
+      b.appendChild(innehall(typ, f[3][a]));
+      if (typ !== 'text') b.setAttribute('aria-label', beskriv(f[3][a]));
+      if (besvarad) {
+        b.disabled = true;
+        if (a === 0) b.classList.add('ratt');
+        else if (a === valt) b.classList.add('fel');
+      } else {
+        b.addEventListener('click', function () { svara(a); });
+      }
+      val.appendChild(b);
+    });
+
+    $('forklaring').hidden = !besvarad;
+    if (besvarad) {
+      $('omdome').textContent = valt === 0 ? 'Rätt!' : 'Inte riktigt';
+      $('varfor').textContent = f[4];
+      $('nasta').textContent = i + 1 < s.idn.length ? 'Nästa serie' : 'Visa resultatet';
+    }
+  }
+
+  function svara(a) {
+    if (s.svar.length > s.steg || !s.fragaStart) return;
+    s.tider.push(Date.now() - s.fragaStart);
+    s.fragaStart = null;
+    s.svar.push(a);
+    sparaDagens();
+    rita();
+  }
+
+  $('nasta').addEventListener('click', function () {
+    s.steg++;
+    if (arKlart()) s.slut = Date.now();
+    else s.fragaStart = Date.now();
+    sparaDagens();
+    rita();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ===== Slut och resultat =====
+  function tidText(t) {
+    var tiondelar = Math.round(totalMs(t) / 100);
+    return Advent.formateraTid(Math.floor(tiondelar / 10)) + ',' + (tiondelar % 10);
+  }
+
+  function visaSlut() {
+    var ratt = antalRatt(s), m = medalj(ratt);
+    $('slut').hidden = false;
+    $('antalRatt').textContent = ratt;
+    $('rutor').textContent = rutorText(s);
+    $('sluttid').textContent = 'Tid: ' + tidText(s);
+    $('sluttext').textContent = m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : '';
+    $('sluttext').hidden = !m;
+    if (!ovning) forsokSkicka();
+    uppdateraGavUpp();
+  }
+
+  // Flest rätt först, sedan kortast tid. Värdet blir högre ju bättre.
+  function resultatet(t) {
+    var ratt = antalRatt(t), tiondelar = Math.min(99999, Math.round(totalMs(t) / 100));
+    return {
+      varde: ratt * 100000 + (99999 - tiondelar),
+      medalj: medalj(ratt),
+      text: rutorText(t) + ' · ' + ratt + '/5 · ' + tidText(t)
+    };
+  }
+
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Dagens första försök skickas när det är klart. Är man inte inloggad skickas det när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) { uppdateraGavUpp(); return; }
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; uppdateraGavUpp(); return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; uppdateraGavUpp(); return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var r = resultatet(dagens);
+    R.skicka({ dag: dag, spel: 'monster', status: 'klar', varde: r.varde, medalj: r.medalj, text: r.text })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; uppdateraGavUpp(); });
+  }
+
+  // "Ge upp" syns när man är inloggad, inte har något på tavlan och inte har spelat klart dagens serier.
+  function uppdateraGavUpp() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    $('gavuppRuta').hidden = ovning || !kanSkicka() || !!(dagens && dagens.slut);
+  }
+  $('gavupp').addEventListener('click', function () {
+    if (!kanSkicka()) return;
+    if (!confirm('Ge upp? Då kan du inte skicka något resultat för den här luckan.')) return;
+    R.skicka({ dag: dag, spel: 'monster', status: 'gav upp', medalj: '', text: '' })
+      .then(uppdateraGavUpp, function (fel) { alert(fel.message); });
+  });
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); uppdateraGavUpp(); } });
+
+  // ===== Visa en omgång =====
+  function visa(idn, arOvning) {
+    ovning = arOvning;
+    $('under').textContent = ovning ? 'Övningsserier' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    s = ovning ? nyttTillstand(idn) : (Advent.lasa(sparNyckel, null) || nyttTillstand(idn));
+    var startat = !!s.start;
+    $('start').hidden = startat;
+    $('spel').hidden = true;
+    $('slut').hidden = true;
+    if (startat) rita();
+    uppdateraGavUpp();
+  }
+
+  $('startknapp').addEventListener('click', function () {
+    s.start = Date.now();
+    s.fragaStart = s.start;
+    sparaDagens();
+    $('start').hidden = true;
+    rita();
+  });
+
+  var aktuella = dagensIdn;
+  $('igen').addEventListener('click', function () {
+    var upptagna = aktuella.concat(dagensIdn);
+    var alla = ovningsIdn();
+    var idn = alla.filter(function (id) { return upptagna.indexOf(id) === -1; });
+    // Saknas en nivå bland de nya tas den från alla övningsserier.
+    NIVAER.forEach(function (n) {
+      if (!idn.some(function (id) { return serie(id)[0] === n; })) {
+        idn = idn.concat(alla.filter(function (id) { return serie(id)[0] === n; }));
+      }
+    });
+    aktuella = valjPerNiva(idn, Advent.nySlump());
+    visa(aktuella, true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    aktuella = dagensIdn;
+    visa(dagensIdn, false);
+  });
+
+  visa(dagensIdn, false);
+})();
+</script>
+</body>
+</html>
