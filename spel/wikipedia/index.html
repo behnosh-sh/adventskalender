@@ -19,28 +19,15 @@
   .artikel .bild { flex: none; width: 56px; height: 56px; border-radius: 14px; background: var(--oppnad) center / cover no-repeat; }
   .artikel .etikett { font-size: 13px; font-weight: 600; color: var(--dampad); text-transform: uppercase; letter-spacing: .04em; }
   .artikel .namn { font-size: 21px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
-  .artikel .namn a { color: var(--text); text-decoration: none; }
   .artikel .besk { font-size: 14px; color: var(--dampad); line-height: 1.25; }
   .pil { text-align: center; font-size: 22px; color: var(--gron); line-height: 1; }
 
-  .klocka { text-align: center; font-size: 52px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
-  .klocka-text { text-align: center; color: var(--dampad); margin: 0 0 14px; }
-
   .knappar { display: grid; gap: 12px; margin: 16px 0; }
 
-  .regler { margin-top: 16px; }
   .regler h2 { margin: 0 0 6px; font-size: 18px; }
-  .regler ul { margin: 0; padding-left: 20px; line-height: 1.45; }
-
-  .raknare { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 6px 0 4px; }
-  .raknare button { width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--oppnad); color: var(--text); font: 700 26px Fredoka, sans-serif; cursor: pointer; }
-  .raknare input { width: 96px; text-align: center; font: 700 40px Fredoka, sans-serif; color: var(--text); border: 0; border-bottom: 3px solid var(--kant); background: transparent; -moz-appearance: textfield; }
-  .raknare input::-webkit-inner-spin-button, .raknare input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .fraga { text-align: center; font-weight: 600; margin: 0; }
-
-  .resultat { white-space: pre-line; font-size: 17px; line-height: 1.45; text-align: center; margin: 0; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .regler b { font-weight: 700; }
   .liten { font-size: 14px; color: var(--dampad); text-align: center; margin: 10px 0 0; }
-  .lanklik { background: none; border: 0; padding: 0; font: inherit; color: var(--gron); text-decoration: underline; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -54,7 +41,7 @@
       <div class="bild" id="startbild"></div>
       <div>
         <div class="etikett">Start</div>
-        <div class="namn"><a id="startnamn" target="_blank" rel="noopener"></a></div>
+        <div class="namn" id="startnamn"></div>
         <div class="besk" id="startbesk"></div>
       </div>
     </div>
@@ -69,121 +56,67 @@
     </div>
   </div>
 
-  <!-- Innan start -->
-  <section id="steg-redo">
-    <div class="knappar">
-      <a class="knapp" id="starta" target="_blank" rel="noopener">Starta klockan och öppna Wikipedia</a>
-    </div>
-    <div class="regler kort">
-      <h2>Så spelar du</h2>
-      <ul>
-        <li>Börja på startartikeln på engelska Wikipedia.</li>
-        <li>Ta dig till målartikeln genom att bara klicka på länkar inne i artiklarna.</li>
-        <li>Ingen sökruta, och skriv inte in adresser själv.</li>
-        <li>Räkna dina klick. Färre klick är bäst, tiden avgör vid lika.</li>
-        <li>Kom tillbaka hit och tryck "Framme!" när du når målet.</li>
-      </ul>
-    </div>
-  </section>
+  <div class="knappar">
+    <a class="knapp" id="spela" target="_blank" rel="noopener">Spela</a>
+  </div>
 
-  <!-- Under spelet -->
-  <section id="steg-spelar" hidden>
-    <div class="kort">
-      <div class="klocka" id="klocka">0:00</div>
-      <p class="klocka-text">Klockan går. Leta dig fram till <b id="malnamn2"></b>.</p>
-      <div class="knappar" style="margin:0">
-        <button class="knapp gul" id="framme" type="button">Framme!</button>
-        <a class="knapp ljus" id="oppnaIgen" target="_blank" rel="noopener">Öppna startartikeln igen</a>
-      </div>
-    </div>
-    <p class="liten"><button class="lanklik" id="avbryt" type="button">Avbryt och börja om</button></p>
-  </section>
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Tryck <b>Spela</b>. Spelet öppnas hos Wikispeedruns (på engelska, inget konto behövs).</li>
+      <li>Ta dig från start till mål genom att bara klicka på länkar i artiklarna. Klick och tid räknas automatiskt.</li>
+      <li>När du är framme trycker du <b>Share Run Summary</b> och klistrar in resultatet i Discord.</li>
+    </ol>
+  </div>
 
-  <!-- Rapportera klick -->
-  <section id="steg-klick" hidden>
-    <div class="kort">
-      <p class="fraga">Hur många klick behövde du?</p>
-      <div class="raknare">
-        <button type="button" id="minus" aria-label="Ett klick färre">−</button>
-        <input id="antal" type="number" inputmode="numeric" min="1" max="999" value="5" aria-label="Antal klick">
-        <button type="button" id="plus" aria-label="Ett klick till">+</button>
-      </div>
-      <p class="liten" id="tidtext"></p>
-      <div class="knappar" style="margin-bottom:0">
-        <button class="knapp" id="spara" type="button">Klart</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Resultat -->
-  <section id="steg-klar" hidden>
-    <div class="kort">
-      <p class="resultat" id="resultat"></p>
-    </div>
-    <div class="knappar">
-      <button class="knapp gul" id="kopiera" type="button">Kopiera resultat</button>
-      <button class="knapp ljus" id="igen" type="button">Spela igen (nya artiklar)</button>
-    </div>
-    <p class="liten" id="tillDagens" hidden><a href="">Tillbaka till dagens runda</a></p>
-  </section>
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Öva på en annan bana</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bana</a></p>
 </main>
 
 <script src="../../js/gemensam.js"></script>
 <script>
 (function () {
-  // Startartiklar och mål på engelska Wikipedia. Dagens par väljs med dagens frö.
-  var STARTER = [
-    'Potato', 'IKEA', 'Moomins', 'Pippi Longstocking', 'Volvo Cars', 'Lego', 'Banana',
-    'Penguin', 'Pizza', 'ABBA', 'Minecraft', 'Eiffel Tower', 'Tyrannosaurus', 'Coffee',
-    'Saturn', 'Chess', 'Vikings', 'Cat', 'Pokémon', 'Mount Everest', 'Octopus',
-    'Pancake', 'Stockholm', 'Super Mario', 'Honey bee', 'Volcano'
+  // Handplockade par på engelska Wikipedia som går att klara på några minuter.
+  // Dagens par väljs med dagens frö, så alla i familjen får samma bana.
+  var PAR = [
+    ['Pizza', 'Santa Claus'],
+    ['IKEA', 'Christmas tree'],
+    ['ABBA', "Saint Lucy's Day"],
+    ['Penguin', 'Reindeer'],
+    ['Minecraft', 'Gingerbread'],
+    ['Moomins', 'Snowman'],
+    ['Banana', 'Mulled wine'],
+    ['Lego', 'Advent calendar'],
+    ['Volcano', 'Aurora'],
+    ['Coffee', 'Saffron'],
+    ['Tyrannosaurus', 'Polar bear'],
+    ['Eiffel Tower', 'Christmas market'],
+    ['Chess', 'Krampus'],
+    ['Pippi Longstocking', 'Donald Duck'],
+    ['Octopus', 'Candy cane'],
+    ['Mount Everest', 'Snowflake'],
+    ['Super Mario', 'Home Alone'],
+    ['Vikings', 'Yule goat'],
+    ['Honey bee', 'Mistletoe'],
+    ['Stockholm', 'Rudolph the Red-Nosed Reindeer']
   ];
-  var MAL = [
-    'Santa Claus', 'Christmas tree', 'Gingerbread', 'Reindeer', "Saint Lucy's Day",
-    'Snowflake', 'Mistletoe', 'Mulled wine', 'From All of Us to All of You', 'Advent calendar',
-    'Candy cane', 'Yule Goat', 'Krampus', 'Rudolph the Red-Nosed Reindeer', 'Home Alone',
-    'Northern lights', 'Snowman', 'Saffron', 'Polar bear', 'Christmas market'
-  ];
-
-  var dag = Advent.hamtaDag() || 2;
-  var ovning = new URLSearchParams(location.search).get('ovning') === '1';
-  var nyckel = ovning ? 'advent-wiki-ovning' : 'advent-wiki-dag-' + dag;
-
-  function valjPar(slump) {
-    var s = STARTER[Math.floor(slump() * STARTER.length)];
-    var m = MAL[Math.floor(slump() * MAL.length)];
-    return { start: s, mal: m };
-  }
-
-  // Tillstånd: { start, mal, borjade, slutade, klick }
-  var lage = Advent.lasa(nyckel, null);
-  if (!lage || (!ovning && lage.fro !== Advent.froForDag(dag))) {
-    lage = valjPar(ovning ? Advent.nySlump() : Advent.dagensSlump(dag));
-    lage.fro = ovning ? null : Advent.froForDag(dag);
-    Advent.spara(nyckel, lage);
-  }
-  if (!ovning) Advent.markeraOppnad(dag);
-
-  function wikiAdress(titel) {
-    return 'https://en.wikipedia.org/wiki/' + encodeURIComponent(titel.replace(/ /g, '_'));
-  }
 
   var $ = function (id) { return document.getElementById(id); };
-  $('under').textContent = ovning ? 'Övningsrunda med slumpade artiklar' : 'Lucka ' + dag;
-  $('ovningsmarke').hidden = !ovning;
-  $('startnamn').textContent = lage.start;
-  $('startnamn').href = wikiAdress(lage.start);
-  $('malnamn').textContent = lage.mal;
-  $('malnamn2').textContent = lage.mal;
-  $('starta').href = wikiAdress(lage.start);
-  $('oppnaIgen').href = wikiAdress(lage.start);
-  if (ovning) {
-    $('tillDagens').hidden = false;
-    $('tillDagens').firstChild.href = '?dag=' + dag;
+  var dag = Advent.hamtaDag() || 2;
+  var dagensIndex = Math.floor(Advent.dagensSlump(dag)() * PAR.length);
+  Advent.markeraOppnad(dag);
+
+  function spelAdress(start, mal) {
+    return 'https://wikispeedruns.com/play/quick_play?prompt_start=' + encodeURIComponent(start) +
+      '&prompt_end=' + encodeURIComponent(mal) + '&lang=en';
   }
 
-  // Kort beskrivning och bild från Wikipedia. Fungerar sidan utan nät till Wikipedia blir det bara tomt.
+  // Kort beskrivning och bild från Wikipedia. Går det inte att hämta blir det bara tomt.
   function hamtaSammanfattning(titel, bildId, beskId) {
+    $(beskId).textContent = '';
+    $(bildId).style.backgroundImage = '';
     if (!window.fetch) return;
     fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(titel.replace(/ /g, '_')))
       .then(function (r) { return r.ok ? r.json() : null; })
@@ -194,76 +127,34 @@
       })
       .catch(function () {});
   }
-  hamtaSammanfattning(lage.start, 'startbild', 'startbesk');
-  hamtaSammanfattning(lage.mal, 'malbild', 'malbesk');
 
-  var tick = null;
-  function visa() {
-    var steg = lage.klick ? 'klar' : lage.slutade ? 'klick' : lage.borjade ? 'spelar' : 'redo';
-    ['redo', 'spelar', 'klick', 'klar'].forEach(function (s) { $('steg-' + s).hidden = s !== steg; });
-    clearInterval(tick);
-    if (steg === 'spelar') {
-      var uppdatera = function () { $('klocka').textContent = Advent.formateraTid((Date.now() - lage.borjade) / 1000); };
-      uppdatera();
-      tick = setInterval(uppdatera, 500);
-    }
-    if (steg === 'klick') {
-      $('tidtext').textContent = 'Din tid: ' + Advent.formateraTid((lage.slutade - lage.borjade) / 1000);
-    }
-    if (steg === 'klar') {
-      $('resultat').textContent = resultatText();
-    }
+  function visa(index, ovning) {
+    var start = PAR[index][0], mal = PAR[index][1];
+    $('under').textContent = ovning ? 'Övningsbana' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('startnamn').textContent = start;
+    $('malnamn').textContent = mal;
+    $('spela').href = spelAdress(start, mal);
+    hamtaSammanfattning(start, 'startbild', 'startbesk');
+    hamtaSammanfattning(mal, 'malbild', 'malbesk');
   }
 
-  function resultatText() {
-    var tid = Advent.formateraTid((lage.slutade - lage.borjade) / 1000);
-    var rubrik = ovning ? '🎄 Wikipedia-spelet (övning)' : '🎄 Lucka ' + dag + ' · Wikipedia-spelet';
-    return rubrik + '\n' + lage.start + ' → ' + lage.mal + '\n🖱️ ' + lage.klick + ' klick · ⏱️ ' + tid;
-  }
-
-  $('starta').addEventListener('click', function () {
-    lage.borjade = Date.now();
-    Advent.spara(nyckel, lage);
-    visa();
-  });
-  $('framme').addEventListener('click', function () {
-    lage.slutade = Date.now();
-    Advent.spara(nyckel, lage);
-    visa();
-  });
-  $('avbryt').addEventListener('click', function () {
-    if (!confirm('Börja om? Klockan nollställs.')) return;
-    delete lage.borjade;
-    Advent.spara(nyckel, lage);
-    visa();
-  });
-  function andraKlick(d) {
-    var v = parseInt($('antal').value, 10) || 0;
-    $('antal').value = Math.min(999, Math.max(1, v + d));
-  }
-  $('minus').addEventListener('click', function () { andraKlick(-1); });
-  $('plus').addEventListener('click', function () { andraKlick(1); });
-  $('spara').addEventListener('click', function () {
-    var v = parseInt($('antal').value, 10);
-    if (!(v >= 1)) { $('antal').focus(); return; }
-    lage.klick = Math.min(999, v);
-    Advent.spara(nyckel, lage);
-    visa();
-  });
-  $('kopiera').addEventListener('click', function () { Advent.kopieraResultat(resultatText(), this); });
+  var aktuellt = dagensIndex;
   $('igen').addEventListener('click', function () {
-    var ny = valjPar(Advent.nySlump());
-    if (ovning) {
-      lage = ny;
-      Advent.spara(nyckel, lage);
-      location.reload();
-      return;
-    }
-    Advent.spara('advent-wiki-ovning', ny);
-    location.href = '?dag=' + dag + '&ovning=1';
+    var slump = Advent.nySlump(), ny;
+    do { ny = Math.floor(slump() * PAR.length); } while (ny === aktuellt || ny === dagensIndex);
+    aktuellt = ny;
+    visa(ny, true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    aktuellt = dagensIndex;
+    visa(dagensIndex, false);
   });
 
-  visa();
+  visa(dagensIndex, false);
 })();
 </script>
 </body>
