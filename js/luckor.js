@@ -3,7 +3,8 @@
 // lagreArBattre: false om högre poäng vinner på resultattavlan (standard: lägre är bättre, t.ex. tid).
 window.LUCKOR = {
   1: { titel: 'Minesweeper', sokvag: 'spel/minesweeper/' },
-  2: { titel: 'Wikipedia-spelet', sokvag: 'spel/wikipedia/' }
+  2: { titel: 'Wikipedia-spelet', sokvag: 'spel/wikipedia/' },
+  3: { titel: 'Connections', sokvag: 'spel/connections/' }
 };
 
 // Under bygget är alla luckor öppna. Sätt till false när datumlåset ska gälla.
