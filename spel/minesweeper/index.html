@@ -138,8 +138,8 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
   height: 48px; min-width: 48px; font-size: 22px; font-weight: 700;
 }
 .kontroller button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--skugga); }
-.kontroller .lage { flex: 1; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.kontroller .lage.flagga { background: #FFE9A8; }
+.kontroller .tips { flex: 1; font-size: 13px; line-height: 1.25; color: #6F8274; text-align: center; }
+.c.trycks { filter: brightness(1.12); transform: scale(0.92); transition: transform .25s; }
 
 /* Resultat */
 .slut {
@@ -172,9 +172,10 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
       <button class="knapp" id="startknapp">Starta dagens bana</button>
       <button class="knapp ljus" id="ovningsknapp">Spela igen (ny slumpad bana)</button>
       <div class="hjalp">
-        <b>Så spelar du:</b> Banan startar med ett öppet område vid ★. Tryck på en ruta för att öppna den.
-        <b>Håll inne</b> (eller högerklicka) för att sätta en flagga, eller byt till flaggläge med knappen nere.
-        Tryck på en siffra som har rätt antal flaggor runt sig för att öppna alla grannar.
+        <b>Så spelar du:</b> Banan startar med ett öppet område vid ★.<br>
+        <b>Tryck på en grön ruta</b> för att gräva.<br>
+        <b>Tryck på en siffra</b> så gör spelet det som är säkert: är det lika många gröna rutor runt siffran som minor sätts flaggorna ut, och har siffran redan alla sina flaggor öppnas resten.<br>
+        <b>Håll inne</b> (eller högerklicka) på en grön ruta för att sätta eller ta bort en flagga själv. Tryck på en flagga för att ta bort den.<br>
         Banan går alltid att lösa utan att gissa. Dra för att flytta, + och − för att zooma.
       </div>
     </div>
@@ -191,7 +192,7 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
     <div class="kontroller">
       <button id="zoom-ut" aria-label="Zooma ut">−</button>
       <button id="zoom-in" aria-label="Zooma in">+</button>
-      <button class="lage" id="lage">⛏️ Gräv</button>
+      <span class="tips">Håll inne = flagga<br>Tryck på siffra = smart</span>
       <button id="avbryt" aria-label="Avbryt" style="font-size:18px">✕</button>
     </div>
   </div>
@@ -390,6 +391,9 @@ function skapaBana(froText) {
     for (let k = 0; k < antal; k++) minor[platser[k]] = 1;
     const siffror = raknaSiffror(W, H, minor);
     senast = { W, H, antal, minor, siffror, start, typ: p.namn };
+    // Startområdet ska vara så stort att man kommer igång direkt
+    const startYta = floodOppna(W, H, siffror, new Uint8Array(N), start).length;
+    if (startYta < Math.max(12, Math.round(N * 0.06)) && forsok < 2500) continue;
     if (gaarAttLosa(W, H, siffror, antal, start)) { senast.forsok = forsok + 1; break; }
   }
   const bv = berakna3BV(senast.W, senast.H, senast.siffror, senast.start);
@@ -443,17 +447,18 @@ function visaIntro() {
 }
 
 // ===== Spelet =====
-let spel = null, cellEl = [], timer = null, flaggLage = false;
-let cellStorlek = 0, zoomNiva = 0;
-const ZOOM = [1, 1.25, 1.5, 1.85, 2.3];
-const FRANS = 0.85;
+let spel = null, cellEl = [], timer = null;
+let cellStorlek = 0, zoomNiva = 0, zoomSteg = [];
+const STARTSTORLEK = 34;          // px per ruta från början, lagom för ett finger
+const ZOOM_STORLEKAR = [28, 34, 42, 52];
 
-function grundStorlek(W) {
-  const bredd = $("ram").clientWidth - 20;
-  return Math.max(14, Math.min(40, Math.floor(bredd / W)));
+// Zoomstegen: "hela bredden syns" plus några fasta storlekar som är större än så.
+function raknaZoomSteg() {
+  const passar = Math.max(14, Math.floor(($("ram").clientWidth - 20) / spel.bana.W));
+  zoomSteg = [passar, ...ZOOM_STORLEKAR.filter(s => s > passar)];
 }
 function satStorlek() {
-  cellStorlek = Math.round(grundStorlek(spel.bana.W) * ZOOM[zoomNiva] * (zoomNiva === -1 ? FRANS : 1));
+  cellStorlek = zoomSteg[zoomNiva];
   $("bana").style.setProperty("--cs", cellStorlek + "px");
 }
 
@@ -479,8 +484,9 @@ function startaSpel(bana, ovning) {
     frag.appendChild(c); cellEl.push(c);
   }
   el.appendChild(frag);
-  zoomNiva = 0; satStorlek();
-  satFlaggLage(false);
+  raknaZoomSteg();
+  zoomNiva = Math.max(0, zoomSteg.findIndex(s => s >= STARTSTORLEK));
+  satStorlek();
   // Öppna startområdet
   oppnaCell(bana.start, true);
   uppdateraMinor();
@@ -541,18 +547,24 @@ function vaxlaFlagga(i) {
   if (navigator.vibrate) navigator.vibrate(15);
 }
 
-function ackord(i) {
+// Tryck på en siffra: flagga grannarna om det är givet, annars öppna dem om alla flaggor redan sitter.
+function smartSiffra(i) {
   const b = spel.bana;
   const nb = grannar(b.W, b.H, i);
   const f = nb.filter(j => spel.flagg[j]).length;
-  if (f !== b.siffror[i]) return;
-  for (const j of nb) { if (spel.slut) return; if (!spel.oppen[j] && !spel.flagg[j]) oppnaCell(j); }
+  const dolda = nb.filter(j => !spel.oppen[j] && !spel.flagg[j]);
+  if (!dolda.length) return;
+  if (f === b.siffror[i]) {
+    for (const j of dolda) { if (spel.slut) return; oppnaCell(j); }
+  } else if (f + dolda.length === b.siffror[i]) {
+    for (const j of dolda) vaxlaFlagga(j);
+  }
 }
 
 function tryck(i, flagga) {
   if (!spel || spel.slut) return;
-  if (spel.oppen[i]) { if (spel.bana.siffror[i] > 0) ackord(i); return; }
-  if (flagga) vaxlaFlagga(i); else oppnaCell(i);
+  if (spel.oppen[i]) { if (spel.bana.siffror[i] > 0) smartSiffra(i); return; }
+  if (flagga || spel.flagg[i]) vaxlaFlagga(i); else oppnaCell(i);
 }
 
 function avsluta(vann, orsak, smallCell) {
@@ -613,7 +625,7 @@ function visaResultat(vann, orsak, t) {
 // ===== Inmatning =====
 const ram = $("ram");
 let tryckInfo = null;
-const LANGT_TRYCK = 350;
+const LANGT_TRYCK = 280;
 
 ram.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -625,12 +637,14 @@ ram.addEventListener("pointerdown", e => {
     knapp: e.button,
   };
   if (tryckInfo.mus && e.button === 2) { if (c) tryck(+c.dataset.i, true); tryckInfo = null; return; }
-  if (c) {
+  if (c && spel && !spel.oppen[+c.dataset.i]) {
+    c.classList.add("trycks");
+    tryckInfo.el = c;
     tryckInfo.timer = setTimeout(() => {
       if (tryckInfo && !tryckInfo.flyttad) {
         tryckInfo.lang = true;
-        // Långt tryck gör motsatsen till aktuellt läge
-        tryck(tryckInfo.cell, !flaggLage);
+        c.classList.remove("trycks");
+        tryck(tryckInfo.cell, true);
       }
     }, LANGT_TRYCK);
   }
@@ -640,6 +654,7 @@ ram.addEventListener("pointermove", e => {
   const dx = e.clientX - tryckInfo.x, dy = e.clientY - tryckInfo.y;
   if (!tryckInfo.flyttad && Math.hypot(dx, dy) > 8) {
     tryckInfo.flyttad = true; clearTimeout(tryckInfo.timer);
+    if (tryckInfo.el) tryckInfo.el.classList.remove("trycks");
     if (tryckInfo.mus) ram.classList.add("drar");
   }
   // Mus: dra för att flytta (pekskärm scrollar själv)
@@ -650,25 +665,24 @@ ram.addEventListener("pointermove", e => {
 function slappt(e) {
   if (!tryckInfo || e.pointerId !== tryckInfo.id) return;
   clearTimeout(tryckInfo.timer);
+  if (tryckInfo.el) tryckInfo.el.classList.remove("trycks");
   ram.classList.remove("drar");
   const t = tryckInfo; tryckInfo = null;
   if (e.type === "pointercancel") return;
   if (t.flyttad || t.lang || t.cell == null) return;
-  tryck(t.cell, flaggLage);
+  tryck(t.cell, false);
 }
 ram.addEventListener("pointerup", slappt);
 ram.addEventListener("pointercancel", slappt);
-ram.addEventListener("scroll", () => { if (tryckInfo && !tryckInfo.mus) { tryckInfo.flyttad = true; clearTimeout(tryckInfo.timer); } }, { passive: true });
-
-function satFlaggLage(v) {
-  flaggLage = v;
-  $("lage").classList.toggle("flagga", v);
-  $("lage").textContent = v ? "🚩 Flagga" : "⛏️ Gräv";
-}
-$("lage").onclick = () => satFlaggLage(!flaggLage);
+ram.addEventListener("scroll", () => {
+  if (tryckInfo && !tryckInfo.mus) {
+    tryckInfo.flyttad = true; clearTimeout(tryckInfo.timer);
+    if (tryckInfo.el) tryckInfo.el.classList.remove("trycks");
+  }
+}, { passive: true });
 
 function zooma(steg) {
-  const ny = Math.max(0, Math.min(ZOOM.length - 1, zoomNiva + steg));
+  const ny = Math.max(0, Math.min(zoomSteg.length - 1, zoomNiva + steg));
   if (ny === zoomNiva) return;
   // Behåll mittpunkten
   const mx = (ram.scrollLeft + ram.clientWidth / 2) / ram.scrollWidth;
@@ -679,7 +693,12 @@ function zooma(steg) {
 }
 $("zoom-in").onclick = () => zooma(1);
 $("zoom-ut").onclick = () => zooma(-1);
-window.addEventListener("resize", () => { if (spel) satStorlek(); });
+window.addEventListener("resize", () => {
+  if (!spel) return;
+  const nu = cellStorlek; raknaZoomSteg();
+  const k = zoomSteg.findIndex(s => s >= nu);
+  zoomNiva = k < 0 ? zoomSteg.length - 1 : k; satStorlek();
+});
 
 $("avbryt").onclick = () => { clearInterval(timer); if (spel) spel.slut = true; visaIntro(); };
 $("startknapp").onclick = () => startaSpel(dagens, false);
