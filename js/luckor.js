@@ -6,7 +6,8 @@ window.LUCKOR = {
   2: { titel: 'Wikipedia-spelet', sokvag: 'spel/wikipedia/' },
   3: { titel: 'Connections', sokvag: 'spel/connections/' },
   4: { titel: 'Gissningsdagen', sokvag: 'spel/gissning/', lagreArBattre: false },
-  5: { titel: 'Globle', sokvag: 'spel/globle/' }
+  5: { titel: 'Globle', sokvag: 'spel/globle/' },
+  6: { titel: '2048', sokvag: 'spel/2048/', lagreArBattre: false }
 };
 
 // Under bygget är alla luckor öppna. Sätt till false när datumlåset ska gälla.
