@@ -84,3 +84,35 @@ a:hover { color: var(--gron-mork); }
   outline: 3px solid var(--glod);
   outline-offset: 3px;
 }
+
+/* Resultattavlan (js/resultat.js). */
+.tavla h2 { margin: 0 0 8px; font-size: 18px; }
+.tavla-lista { list-style: none; margin: 0; padding: 0; }
+.tavla-rad { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-top: 1px solid #F0E6D8; font-size: 17px; }
+.tavla-rad:first-child { border-top: 0; }
+.tavla-rad .plats { width: 18px; font-weight: 700; color: var(--dampad); }
+.tavla-rad .vem { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.tavla-rad .hur { font-weight: 600; text-align: right; }
+.tavla-rad.jag .vem { font-weight: 700; }
+.tavla-rad.vantar { color: var(--dampad); }
+.tavla-rad.vantar .hur { font-weight: 500; font-size: 15px; }
+.medalj { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.medalj.guld { background: #F2C230; color: #5A4200; }
+.medalj.silver { background: #C9CED3; color: #3A4148; }
+.medalj.brons { background: #D49A6A; color: #4A2A10; }
+.medalj.ingen { background: var(--oppnad); }
+.medalj.tom { border: 2px dashed #C9B9A3; }
+.tavla-antal { margin: 4px 0 2px; font-size: 17px; text-align: center; }
+.tavla-info { margin: 4px 0; font-size: 15px; color: var(--dampad); text-align: center; }
+.tavla-fel { margin: 6px 0 0; font-size: 15px; color: #A23B2A; text-align: center; min-height: 1em; }
+.tavla-fel:empty { display: none; }
+.tavla-prickar { display: flex; justify-content: center; gap: 8px; margin: 10px 0 4px; }
+.tavla-prickar span { width: 26px; height: 26px; border-radius: 50%; border: 2px dashed #C9B9A3; }
+.tavla-prickar span.pa { background: var(--gran-1); border-color: var(--gran-1); }
+.tavla-kod { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: end; margin-top: 8px; }
+.tavla-kod label { grid-column: 1 / -1; font-weight: 600; }
+.tavla-kod input { font: 600 20px Fredoka, system-ui, sans-serif; letter-spacing: .2em; padding: 10px 12px; border: 2px solid var(--kant); border-radius: 14px; background: #FFFDF9; color: var(--text); min-width: 0; }
+.tavla-kod .knapp { width: auto; padding: 12px 20px; }
+.tavla-vem { margin: 12px 0 0; font-size: 13px; color: var(--dampad); text-align: center; }
+.lanklik { font: inherit; color: var(--gron); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+.tavla-lista.utan-medalj .medalj { display: none; }

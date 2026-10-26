@@ -28,6 +28,16 @@
   .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
   .regler b { font-weight: 700; }
   .liten { font-size: 14px; color: var(--dampad); text-align: center; margin: 10px 0 0; }
+
+  .skicka { display: grid; gap: 10px; margin-bottom: 16px; }
+  .skicka h2 { margin: 0; font-size: 18px; }
+  .skicka label { font-weight: 600; }
+  .skicka textarea { font: 500 15px Fredoka, system-ui, sans-serif; color: var(--text); border: 2px solid var(--kant); border-radius: 14px; padding: 10px; background: #FFFDF9; resize: vertical; min-height: 110px; }
+  .skicka .last { margin: 0; font-size: 15px; color: var(--dampad); }
+  .skicka .last b { color: var(--text); }
+  .skicka .fel { margin: 0; font-size: 15px; color: #A23B2A; }
+  .skicka .fel:empty, .skicka .last:empty { display: none; }
+  .tavla { margin-bottom: 16px; }
 </style>
 </head>
 <body>
@@ -60,12 +70,25 @@
     <a class="knapp" id="spela" target="_blank" rel="noopener">Spela</a>
   </div>
 
+  <div class="skicka kort" id="skicka" hidden>
+    <h2>Ditt resultat</h2>
+    <label for="inklistrat">Klistra in din Share Run Summary</label>
+    <textarea id="inklistrat" placeholder="WikiSpeedruns&#10;Pizza -> Santa Claus&#10;5 🖱️&#10;72.4 ⏱️"></textarea>
+    <p class="last" id="last"></p>
+    <p class="fel" id="skickafel"></p>
+    <button class="knapp" id="skickaknapp" type="button" disabled>Skicka till familjen</button>
+    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <p class="liten">Bara ditt första resultat räknas.</p>
+  </div>
+
+  <section id="tavla"></section>
+
   <div class="regler kort">
     <h2>Så spelar du</h2>
     <ol>
       <li>Tryck <b>Spela</b>. Spelet öppnas hos Wikispeedruns (på engelska, inget konto behövs).</li>
       <li>Ta dig från start till mål genom att bara klicka på länkar i artiklarna. Klick och tid räknas automatiskt.</li>
-      <li>När du är framme trycker du <b>Share Run Summary</b> och klistrar in resultatet i Discord.</li>
+      <li>När du är framme trycker du <b>Share Run Summary</b>, kommer tillbaka hit och klistrar in resultatet.</li>
     </ol>
   </div>
 
@@ -76,6 +99,8 @@
 </main>
 
 <script src="../../js/gemensam.js"></script>
+<script src="../../js/luckor.js"></script>
+<script src="../../js/resultat.js"></script>
 <script>
 (function () {
   // Handplockade par på engelska Wikipedia som går att klara på några minuter.
@@ -155,6 +180,83 @@
   });
 
   visa(dagensIndex, false);
+
+  // Gemensamma resultat. Bara dagens bana räknas, inte övningsbanor.
+  var lastResultat = null, harSpelat = true;
+  function visaSkicka() {
+    $('skicka').hidden = harSpelat || aktuellt !== dagensIndex;
+  }
+  Advent.Resultat.tavla($('tavla'), dag, {
+    vidStatus: function (d) {
+      harSpelat = !d || d.harSpelat;
+      visaSkicka();
+    }
+  });
+  $('igen').addEventListener('click', visaSkicka);
+  $('tillDagensLank').addEventListener('click', visaSkicka);
+
+  // Plockar ut klick och tid ur Wikispeedruns delningstext:
+  // "WikiSpeedruns\nStart -> Mål\n5 🖱️\n72.4 ⏱️\nhttps://wikispeedruns.com/play/quick_play?..."
+  function normalisera(t) {
+    try { t = decodeURIComponent(t); } catch (e) {}
+    return t.replace(/_/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  function lasDelning(text) {
+    var klick = text.match(/(\d+)\s*🖱/);
+    var tid = text.match(/(\d+(?:\.\d+)?)\s*⏱/);
+    if (!klick || !tid) return { fel: 'Hittar inte klick och tid. Klistra in hela texten från Share Run Summary.' };
+    var start = PAR[dagensIndex][0], mal = PAR[dagensIndex][1];
+    var lank = text.match(/prompt_start=([^&\s]+)&prompt_end=([^&\s]+)/);
+    var rad = text.match(/^(.+?)\s*->\s*(.+)$/m);
+    var par = lank ? [lank[1], lank[2]] : rad ? [rad[1], rad[2]] : null;
+    if (!par || normalisera(par[0]) !== normalisera(start) || normalisera(par[1]) !== normalisera(mal)) {
+      return { fel: 'Det här ser inte ut att vara dagens bana (' + start + ' → ' + mal + ').' };
+    }
+    var k = parseInt(klick[1], 10), s = parseFloat(tid[1]);
+    return { klick: k, sek: s, text: k + ' klick · ' + Advent.formateraTid(s) };
+  }
+
+  $('inklistrat').addEventListener('input', function () {
+    var t = $('inklistrat').value.trim();
+    $('skickafel').textContent = '';
+    $('last').textContent = '';
+    lastResultat = null;
+    if (t) {
+      var r = lasDelning(t);
+      if (r.fel) $('skickafel').textContent = r.fel;
+      else {
+        lastResultat = r;
+        $('last').textContent = 'Vi läste: ';
+        $('last').appendChild(document.createElement('b')).textContent = r.text;
+      }
+    }
+    $('skickaknapp').disabled = !lastResultat;
+  });
+
+  function skicka(resultat) {
+    $('skickaknapp').disabled = true;
+    $('gavupp').disabled = true;
+    $('skickafel').textContent = '';
+    Advent.Resultat.skicka(resultat).then(function () {
+      $('tavla').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, function (fel) {
+      $('skickafel').textContent = fel.message;
+      $('skickaknapp').disabled = !lastResultat;
+      $('gavupp').disabled = false;
+    });
+  }
+  $('skickaknapp').addEventListener('click', function () {
+    if (!lastResultat) return;
+    skicka({
+      dag: dag, spel: 'wikipedia', status: 'klar', medalj: '',
+      varde: lastResultat.klick * 100000 + Math.round(lastResultat.sek * 10),
+      text: lastResultat.text
+    });
+  });
+  $('gavupp').addEventListener('click', function () {
+    if (!confirm('Ge upp? Då kan du inte skicka något resultat för den här luckan.')) return;
+    skicka({ dag: dag, spel: 'wikipedia', status: 'gav upp', medalj: '', text: '' });
+  });
 })();
 </script>
 </body>
