@@ -557,8 +557,14 @@ function oppnaRunt(i) {
   for (const j of nb) { if (spel.slut) return; if (!spel.oppen[j] && !spel.flagg[j]) oppnaCell(j); }
 }
 
+// Efter ett långt tryck ignoreras nya tryck på samma ruta en stund. Vissa mobiler
+// (iPhone) skickar ett extra tryck när fingret släpps, som annars tog bort flaggan igen.
+let sparrCell = -1, sparrTill = 0;
+const SPARR_TID = 700;
+
 function tryck(i, flagga) {
   if (!spel || spel.slut) return;
+  if (i === sparrCell && performance.now() < sparrTill) return;
   if (spel.oppen[i]) { if (spel.bana.siffror[i] > 0) oppnaRunt(i); return; }
   if (flagga || spel.flagg[i]) vaxlaFlagga(i); else oppnaCell(i);
 }
@@ -628,6 +634,7 @@ const LANGT_TRYCK = 280;
 ram.addEventListener("contextmenu", e => e.preventDefault());
 
 ram.addEventListener("pointerdown", e => {
+  if (!e.isPrimary) return;
   const c = e.target.closest(".c");
   tryckInfo = {
     t0: performance.now(), id: e.pointerId, x: e.clientX, y: e.clientY, sl: ram.scrollLeft, st: ram.scrollTop,
@@ -643,6 +650,7 @@ ram.addEventListener("pointerdown", e => {
         tryckInfo.lang = true;
         c.classList.remove("trycks");
         tryck(tryckInfo.cell, true);
+        sparrCell = tryckInfo.cell; sparrTill = performance.now() + SPARR_TID;
       }
     }, LANGT_TRYCK);
   }
@@ -669,6 +677,8 @@ function slappt(e) {
   ram.classList.remove("drar");
   const t = tryckInfo; tryckInfo = null;
   if (e.type === "pointercancel") return;
+  // Spärren räknas från när fingret släpps, hur länge man än höll inne
+  if (t.lang) { sparrCell = t.cell; sparrTill = performance.now() + SPARR_TID; }
   if (t.flyttad || t.lang || t.cell == null) return;
   // Ett påbörjat långt tryck som släpps för tidigt gräver inte
   if (spel && !spel.oppen[t.cell] && !spel.flagg[t.cell] && performance.now() - t.t0 > KORT_TRYCK) return;
