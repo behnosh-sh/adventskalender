@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gissningsdagen</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css">
+<style>
+  :root {
+    --zon-0: #5FAF7E;
+    --zon-1: #F6D66B;
+    --zon-2: #F0A35E;
+    --zon-3: #E0675A;
+    --zon-4: #A23B2A;
+  }
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+
+  .start { display: grid; gap: 12px; margin-bottom: 16px; text-align: center; }
+  .start p { margin: 0; line-height: 1.4; }
+
+  .prickar { display: flex; justify-content: center; gap: 8px; margin: 0 0 12px; }
+  .prickar span { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--himmel-dampad); }
+  .prickar span.nu { background: var(--himmel-text); box-shadow: none; }
+  .prickar span.z0 { background: var(--zon-0); box-shadow: none; }
+  .prickar span.z1 { background: var(--zon-1); box-shadow: none; }
+  .prickar span.z2 { background: var(--zon-2); box-shadow: none; }
+  .prickar span.z3 { background: var(--zon-3); box-shadow: none; }
+  .prickar span.z4 { background: var(--zon-4); box-shadow: none; }
+
+  .fraga { margin-bottom: 16px; animation: fram .3s ease-out; }
+  .fraga .nr { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--dampad); }
+  .fraga h2 { margin: 0 0 14px; font-size: 21px; line-height: 1.25; }
+  @keyframes fram { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .fraga { animation: none; } }
+
+  .gissa { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+  .gissa input {
+    min-width: 0; font: 600 22px var(--text-typsnitt); padding: 10px 12px;
+    border: 2px solid var(--kant); border-radius: 14px; background: var(--kort); color: var(--text);
+  }
+  .gissa input:focus { outline: none; border-color: var(--gron); }
+  .gissa .knapp { width: auto; padding: 13px 22px; }
+  .knapp:disabled { opacity: .5; cursor: default; filter: none; }
+  .enhet { margin: 6px 2px 0; font-size: 15px; color: var(--dampad); min-height: 1.3em; }
+
+  .svar { display: grid; gap: 4px; }
+  .svar .rad { display: flex; justify-content: space-between; gap: 10px; font-size: 17px; }
+  .svar .rad b { font-weight: 700; text-align: right; }
+  .omdome { margin: 14px 0 0; text-align: center; font-family: var(--rubrik-typsnitt); font-size: 22px; font-weight: 700; }
+  .skala { position: relative; height: 16px; margin: 10px 4px 0; border-radius: 999px;
+    background: linear-gradient(90deg,
+      var(--zon-4) 0 10%, var(--zon-3) 10% 20%, var(--zon-2) 20% 30%, var(--zon-1) 30% 40%,
+      var(--zon-0) 40% 60%,
+      var(--zon-1) 60% 70%, var(--zon-2) 70% 80%, var(--zon-3) 80% 90%, var(--zon-4) 90% 100%); }
+  .skala .mitt { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--text); opacity: .5; }
+  .skala .markor {
+    position: absolute; top: 50%; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%;
+    background: var(--kort); border: 4px solid var(--text); box-shadow: 0 2px 4px rgba(0,0,0,.3);
+    transition: left .8s cubic-bezier(.2, .8, .2, 1.1);
+  }
+  @media (prefers-reduced-motion: reduce) { .skala .markor { transition: none; } }
+  .skala-text { display: flex; justify-content: space-between; margin: 6px 2px 0; font-size: 13px; color: var(--dampad); }
+  .fakta { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: #EEF3F0; line-height: 1.4; font-size: 15px; }
+  .fakta b { display: block; margin-bottom: 2px; }
+  .svar .knapp { margin-top: 16px; }
+
+  .slut { display: grid; gap: 8px; margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0; font-size: 24px; }
+  .slut p { margin: 0; }
+  .poang { font-family: var(--rubrik-typsnitt); font-size: 44px; font-weight: 700; line-height: 1; }
+  .poang small { font-size: 18px; color: var(--dampad); }
+  .rutor { font-size: 24px; letter-spacing: 3px; }
+  .genomgang { list-style: none; margin: 6px 0 0; padding: 0; text-align: left; }
+  .genomgang li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--kant); font-size: 15px; }
+  .genomgang .q { grid-column: 1 / -1; font-weight: 600; }
+  .genomgang .siffror { color: var(--dampad); }
+  .genomgang .p { font-weight: 700; }
+  .slut .info { font-size: 15px; color: var(--dampad); }
+  .slut .info:empty { display: none; }
+
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Gissningsdagen <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="start kort" id="start" hidden>
+    <p>Fem udda frågor där svaret är ett tal. Ingen vet, alla gissar. Den som totalt hamnar närmast vinner.</p>
+    <button class="knapp" id="startknapp" type="button">Starta</button>
+  </div>
+
+  <section id="spel" hidden>
+    <div class="prickar" id="prickar" aria-hidden="true"></div>
+
+    <form class="fraga kort" id="fragaKort" autocomplete="off">
+      <p class="nr" id="fragaNr"></p>
+      <h2 id="fragaText"></h2>
+      <div class="gissa">
+        <input id="gissning" type="text" inputmode="decimal" enterkeyhint="done" aria-label="Din gissning" placeholder="Din gissning">
+        <button class="knapp" id="gissaKnapp" type="submit" disabled>Gissa</button>
+      </div>
+      <p class="enhet" id="tolkat" aria-live="polite"></p>
+    </form>
+
+    <div class="fraga kort" id="svarKort" hidden>
+      <p class="nr" id="svarNr"></p>
+      <h2 id="svarFraga"></h2>
+      <div class="svar">
+        <div class="rad"><span>Din gissning</span><b id="dinGissning"></b></div>
+        <div class="rad"><span>Rätt svar</span><b id="rattSvar"></b></div>
+        <p class="omdome" id="omdome"></p>
+        <div class="skala"><span class="mitt"></span><span class="markor" id="markor"></span></div>
+        <div class="skala-text"><span>För lågt</span><span>För högt</span></div>
+        <p class="fakta" id="fakta"><b>Visste du?</b><span id="faktaText"></span></p>
+        <button class="knapp" id="nasta" type="button"></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2>Resultat</h2>
+    <p class="poang"><span id="summa"></span> <small>av 500</small></p>
+    <p class="rutor" id="rutor"></p>
+    <p id="sluttext"></p>
+    <ol class="genomgang" id="genomgang"></ol>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <div class="knappar" id="gavuppRuta" hidden>
+    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+  </div>
+
+  <section id="tavla"></section>
+
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Gissa ett tal på varje fråga. Ingen tidsgräns, men inget googlande!</li>
+      <li>Efter varje gissning får du se rätt svar och hur nära du kom, från grönt till rött.</li>
+      <li>Det räknas hur många <i>gånger</i> fel du är, så stora och små svar väger lika. Hälften eller dubbelt så mycket är lika fel.</li>
+      <li>Varje fråga ger 0–100 poäng och poängen visas på slutet. Högst totalt vinner. Guld från 400, silver från 330, brons från 250.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök på dagens frågor räknas.</p>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Öva med fem andra frågor</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens frågor</a></p>
+</main>
+
+<script src="../../js/gemensam.js"></script>
+<script src="../../js/luckor.js"></script>
+<script src="../../js/resultat.js"></script>
+<script>
+(function () {
+  // Varje fråga är [fråga, rätt svar, enhet, "visste du"]. Svaret är alltid ett positivt tal.
+
+  // Testset som får visas. Används som övning och som dagens frågor innan tävlingen börjar.
+  var TESTSET = [
+    ['Hur många muskler har en katt i varje öra?', 32, 'muskler', 'Därför kan katten vrida öronen nästan 180 grader, var för sig.'],
+    ['Hur många minuter varade världens kortaste krig, mellan Storbritannien och Zanzibar?', 38, 'minuter', 'Efteråt krävde britterna att Zanzibar skulle betala för ammunitionen.'],
+    ['Hur många meter är världens kortaste reguljära flygsträcka, Westray–Papa Westray på Orkney?', 2700, 'meter', 'Flygturen tar runt en och en halv minut. Rekordet är 53 sekunder.'],
+    ['Hur många tänder har en vanlig trädgårdssnäcka?', 14000, 'tänder', 'Tänderna sitter på en raspliknande tunga som fungerar som ett rivjärn.'],
+    ['Hur många gånger per minut kan en blåvals hjärta slå när den dyker djupt?', 2, 'slag', 'Forskare satte en mätare på en blåval med sugkoppar och kunde mäta det.'],
+    ['Hur många år var den äldsta grönlandshaj som undersökts?', 392, 'år', 'Ålder räknades fram från ögats lins. Grönlandshajen blir könsmogen först runt 150 års ålder.'],
+    ['Hur många sekunder varade bröderna Wrights första flygning?', 12, 'sekunder', 'Planet flög 37 meter, kortare än vingbredden på ett modernt jumbojetplan.'],
+    ['Hur många blommor måste bin besöka för att göra ett halvt kilo honung?', 2000000, 'blommor', 'Ett enda bi gör bara ungefär en tolftedels tesked honung under hela sitt liv.'],
+    ['Hur många kilometer i timmen kan en pilgrimsfalk nå i en störtdykning?', 390, 'km/h', 'Det gör den till världens snabbaste djur.'],
+    ['Hur många dygn tar det för Venus att snurra ett varv runt sin egen axel?', 243, 'dygn', 'Det är längre än ett år på Venus, som bara är 225 dygn.']
+  ];
+
+  // Tävlingsfrågorna, förvrängda så att ingen ser dem av misstag.
+  var FORVRANGT =
+    'Hpte0NywDFo16eSjLHg9TFCo/gFHzv+7R9DO89NGsiKZP5xYCUQ5+cy7UTg697BkUOYmKV1OUYAw/K0EvHeL/c/e6Tw/hLsMxeXM' +
+    'X5eQxZ05ZyK9mXrtW5ZSvbs90bSPHMAObTYQHFtTd39PksZTrcWiKnObrwRXyegKcDEuBM7O3m9TDQlOrYvBbPOLJKTWh2aBjJC5' +
+    'B0DVZjhyNjcIvHpqr8tzOyrOlNo8HbgzW/Z1ZJwPMIsjovSV4/XEr5EMopv+dGUBaGzYAzuN2/pzy8DobVN1IFT2Ztk8uv1oX1rj' +
+    'JA2cIjYw5w0kiTvbLqir7VBQFkHNwaUCjjOkrOXEGlCi9VMSItYQtKtZ6jLgS+9CW2+2COGBCaDDSs0xLKcLLfZRwTeto8l4KnZB' +
+    'jVEEJoUAKX7c8YL6i3IGQ2iVEGfGYp8edaRBhJFTjQy8Bqk2x9dn6ldSlpKhgLFEulZMPvp2Di4lKsQwLoof5GuHGCzsUfNfzrCH' +
+    'aGaffdSKqtctf17+35dLiSV1816HKmxESiyAb5JlN/ZmILx7VG9sdKXu619hbkU5oNgyo0vrY3A4pIok19FabgMkrlDjhiuqRlxN' +
+    'cQKwUx0gj/+ZzRTTzLggrDwRR8KsuFKOJy4tnhAADoZcrf1uozy8l5bbZOb+UZGDtKFgAAEycdWfxGCBA/VmnFQWLN1IZ/xRMlUo' +
+    '6jdOYHTmz8zcz1mUvQ/kLBwX32hSYP8hFuJU7ds0kj9WJXsJpwfOJsTCzx+a+uZlfDBDP/tA8OKblNsr+b17guHQiPGMQ0adG3xo' +
+    'Oriirt+k1ISyh47acvG83kvdI0vJuExwKTN6ong0yzXvoYBwkMpt/05C46ujmSnXvm9A2ITBN7BWG3+ay5y8mWWd1nyt0uFFE0ug' +
+    'FXBiagUycd6IzpSgHKgQkVhK0v9ydNuWmXEt/tc4QDR7eXVstI6pLgqxXkIuzHnh1UmZkr21VIX5Lw9awOQbWw4E33d97VMFQwle' +
+    'lI6jpoFnySvyj2NOv0l8yE+CHCGqIgV/9dGM7SSeoZGCOYLztlMxiM/b+/0T/B5VOPvLVThJpyBVrZ/aTsmGRubBAXci61hJ3iZd' +
+    'aVd16iicRiQPPdXPDRDWlongl/UNlYfP7F8nEo1oPi6os/bW4BbVd+z7m72i5efWoe+1XlrY4YvtwziRTKKxRsVRJrLJT8SzEhAb' +
+    'umpkCGyVx5yAbLMFBf4Om2mwOARKFMlA+3JjXne4xjwcp38Htm2Xap56B4C5sgHtHpFwEWAkz6d533OKdtp7lVHh33cqXNUz4QR3' +
+    'RKBSkOLzRgATSUvg8viHBpsykchJ2Yn/F8/tKVApp9jTl+hYCJV2YWbi/0mS9St/LQva0WmrsvxP1194SnPYu6vLWIuRMmia9R2y' +
+    'hP+c9aIICuJPEISxfIDVgS73TcKSIXmB7Gg+SQjHTnmWaadAEm1Ef+GJb6SmtOEmqENHhM6OzT0+evQOw0edB0KffXjEJpR4nT/t' +
+    '850wvYld+0R5xx0Di3F0TjiiPKbWqNnr6fJQrgRHnFP61ELN9iwz2vZgNpBfdiEPmqjRKQoOVbjAspXBfWJh9azwiE3TwoDWCdBo' +
+    'N7khVFx2xaxtxlcUkQzhOhff+dsH+lYCjk8xsqL5JLp6sICDDbJhjnBqP3AZcHZYl82CYApAwqQ+Y6DwNOfJ0jUQqgIsvBf9xNhW' +
+    'lqjnMR98Kmc3SK522EBnziarj1dEG8abY4wSi0ImfWgNrFCqyQgJowVz7X7ArPyOgkIi6XSh5fNxzqAXmYNuJuWyYtswgTfY5nyJ' +
+    'DcDa0Q1Az4AA12hHDh08Mt2zD89CjMsw1OKCSwrJYhk249iCRAk4f/WUc9PAFG9hAfz+r8hGz5g53iar3T97n33PIJMr378iCd6z' +
+    'QWQmEnYs+2WWAwEuYb02o9koNnNWz5U8sNeAsfzFZRqofOHYH8omDgcw96Zqz+EgNM8PAhonBUmvwrDpho3Nqb81cugsIoSXWIRg' +
+    'OsyIalvtfVQpD0ruqMnmU0oW2rvWFEazwrIU7OnkPYPDoO6OK005mK0v0MB5UsvNVBJpuSK8cOkTrRoW3UIYJZqsbhwh/y80jX8P' +
+    'tWRGY1L6vXbYB8TNFCpFuArU+gs0QYwl/21eLl1BDalvvxcaTiWYIiLDfI1yoxLYkN31ofjV1y5QqNKChgQVQEMZGkZ5xrnP8JQi' +
+    'VgG4EkvAhdqYfECLEUvP4MPHgodylhS9ClBgtot82JZKhoCxjlekCLG/GFHlNDg1REXOf4OQmjr2t+RihrBRu3qfDt7UUiiqjjOt' +
+    'dExlqUjuwPPKvtWUG7f2m4Ze16SAmpxJbdk1W782IEMPUxtXqLeVlN0pRaFxbvwcRaNei6TBQk3A4P7YwUXOyRs8MLWuRxyOJbQ3' +
+    '+kxruSmcgWDNd8qAnr2isdEmZwoEzPeAxTPKLnR3EsCXec4w20t57F67zE1IyonHzzUlWz2FloUUyD9XOcfhDAaUU6j1TpflkKWY' +
+    'eKNF06sKZZ/07PerorZqCY0QTMPV3acOpQRkVsXYkBr5RtDTsOEu3M6Ct9oJ/CCZNqZMe++0K4JxfrmNr/9n580n80oB+Q5IgUFw' +
+    '/2+G6M8uyNuCkrZ28lGJ/T1hjC/Ihy+xxQEs+w77MREvY/ykFYWX0YQZiqv7HltZ5lv97YhMvbDZSdCX7//FrmTjhq8ZyMJcDXfZ' +
+    'Ae8qWukQUr989jeGswZXUcyEZVu9v6PnvNqA4EBOArM7xv3yxLqbdXqVS5VZmf6rYQFeogg5ovhB1rQGgGBtWJHpBSO1Dlc3e5Wb' +
+    '/99VMLbxOKkbkquEXzzLraV9pV74WCQa6fyFSHsNO8MIqwvpMOGu4WweNRfJqcrXuHGTradWoy34C1+1UWb50zCWoh30RkkSwYLB' +
+    'wXDWMCjHemh24/8vxo+MnAbZnPTM8lwz8BPsRj/creZfHvqjBe4WGGjFUBDGlFee29YWK3+8d+usbrG+oVRn9cfEpF9Ar7OEs/s7' +
+    '1x0eyGqQcub4febJdvYehAaTUBPYRE1ElgkbZIXlZkrLaqFdOd9fHGIohTQQKjoR7jv88pDONdEHscRumweQ34n89a82wcJWsBvp' +
+    'u+MVlqL+qqWnWUpCtxhuq5l7dXuhyCY972558NPakzr99kTq1QoWR/hCTYBsREolMrZpYmocgvjfhfEI9bMIaJkg5SmeuK2ez1io' +
+    'Dow9wVBHb9dEpTpHeXqal+ri3IH9r6P4McH15CeZB6qVhufKt/yOSmZMfVjQyQjidvvR3AB9q/EGA+Dw8KSAfJVAwAo+TeRkh2ZL' +
+    'Z72vLgNAxmif0zSJrkVlSOO9nDjfPG2NHRMdEwT9XGTRT9b/q4fnocFKcaE1IH/bxzfIbwAFWWhZ0CfbQUJ4B6Ce9D0xIXduRPGZ' +
+    'WCrDidbSdfoifa1YbMDFfaU/bZafxwCVqXYmlMDMOzbqD2q+Wb+MroNpyb6Nmutue3UHht8GNIbJxvHET3eg1SDFSFSVUlShjyM/' +
+    '0Obik81kDhGMXjxKg0FTvkWPjbVDdq53xQFaQoldexvFim+CkIRuFEKmmJjjVbceBPnKBZsL9fy70lC3kzoBlMDelGGwjJGPdTxW' +
+    '+khkpizKfF/fREj6mvVaGOuTxLtJJI3kAh1ZUa5/LNruByVeKw4+GF1q8DD2pTxRlXl6sX6bRfjYZatRuWCwx36nnylgEiQVZO0Q' +
+    'HNeaTnt6gCNDu9l0UNCAVep48DJ0W8vMsOzg56oMBWBPZsxCogrFnTQbWWfPVcp4FUXT12LBZdUfLFBBlfXUU4i1Q3jjPyDPCAKh' +
+    'grfgHLTBa5q5PWBwLgIwN89De1r9Q5ISrAjy85LglZIm7WVsyG1BAnn8fiDL7DKEoynmhE56Rl+rJkEGQ6kNpo1IdJ7ID9ekNek2' +
+    'bl5k97KOWaMUqLSTT7oiPhZWGbJZqDjdB8OyQA6hfHKdD+8m8EouD9OLPk1Ia0c6UISnuUel5s2IZNUxWxdv0JSs/okjxpMgck2C' +
+    'Bus7d6myBfKoiT8zYOeejF6bGWdXNcacS6bwppjZaTHKOmkPHGDl3X19ixlobDUjwlC4IljfPyjvwN1rVsgEP6aMEeJNUSgNRUjy' +
+    'Xd3Q38upnYPLs3hcOnOGSSjWsYsaQKIAm/mngt6lCJEW1xuoTOVsi6JEwP+ne4HRYAgAq1+BwHoD9mrUSEh1+WRghBT181zIyz8f' +
+    'eaCOc3u3Hs6NbScwhDexEqR1fGp01VFzjHA3iwr9CFBJgDGY6b3nsctNzcGkM+45rQNfd+H3BLT+/wjxRmFi/KLLD+ZCY6pylMkl' +
+    '8ApmZAA/DU2SGz7ed+DryayDEX8WbovLVJnjLpm5/lhK0CR8vaIMtHnZKKBVlgIqIV+uVrjxYkrdDvB77qJ+A2pcHzVu2P4xVQCk' +
+    '2Qtw6kpflHMICS9gyDuYhatcITqXvOT+e6RtaG8D7Yk3FFnRPWsWfxP4Ef0l0oYZsxAEbqbXocjVqPFtyGLLVtGwf86ahmB+b5L/' +
+    'yk8RNpIfmZRWVNyRgqAK/Knbxr/vkv8veC9BRX+vDUeSmsFXDxPa0ZXddDoTm2+Oy2HSLXYi+A+UesKa0flJaIoQ5oH1hQgMxS2h' +
+    '61gTL+ghNziDW63ecq1K8+cix9JfBMB8f6MkJev8bzocs8SL+NwHXf7K8T+AWm4dhUVx6OW3Zw+UyMX4bEchaaRcIpsfIWFszLkV' +
+    'd00PRqPnmTIb/iYhoaIyRDkBhVp/q1XiXQeiT+ZmjZ1NFGe0j/wl466QeB8Y4Fe4JN/3+dsY4LXtJXL/ChHkELbR0/rjr8JifnvX' +
+    'AJzgFCkVtMbc7x7NcRe5rNV1EYszydie4NUYrwuIwny3x8Ca1xEBOEcpwu8uvbR/FbRcUiIuc6qu2YBneT324xSb0BbqNcTei2Ji' +
+    'C/gq2tdvLYuqXfohXA6d9ZsAjjWuyS2nSPviLsYbcTvAKX/8PP6nRh5l1HJIaBAlyT0tEKnU6JDybJx5cQI3strXolWvRBs+BOou' +
+    'TypE1lfkttdbrPIpahCAowMfzfqHSdkbz9TIyQ/wulOS+Ge1F9arDV3vhICxOQ7ZkR3r/EZK+YcnGs9XjgFYdhzkZo/ym8wcyM8O' +
+    'BPDh+w41taKX5U0A14ogdKJpRiAt25ypOO3gbnsa8P1YaNYfJEXIFDUjIXLBJ7O99r4tiXPuNB4PYFNWi2n1G6F8wygpJvA9hnjf' +
+    'oUIUJqybIRwWgve0958bODrGFqk4ZOnmm9QIAmpRa4MYeVlyQP2ZGu/Cd91+/a0JkvNHmg7BICDL6bPpQALeiIS7mDy+uixj5FaO' +
+    'FZgKaEi/1LPLWI2JaMkr9wZWjqbz1vyiW6abDlVfSKVQTGSoXCzh7vLvt8FJiYXwFwsHy8OuhGhxSu7gFqFjvnDV5y09CYUepviY' +
+    'Ijz62m+RB7C6spImCha74tqIdF5uTjo5mDQAdR9qWoJK84TyQmLb5C0nH6eJuaS9FUcwZtf1DiMYIl3fd+XsLWIFmuLdhVhagA3i' +
+    'y7Bc0ENetqZvH/3aaoJ+NlJ1UtnNb9Qok7VS+Z6cos3lls46cNDKjqfmhq51VYSUx9c3iW/L9dQcI5YFg4f5bD2o8Iw70wYPvtOE' +
+    'SyEwysgxCHHR3ImftKuw4/eKbafCbY9NQizWyIY3Ero4ba4vDYMW+d9JZNLSOkMofDQAO8WWuocR4XnUlJLXARzyyr1EXyH0jRvx' +
+    'o2NrWOCu6JUX46hND7H9TSxfu/jCV4nOXUzzJ2AkuzYWAFN53UdUCB+VjJ/n7IIL994ifxbAh5yC6T/TCsnyzwNSJhQWv9UfghR7' +
+    'XU34+lqvpsld41N70SNk/A/GXg91IAZfIuP4Wz6V4x/6SwfsgmQvQ7P61+ctYL9TyT2xvdxqWt4154CwhdkT5ILuOtgzi8wZFJlJ' +
+    'YEEDnltsLk7KTGxTH29RPkVjPc9Z69rIrUaLjzCSpIejI2eRyS7QpWZw5zd7FFcn7uId5+1f7RgL4S0MItR+VV4Vn8cJAZZ6Dwqw' +
+    '0ASZ6y2Q3QqHUQwGc4fDtteyiU/bFOe0K/9XZMp2QDotXv2BxjsHmlVQqjQr60WjbsKtxr4QOF7mrWp9dcYWZK9UuDONR0UKsui/' +
+    'KpkKmjyZ56EKTSELHVp1M+/Nsw3LG8fYqviLMdE7F7K6BhY7VjUneFSobXLwX3dp115rrKFrR6Anq1fE13Lv7KiExrl5qNWHdIFF' +
+    'jjSuzkgpPcFOstBmOqOFsUYYKcS6ndDupAalkgtVTq3WIbEPCjCh+9SYF+4sc7Va5r4g2Dvgwf/u+65+stCc2Ja8zoipRQiLHk3M' +
+    'L4Baf/SuzdycfcXjv1exj3cZkYcy2EEB6Wr4ZwsIAn7rk0EVi8QIBSwW2IgfbbdYKiDwrM6POUXrC/NzBgevR4FNLO+1ObhQeb/T' +
+    'N23IaZRqbgIVWVpoqaKMnfTvKvC7K9EbHHy7p7igwGUvad01Gm/2KJvv6+ZDpbDFLoy/ObfcaMmhESzjDFNS1bvjJGMiqTwc0L0X' +
+    'uUCaI0sniSCIn8gIe17pEuD2DO02I8gNNdOt6Je6Tm4mgthfGE2k7KB/tlCuBX5gb8eDGRq0v+tl0bq3HvV3WpOJ+WQZjRQJIfjh' +
+    'khULK8H4ES3HR82o32mefvhcF43v6MXB8ZcUtzoDL5GN04NEOixV07kw9DiP9Qh2bJQdA/w+tLv/oyp5moS3ndT+9L+NJ9EhEzr9' +
+    '9cSCeUDvc8yOk+zumqghS4oJuv+69OpHiZ5/tagANDDWiM4qii6YZdg66TZYVifbNd1glJdtijHIM4k4qFFBECFk2YLGZv2ypA+S' +
+    'cc4JOYq086iV5+pT78MG9hEgYTqRLEAn/9X9IAWcJfXGBnY8mvFOyPK2B7UH0KWreiagdJkjncvMBsCzYJeKES6oxz9bfUyB9dRA' +
+    'J4G1sSUk1BJqwsdpTtmRfbJNhuL0pYFeTANj1qJuMHXy+6NTBCO3lkgM18dKETU6TYJ15p4sw3UJgZQS7GfYJzkY0g8ryQ8Z0L4O' +
+    'tikCdmt9vp5zXsmSybYmUV2nrajK3Neqqt7UOaFtHU8hso39dx7ZRmhnu7RWA9JrCAI6vUR8Ld4hEF6B3Tgx5IoZTB+mDbqk3FWj' +
+    '2uVCRJeZwgfNSNLatQURh3KISvVSJiVPyRg95iLfqe80E/ek/fg1Qj05AhqIJLLpT+vV9AQWf/a899OUlz0kNlOa9n8yy0ywbrmo' +
+    'IL+hgjm73s2/UjOn/StTUBmbp9+8qDgE03m52KecGAtwjGLNqlwZUbERsQ9bn7wOnDfkxL7yRZSg2MauzHyYpKz9XD07XPoD9hQ+' +
+    'ryHoVJimGDA75BOvSEUFv6ulpyxi8T+0tgVjVVfKhNfRGFv0irtpbXUqYrplaJLqxq2Hako3X5Dg066xAZcPljwtCmf3nTeMq16t' +
+    'ZX5MIKPBsAa5QLuL0dcq4mdshMGiYKr/YEJamed7WjKmZBs4noC7Wcr93bLZTMMtpNjWis8AFd+fvDqD+4ZFR3m4QwIG7uRh1QX2' +
+    'pFLDW146hSJk5u/emh8GoclDiOMl9grlYHBGDgDRfZ5ZVHScr/WitSw9N3nIAUCUUJbgszkkTravIVjjPdj5NIHpHYL68n+48qr9' +
+    'rMZ+3hBeXOKDL5x5LN9LY44HVakSWd9VZ6SG/QABVfr2ebnulCyBM+4+PGe/UYp1e3Cyemk5HSuWf+oy+I/T7ip2wgfIdwiblO0r' +
+    'Br+k0UBL6fG5tmNesQchCo8QiPaJqc1v8+xHQbfGqayiUGPrzNJZIDepAYxKy73kmu4xkVv4HEzrL+UEdyNTrJ5k3eMF4LnFzXpa' +
+    'ErNPpmiHgGrOEvOdhSWt5X1XffDS7NZTM2kah1sFx3cfPlxw6jY6RF6OyvxQiJlOFarFW4WcbPGI97N0LowhGSzHQV4ua3i9QtEW' +
+    'Sdt6UN9dnzpn65FPVosA/3z4TROdBhiQ+/XpoHQxkMA3xXa6rrUvEJtdXwTOHl2qup7o55537P5DzUNsU8kLKxdsKJ3Wo+evz0d0' +
+    'ZIItWKWf/3QpWPD3NB2C0dBlbdCM98XJ4B2eV1m8aL+CuQaFZ81zoVsdMXeZ124U95Gbn8fE3pQv2NQHDHEgavlTEpeoE55bF3kG' +
+    '+7P9SNe+Pjs8o0p2RzV8ZaGB33zcycIPk4ectIdCHEcDUXe9iKCDZRLtUc19JumvclXrmkXxfGNn95eetr7sv4ancym4OgMtRaFa' +
+    '2vQ/CeFa7g6XtXsFC1dxA+v7nUPz5txn20rQ4a89iOuH0o0JcTxuQJuJdUwd7lUDmVMwee6dxK9bzmyImzPDvd9I0w8ouj60BtvI' +
+    'rg85OcJNwitcaHTJFjyhlRvgAir3ZRLOJkWMPW+i54WeAAbUtqeOr8S79HKoZh5uwc6VnhRazOX1NYPBHmgaqGLuLZWwCPr4zZyw' +
+    'wkIvir3I/GQ9NAGxNWueJc2mKVvK0KsnVjkcjsRQ8ygO+EBKe8X0vtzv6QnluYjiAShhCsDftk1kzxJWVvQSJJGtuVic0Tr9N3lq' +
+    'Lx7HNNSOLEcb7ABZ7e3qxNOc6WMc6BESMuL4L8uzFuPk3kBiqCTKjXsURpTNEqXvhiLjMKQQCDFL9tg3tIbZ4LCIHrRTVFiCSieI' +
+    'GFgN0LhLvspLXmd9+N9vIJP9uYvqopWlscOOy4JEpuYsvUpBGRYp0HFSr2gvNvIeap1CixViM7g18YDTcyh5oDVpTVMAYMLdVLEx' +
+    'YfB66LtZsl4v5D6I8FmrKYbijNmIjwgbNFtags6HUVsUho0XqXaNHIQFunf/V8eZGrRdKjlMPA8YfxK2dkTFV4K2ION/dTwjEzYt' +
+    '19u9LDPWSeqmAyc81gvU1hkLpHsGBlAKr+2TlpwXk5H6oEXY6/Z9BYnJZL7cHJX+ayewofjYd6iXpO2Hljg6Mw42tCHwDzDfD5RZ' +
+    'o9PAZ62Ab3dvvqDm1DZ9B3b6lYKOweuZ1UOwsGNN0rOsXkJDzlCHOct2X27Dfafgim/iwQCGiWRs8ilVDkbr3J37ddC/OaF5LCWx' +
+    'WnzFA2ZMVs5hD+50AtDBl0O3XzZEblmqN/HabjbAZXeaAUo+UdN3YmazkbAUmwScHHFjutBNdHOFNRRYZ5TN/Cz+KlvsFsceOGz4' +
+    'bV00RpfyAI2KIP3mMb3jqudQcLeIfwNBYyLxsPKyvffJhY7Mb54eTUJDM+Hc4Lqh5z4kZBWBt7DkQSVDTP0AbjsWtjpoB/ZUtbYR' +
+    'DRLeSIHXJOnGtAVtKHElcCGYmzDZeAg/r30qQVx7FEczzHde0KdDpu+HP+Hr5MdL63HCcLQWal36GfQFlhUrwaiUFagi9TEucQ08' +
+    'YZWtfi0NrpmbVOAOXP9OpBzauHazmxP2/lt9z/MhBZvTYqmkT9/dEJN+6DxU+BxwPxAUnsWKiteaQAyuIQ57vAYWM3SqYfVYusU0' +
+    'wHcqjk6hPrMY9X8tG7kS1f9ADDHAiGjYBtxm2p/ndTpHAJF2ZWo+03C+pT7yNDX3TIOX/Hec4dXtBDUNaW3XPgDqChjBBqecXVws' +
+    'vHfz9KdWSC+MA3BvEO1lPBg0Z1//+NwNHiGmTMHqcVwFS3Ht7KeXyX1I0qJCg9X+LekCXeZIKOVGQLURwfUDJZdLnDxdiPI7/LE0' +
+    '+daV+5nwEMR55iqRwGUmq9j3hRbQjGw+0ABk5O+przRAkzit6Ab+2FoR2Zc5fmp3MRTliRt+C+qbVF2dOzfAHFXHqvHWxeU6QN8z' +
+    'cn5tqiZybyxEl/q+MOO9vBdZotzjsRNGmLrjha/PNa3nbh6nxxxo+mP7cnjjv3LCfXzu9TxkPsX4KXsGn2Kgm2i1XQNF1WUvPpsc' +
+    'AaGjgcxqFNEFzSKSIT811JRJbphyOL4JOH0m0WEopTu9nsE4H6dGCxt7aT/aJBxMnrdGoitDp1+NweWzSXT4RTRIOINBHNkdpctF' +
+    'dZnYkdZMvU54u3gPpB827QLvWNpoo87YlB+301u2d9VYe/OdSPgot/6jUATukD9j3eTAauWvOXru2BgM0GdRZWFclRmM3cJt7fZc' +
+    'ItOTHQc0x/lzN+XbTEVTjk/Nwza747x2kAJZh110pPpj0oR5jtPFgwHyi1YDASHCrRj4MS0AqQtPuVu8Nl9XwdLLKnQ3wH9d109C' +
+    '2gzyseUdPK00OVv0sCG2HJHm59UgCeo+v6XhUdlbAiT5os79GLO3VOM8Ei8VxaLvwyJmBnM9aaKzr2pqGP/2yTKIuF4McPK8nt/Y' +
+    'yjha/xTLrZeZX8V/fClGuMj2vjBssyU0UXpuW4CxKC3lL6LYX6kBSdqsNycn+jOknx5mIGLAf5o4hXIgcx6c2M40ws0oxSywtBKO' +
+    '8cn4UYmjRsDcPsc5EkBL77/SQRur2cxnaZ9Mm8Qyivm2NLLlxRO2Z1ffvCKq6DVgf0KYJ5lHhv3URNP0vY6ur4zqdTkHuWv8Hdqs' +
+    'OhubT3/7/YILhgllAPtS78Su9eIBs0oLEROovHX09N6WBDvPG+XgxKy64B+ayx6RLhf6LG0IXaaO7U1S2UPbfVLZ9w5zxqo6XsNN' +
+    'n0m/LEpmnVQ9NxIgcw==';
+
+  // Dagar med Gissningsdagen. Varje dag får fem egna frågor ur poolen, valda med dagens frö.
+  var TAVLINGSDAGAR = [4];
+  var ANTAL = 5;
+
+  function avvrang(text) {
+    var bin = atob(text), slump = Advent.skapaSlump('gissning-forvrangning');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  var POOL = avvrang(FORVRANGT);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 4;
+  Advent.markeraOppnad(dag);
+
+  // Tävlingen gäller från luckans datum. Innan dess är dagens frågor fem ur testsetet.
+  function harBorjat(d) { return new Date() >= new Date(2026, 11, d); }
+
+  // Väljer n olika idn ur en lista med slumpen.
+  function valjUt(idn, n, slump) {
+    idn = idn.slice();
+    var ut = [];
+    while (ut.length < n && idn.length) ut.push(idn.splice(Math.floor(slump() * idn.length), 1)[0]);
+    return ut;
+  }
+  function poolIdn() { return POOL.map(function (_, i) { return 'p' + i; }); }
+  function testIdn() { return TESTSET.map(function (_, i) { return 't' + i; }); }
+
+  // Tävlingsfrågor per dag, olika för varje dag: "p3" = POOL[3].
+  var tavlingsfragor = {};
+  (function () {
+    var kvar = poolIdn();
+    TAVLINGSDAGAR.forEach(function (d) {
+      var valda = valjUt(kvar, ANTAL, Advent.dagensSlump(d));
+      kvar = kvar.filter(function (id) { return valda.indexOf(id) === -1; });
+      tavlingsfragor[d] = valda;
+    });
+  })();
+  var dagensIdn = harBorjat(dag) && tavlingsfragor[dag]
+    ? tavlingsfragor[dag]
+    : valjUt(testIdn(), ANTAL, Advent.dagensSlump(dag));
+
+  function fraga(id) { return (id[0] === 'p' ? POOL : TESTSET)[+id.slice(1)]; }
+
+  // Övning: testsetet, och poolen utom tävlingsfrågor vars dag inte har kommit än.
+  function ovningsIdn() {
+    var idn = testIdn();
+    if (harBorjat(dag)) {
+      var sparade = {};
+      TAVLINGSDAGAR.forEach(function (d) {
+        if (!harBorjat(d)) tavlingsfragor[d].forEach(function (id) { sparade[id] = true; });
+      });
+      poolIdn().forEach(function (id) { if (!sparade[id]) idn.push(id); });
+    }
+    return idn;
+  }
+
+  // ===== Poäng =====
+  // Hur många gånger fel: 2 betyder dubbelt eller hälften. Noll eller minus är oändligt fel.
+  function ggrFel(gissning, svar) {
+    if (!(gissning > 0)) return Infinity;
+    return Math.max(gissning / svar, svar / gissning);
+  }
+  // 100 poäng för exakt rätt, 50 färre för varje tiopotens fel.
+  function poang(gissning, svar) {
+    return Math.max(0, Math.round(100 - 50 * Math.log10(ggrFel(gissning, svar))));
+  }
+  var ZONGRANS = [1.25, 2, 5, 20];
+  var ZONORD = ['Pricken!', 'Nära', 'En bit bort', 'Långt bort', 'Helt ute och cyklar'];
+  var ZONRUTA = ['🟩', '🟨', '🟧', '🟥', '🟥'];
+  function zon(gissning, svar) {
+    var r = ggrFel(gissning, svar), z = 0;
+    while (z < ZONGRANS.length && r > ZONGRANS[z] * (1 + 1e-9)) z++;
+    return z;
+  }
+  // Markörens plats på skalan i procent. Varje zon tar lika stor del av skalan på var sida om mitten.
+  function skalplats(gissning, svar) {
+    var r = ggrFel(gissning, svar);
+    var granser = [1].concat(ZONGRANS, [200]);
+    var del = 1;
+    for (var z = 0; z < granser.length - 1; z++) {
+      if (r <= granser[z + 1]) {
+        del = (z + Math.log(r / granser[z]) / Math.log(granser[z + 1] / granser[z])) / (granser.length - 1);
+        break;
+      }
+    }
+    var sida = gissning < svar ? -1 : 1;
+    return 50 + sida * Math.min(del, 1) * 46;
+  }
+
+  function medalj(summa) { return summa >= 400 ? 'guld' : summa >= 330 ? 'silver' : summa >= 250 ? 'brons' : ''; }
+
+  // ===== Tal =====
+  function tolka(text) {
+    var t = String(text).replace(/[\s  ]/g, '').replace(',', '.');
+    if (!/^\d+(\.\d+)?$|^\.\d+$/.test(t)) return null;
+    return Number(t);
+  }
+  function visaTal(n) { return n.toLocaleString('sv-SE', { maximumFractionDigits: 2 }); }
+
+  // ===== Spelets tillstånd =====
+  // Dagens frågor sparas i telefonen, så att man inte kan börja om genom att ladda om sidan.
+  var sparNyckel = 'gissning:' + dag + ':' + dagensIdn.join(',');
+  var s;          // { idn, gissningar, steg, start, slut, skickad }
+  var ovning = false;
+
+  function nyttTillstand(idn) { return { idn: idn, gissningar: [], steg: 0, start: null, slut: null, skickad: false }; }
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+  function arKlart() { return s.gissningar.length >= s.idn.length && s.steg >= s.idn.length; }
+  function summa() {
+    return s.gissningar.reduce(function (t, g, i) { return t + poang(g, fraga(s.idn[i])[1]); }, 0);
+  }
+  function rutorText() {
+    return s.gissningar.map(function (g, i) { return ZONRUTA[zon(g, fraga(s.idn[i])[1])]; }).join('');
+  }
+
+  // ===== Ritning =====
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ritaPrickar() {
+    var p = $('prickar');
+    p.textContent = '';
+    s.idn.forEach(function (id, i) {
+      var g = s.gissningar[i];
+      p.appendChild(el('span', g != null ? 'z' + zon(g, fraga(id)[1]) : i === s.steg ? 'nu' : ''));
+    });
+  }
+
+  function rita() {
+    $('slut').hidden = true;
+    if (arKlart()) {
+      $('spel').hidden = true;
+      visaSlut();
+      return;
+    }
+    $('spel').hidden = false;
+    ritaPrickar();
+    var i = s.steg, f = fraga(s.idn[i]), nr = 'Fråga ' + (i + 1) + ' av ' + s.idn.length;
+    var besvarad = s.gissningar.length > i;
+    $('fragaKort').hidden = besvarad;
+    $('svarKort').hidden = !besvarad;
+    if (!besvarad) {
+      $('fragaNr').textContent = nr;
+      $('fragaText').textContent = f[0];
+      $('gissning').value = '';
+      uppdateraTolkat();
+      $('gissning').focus({ preventScroll: true });
+      return;
+    }
+    var g = s.gissningar[i], z = zon(g, f[1]);
+    $('svarNr').textContent = nr;
+    $('svarFraga').textContent = f[0];
+    $('dinGissning').textContent = visaTal(g) + ' ' + f[2];
+    $('rattSvar').textContent = visaTal(f[1]) + ' ' + f[2];
+    $('omdome').textContent = ZONRUTA[z] + ' ' + ZONORD[z];
+    $('faktaText').textContent = f[3];
+    $('nasta').textContent = i + 1 < s.idn.length ? 'Nästa fråga' : 'Visa resultatet';
+    var markor = $('markor');
+    markor.style.transition = 'none';
+    markor.style.left = '50%';
+    void markor.offsetWidth;
+    markor.style.transition = '';
+    requestAnimationFrame(function () { markor.style.left = skalplats(g, f[1]) + '%'; });
+  }
+
+  function uppdateraTolkat() {
+    var text = $('gissning').value, n = tolka(text), f = fraga(s.idn[s.steg]);
+    $('gissaKnapp').disabled = n === null;
+    $('tolkat').textContent = n === null
+      ? (text.trim() ? 'Skriv bara ett tal, t.ex. 1 500 eller 2,5' : 'Svara i ' + f[2])
+      : '= ' + visaTal(n) + ' ' + f[2];
+  }
+  $('gissning').addEventListener('input', uppdateraTolkat);
+
+  $('fragaKort').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var n = tolka($('gissning').value);
+    if (n === null || s.gissningar.length > s.steg) return;
+    s.gissningar.push(n);
+    sparaDagens();
+    $('gissning').blur();
+    rita();
+  });
+  $('nasta').addEventListener('click', function () {
+    s.steg++;
+    if (arKlart()) s.slut = Date.now();
+    sparaDagens();
+    rita();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ===== Slut och resultat =====
+  function visaSlut() {
+    var sum = summa(), m = medalj(sum);
+    $('slut').hidden = false;
+    $('summa').textContent = sum;
+    $('rutor').textContent = rutorText();
+    $('sluttext').textContent = m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : '';
+    $('sluttext').hidden = !m;
+    var lista = $('genomgang');
+    lista.textContent = '';
+    s.idn.forEach(function (id, i) {
+      var f = fraga(id), g = s.gissningar[i];
+      var li = el('li');
+      li.appendChild(el('span', 'q', f[0]));
+      li.appendChild(el('span', 'siffror', ZONRUTA[zon(g, f[1])] + ' ' + visaTal(g) + ' (rätt: ' + visaTal(f[1]) + ' ' + f[2] + ')'));
+      li.appendChild(el('span', 'p', poang(g, f[1]) + ' p'));
+      lista.appendChild(li);
+    });
+    if (!ovning) forsokSkicka();
+    uppdateraGavUpp();
+  }
+
+  function resultatet(t) {
+    var gammalt = s;
+    s = t;
+    var sum = summa(), r = { varde: sum, medalj: medalj(sum), text: rutorText() + ' · ' + sum + ' p' };
+    s = gammalt;
+    return r;
+  }
+
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Dagens första försök skickas när det är klart. Är man inte inloggad skickas det när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) { uppdateraGavUpp(); return; }
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; uppdateraGavUpp(); return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; uppdateraGavUpp(); return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var r = resultatet(dagens);
+    R.skicka({ dag: dag, spel: 'gissning', status: 'klar', varde: r.varde, medalj: r.medalj, text: r.text })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; uppdateraGavUpp(); });
+  }
+
+  // "Ge upp" syns när man är inloggad, inte har något på tavlan och inte har spelat klart dagens frågor.
+  function uppdateraGavUpp() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    $('gavuppRuta').hidden = ovning || !kanSkicka() || !!(dagens && dagens.slut);
+  }
+  $('gavupp').addEventListener('click', function () {
+    if (!kanSkicka()) return;
+    if (!confirm('Ge upp? Då kan du inte skicka något resultat för den här luckan.')) return;
+    R.skicka({ dag: dag, spel: 'gissning', status: 'gav upp', medalj: '', text: '' })
+      .then(uppdateraGavUpp, function (fel) { alert(fel.message); });
+  });
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); uppdateraGavUpp(); } });
+
+  // ===== Visa en omgång =====
+  function visa(idn, arOvning) {
+    ovning = arOvning;
+    $('under').textContent = ovning ? 'Övningsfrågor' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    s = ovning ? nyttTillstand(idn) : (Advent.lasa(sparNyckel, null) || nyttTillstand(idn));
+    var startat = !!s.start;
+    $('start').hidden = startat;
+    $('spel').hidden = true;
+    $('slut').hidden = true;
+    if (startat) rita();
+    uppdateraGavUpp();
+  }
+
+  $('startknapp').addEventListener('click', function () {
+    s.start = Date.now();
+    sparaDagens();
+    $('start').hidden = true;
+    rita();
+  });
+
+  var aktuella = dagensIdn;
+  $('igen').addEventListener('click', function () {
+    var upptagna = aktuella.concat(dagensIdn);
+    var idn = ovningsIdn().filter(function (id) { return upptagna.indexOf(id) === -1; });
+    if (idn.length < ANTAL) idn = ovningsIdn().filter(function (id) { return dagensIdn.indexOf(id) === -1; });
+    aktuella = valjUt(idn, ANTAL, Advent.nySlump());
+    visa(aktuella, true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    aktuella = dagensIdn;
+    visa(dagensIdn, false);
+  });
+
+  visa(dagensIdn, false);
+})();
+</script>
+</body>
+</html>
