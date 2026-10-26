@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Familjens adventskalender</title>
+<meta name="theme-color" content="#FBF4EA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/gemensam.css">
+<style>
+  body { min-height: 100vh; min-height: 100dvh; }
+  .sida {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: max(24px, env(safe-area-inset-top)) 0 calc(96px + env(safe-area-inset-bottom));
+  }
+  header { text-align: center; padding: 0 16px; }
+  .datum { margin: 0; font-size: 15px; font-weight: 600; color: var(--gron); }
+  .datum::first-letter { text-transform: uppercase; }
+  h1 { margin: 2px 0 0; font-size: 30px; font-weight: 700; line-height: 1.1; }
+
+  #kalender { display: block; width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+
+  .gran { cursor: pointer; outline: none; }
+  .gran .kropp { filter: drop-shadow(0 4px 0 rgba(47,74,58,0.15)); }
+  .gran:focus-visible .kropp { filter: drop-shadow(0 0 3px #2F4A3A) drop-shadow(0 0 3px #2F4A3A); }
+  .gran .text { font: 700 14px Fredoka, system-ui, sans-serif; fill: var(--text); pointer-events: none; }
+
+  /* Granen gungar på sitt snöre när sidan öppnas. */
+  .gunga { transform-box: view-box; animation: gunga 2.4s ease-out both; }
+  @keyframes gunga {
+    0%   { transform: rotate(0deg); }
+    12%  { transform: rotate(7deg); }
+    30%  { transform: rotate(-5deg); }
+    48%  { transform: rotate(3deg); }
+    66%  { transform: rotate(-1.5deg); }
+    84%  { transform: rotate(.6deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .gunga.ruska { animation: ruska .5s ease-in-out; }
+  @keyframes ruska {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-6deg); }
+    75% { transform: rotate(6deg); }
+  }
+
+  /* Granen vänds när luckan öppnas. */
+  .vand { transform-box: fill-box; transform-origin: center; }
+  .vand.vander { animation: vand .6s ease-in-out both; }
+  @keyframes vand {
+    0%   { transform: scaleX(1); }
+    50%  { transform: scaleX(0); }
+    100% { transform: scaleX(1); }
+  }
+
+  .idag .kropp { filter: drop-shadow(0 0 6px #FFD66B) drop-shadow(0 0 14px #FFD66B); }
+  .idag .vand { animation: puls 2.2s ease-in-out infinite; }
+  @keyframes puls { 50% { transform: scale(1.04); } }
+
+  .lampa { animation: blinka 3s ease-in-out infinite; }
+  @keyframes blinka { 50% { opacity: .55; } }
+
+  .rad {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    width: min(442px, calc(100% - 32px));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: var(--kort);
+    border-radius: 999px;
+    padding: 12px 20px;
+    box-shadow: 0 4px 0 var(--kant);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .rad:hover { color: var(--text); }
+  .rad .oppna { font-size: 15px; font-weight: 700; color: var(--gron); white-space: nowrap; }
+  .rad[aria-disabled="true"] { cursor: default; }
+  .rad[aria-disabled="true"] .oppna { color: var(--dampad); }
+
+  .utv { text-align: center; font-size: 13px; color: var(--dampad); margin: 8px 16px 0; }
+  .utv button { font: inherit; color: var(--gron); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gunga, .vand, .lampa, .idag .vand { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="sida">
+  <header>
+    <p class="datum" id="datum"></p>
+    <h1>Familjens adventskalender</h1>
+  </header>
+  <svg id="kalender" viewBox="0 0 390 620" role="list" aria-label="Luckor 1 till 24"></svg>
+  <p class="utv" id="utv" hidden>Byggläge: alla luckor är öppna. <button type="button" id="nollstall">Vänd tillbaka granarna</button></p>
+</div>
+<a class="rad" id="rad" href="#"><span id="radtext"></span><span class="oppna" id="radknapp">Öppna</span></a>
+
+<script src="js/gemensam.js"></script>
+<script src="js/luckor.js"></script>
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('kalender');
+  var nu = new Date();
+
+  // Dagens lucka: datumet i december 2026. ?idag=N går att använda för att testa.
+  var testIdag = parseInt(new URLSearchParams(location.search).get('idag'), 10);
+  var idag = testIdag >= 1 && testIdag <= 24 ? testIdag
+    : (nu.getFullYear() === 2026 && nu.getMonth() === 11 && nu.getDate() <= 24 ? nu.getDate() : null);
+
+  document.getElementById('datum').textContent =
+    nu.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  var oppnade = Advent.lasa('advent-oppnade', []);
+
+  function arOppningsbar(n) {
+    return window.ALLA_OPPNA || (idag !== null && n <= idag);
+  }
+  function adress(n) {
+    var l = window.LUCKOR[n];
+    return l ? l.sokvag + '?dag=' + n : null;
+  }
+
+  function el(namn, attr, forelder) {
+    var e = document.createElementNS(NS, namn);
+    for (var k in attr) e.setAttribute(k, attr[k]);
+    if (forelder) forelder.appendChild(e);
+    return e;
+  }
+
+  // Layout från skissen: 4 snören, 6 granar per snöre, växelvis högt och lågt.
+  var rader = [24, 172, 320, 468];
+  var hang = 28;
+  function snoreY(y0, x) { var u = (x - 195) / 187; return y0 + hang * (1 - u * u); }
+
+  var snoren = el('g', { 'aria-hidden': 'true' }, svg);
+  var lamporFarg = ['#FF9EC4', '#FFD66B', '#8EC9FF', '#FF9F7A'];
+  var granFarg = ['#5FAF7E', '#4E9A6D', '#6DBB8A'];
+
+  rader.forEach(function (y0, ri) {
+    el('path', { d: 'M8 ' + y0 + ' Q195 ' + (y0 + hang * 2) + ' 382 ' + y0, stroke: '#8A6A55', 'stroke-width': 2.5, fill: 'none' }, snoren);
+    el('circle', { cx: 8, cy: y0, r: 5, fill: '#8A6A55' }, snoren);
+    el('circle', { cx: 382, cy: y0, r: 5, fill: '#8A6A55' }, snoren);
+    for (var j = 0; j < 5; j++) {
+      var x = 72 + j * 61;
+      var l = el('circle', { cx: x, cy: Math.round(snoreY(y0, x)) + 3, r: 4.5, fill: lamporFarg[(j + ri) % 4], class: 'lampa' }, snoren);
+      l.style.animationDelay = ((j * 0.7 + ri * 0.4) % 3) + 's';
+    }
+  });
+
+  var granar = {};
+
+  for (var i = 0; i < 24; i++) {
+    var n = i + 1, r = Math.floor(i / 6), k = i % 6;
+    var cx = 42 + k * 61;
+    var topp = snoreY(rader[r], cx);
+    var y = topp + (k % 2 ? 30 : 8);
+    var x0 = cx - 28;
+
+    var gunga = el('g', { class: 'gunga', role: 'listitem' }, svg);
+    gunga.style.transformOrigin = cx + 'px ' + topp + 'px';
+    gunga.style.animationDelay = (Math.random() * 0.5) + 's';
+    el('line', { x1: cx, y1: topp, x2: cx, y2: y, stroke: '#8A6A55', 'stroke-width': 1.5 }, gunga);
+
+    var lank = el('a', { class: 'gran', href: adress(n) || '#', 'aria-label': 'Lucka ' + n + (window.LUCKOR[n] ? ': ' + window.LUCKOR[n].titel : '') }, gunga);
+    var vand = el('g', { class: 'vand' }, lank);
+    var kropp = el('g', { class: 'kropp' }, vand);
+    granar[n] = { gunga: gunga, lank: lank, vand: vand, kropp: kropp, x0: x0, y: y, farg: granFarg[i % 3] };
+    ritaGran(n);
+
+    if (n === idag) lank.classList.add('idag');
+    lank.addEventListener('click', klick.bind(null, n));
+  }
+
+  // Ritar granen: hel med snötopp och nummer, eller ljusgrön och "vänd" om den är öppnad.
+  function ritaGran(n) {
+    var g = granar[n], x0 = g.x0, y = g.y;
+    var oppnad = oppnade.indexOf(n) !== -1;
+    while (g.kropp.firstChild) g.kropp.removeChild(g.kropp.firstChild);
+    var p = function (pts) { return pts.map(function (q) { return (x0 + q[0] * 56) + ',' + (y + q[1] * 76); }).join(' '); };
+    el('polygon', { points: p([[0.5, 0], [1, 1], [0, 1]]), fill: oppnad ? '#C7E2CF' : g.farg }, g.kropp);
+    if (!oppnad) {
+      el('polygon', { points: p([[0.5, 0], [0.76, 0.158], [0.66, 0.134], [0.58, 0.182], [0.5, 0.142], [0.42, 0.189], [0.34, 0.142], [0.24, 0.158]]), fill: '#FFFFFF' }, g.kropp);
+      el('circle', { cx: x0 + 28, cy: y + 76 - 6 - 14, r: 14, fill: '#FFFFFF' }, g.kropp);
+      var t = el('text', { x: x0 + 28, y: y + 76 - 6 - 14, 'text-anchor': 'middle', 'dominant-baseline': 'central', class: 'text' }, g.kropp);
+      t.textContent = n;
+    }
+  }
+
+  function klick(n, e) {
+    e.preventDefault();
+    var g = granar[n];
+    var dit = adress(n);
+    if (!arOppningsbar(n) || !dit) {
+      g.gunga.classList.remove('ruska');
+      void g.gunga.getBoundingClientRect();
+      g.gunga.classList.add('ruska');
+      visaRad(n);
+      return;
+    }
+    var redanOppnad = oppnade.indexOf(n) !== -1;
+    if (redanOppnad || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      location.href = dit;
+      return;
+    }
+    oppnade.push(n);
+    Advent.markeraOppnad(n);
+    g.vand.classList.add('vander');
+    setTimeout(function () { ritaGran(n); }, 300);
+    setTimeout(function () { location.href = dit; }, 750);
+  }
+
+  // Raden längst ner: dagens lucka, eller den man senast tryckte på.
+  var rad = document.getElementById('rad');
+  function visaRad(n) {
+    var l = window.LUCKOR[n];
+    var radtext = document.getElementById('radtext');
+    var knapp = document.getElementById('radknapp');
+    if (n === null) {
+      radtext.textContent = 'Tryck på en gran';
+      knapp.textContent = '';
+      rad.removeAttribute('href');
+      rad.setAttribute('aria-disabled', 'true');
+      return;
+    }
+    radtext.textContent = 'Lucka ' + n + ': ' + (l ? l.titel : 'kommer snart');
+    if (l && arOppningsbar(n)) {
+      knapp.textContent = 'Öppna';
+      rad.href = adress(n);
+      rad.removeAttribute('aria-disabled');
+      rad.onclick = function (e) { klick(n, e); };
+    } else {
+      knapp.textContent = l ? 'Inte än' : 'Snart';
+      rad.removeAttribute('href');
+      rad.setAttribute('aria-disabled', 'true');
+      rad.onclick = null;
+    }
+  }
+  visaRad(idag !== null ? idag : (window.ALLA_OPPNA ? 1 : null));
+
+  if (window.ALLA_OPPNA) {
+    document.getElementById('utv').hidden = false;
+    document.getElementById('nollstall').addEventListener('click', function () {
+      oppnade = [];
+      Advent.spara('advent-oppnade', []);
+      for (var n = 1; n <= 24; n++) ritaGran(n);
+    });
+  }
+
+  // Tillbaka med bakåtknappen: läs om vilka luckor som är öppnade.
+  window.addEventListener('pageshow', function (e) {
+    if (!e.persisted) return;
+    oppnade = Advent.lasa('advent-oppnade', []);
+    for (var n = 1; n <= 24; n++) { granar[n].vand.classList.remove('vander'); ritaGran(n); }
+  });
+})();
+</script>
+</body>
+</html>

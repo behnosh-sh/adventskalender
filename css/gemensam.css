@@ -1,0 +1,86 @@
+/* Gemensamt utseende för startsidan och spelen ("Granvimplar på snöre"). */
+:root {
+  --vagg: #FBF4EA;
+  --text: #2F4A3A;
+  --gron: #3E8A5E;
+  --gron-mork: #2C6A46;
+  --gran-1: #5FAF7E;
+  --gran-2: #4E9A6D;
+  --gran-3: #6DBB8A;
+  --oppnad: #C7E2CF;
+  --snore: #8A6A55;
+  --glod: #FFD66B;
+  --kort: #FFFFFF;
+  --kant: #E4D6C3;
+  --dampad: #6B7F72;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  background: var(--vagg);
+  color: var(--text);
+  font-family: Fredoka, system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a { color: var(--gron); }
+a:hover { color: var(--gron-mork); }
+
+/* Smal spalt, mobil först. */
+.spalt {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+.tillbaka {
+  display: inline-block;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 6px 0;
+}
+
+.kort {
+  background: var(--kort);
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 0 var(--kant);
+}
+
+.knapp {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 18px;
+  font: 700 17px Fredoka, system-ui, sans-serif;
+  color: #fff;
+  background: var(--gron);
+  box-shadow: 0 4px 0 var(--gron-mork);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+.knapp:hover { color: #fff; filter: brightness(1.05); }
+.knapp:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--gron-mork); }
+.knapp.ljus {
+  color: var(--text);
+  background: var(--kort);
+  box-shadow: 0 4px 0 var(--kant);
+}
+.knapp.ljus:hover { color: var(--text); }
+.knapp.ljus:active { box-shadow: 0 2px 0 var(--kant); }
+.knapp.gul {
+  color: var(--text);
+  background: var(--glod);
+  box-shadow: 0 4px 0 #D9AE3C;
+}
+.knapp.gul:hover { color: var(--text); }
+
+.knapp:focus-visible, a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--glod);
+  outline-offset: 3px;
+}
