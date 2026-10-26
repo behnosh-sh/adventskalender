@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2048</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
+  .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .matare .bradskande b { color: var(--glod); }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
+
+  /* Brädet: rutorna ligger i ett rutnät, brickorna flyttas ovanpå med left/top. */
+  .brade {
+    --mellan: 2.6cqw;
+    --ruta: calc((100% - 5 * var(--mellan)) / 4);
+    container-type: inline-size;
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 16px;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    background: #2C4A6E;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+  }
+  .yta, .bricka {
+    position: absolute;
+    width: var(--ruta);
+    height: var(--ruta);
+    left: calc(var(--mellan) + var(--x) * (var(--ruta) + var(--mellan)));
+    top: calc(var(--mellan) + var(--y) * (var(--ruta) + var(--mellan)));
+    border-radius: 10px;
+  }
+  .yta { background: rgba(255,255,255,.1); }
+  .bricka {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 700 13cqw/1 var(--rubrik-typsnitt);
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    background: #fff;
+    transition: left .1s ease-in-out, top .1s ease-in-out;
+    z-index: 1;
+  }
+  .bricka.s3 { font-size: 10.5cqw; }
+  .bricka.s4 { font-size: 8cqw; }
+  .bricka.s5 { font-size: 6.5cqw; }
+  .bricka.ny { animation: fram .18s ease-out .08s backwards; }
+  .bricka.ihop { z-index: 2; animation: pop .2s ease-out .08s backwards; }
+  @keyframes fram { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .bricka { transition: none; }
+    .bricka.ny, .bricka.ihop { animation: none; }
+  }
+
+  /* Brickornas färger: från snö via granar och lampor till guld. */
+  .v2 { background: #FFFFFF; }
+  .v4 { background: #EEF3FA; }
+  .v8 { background: #C7E2CF; }
+  .v16 { background: #8FD3A8; }
+  .v32 { background: #5FAF7E; color: #fff; }
+  .v64 { background: #3E8A5E; color: #fff; }
+  .v128 { background: #F6D66B; }
+  .v256 { background: #F0A35E; }
+  .v512 { background: #E0675A; color: #fff; }
+  .v1024 { background: #B8463A; color: #fff; }
+  .v2048 { background: #FFD66B; box-shadow: 0 0 18px 4px rgba(255,214,107,.7); }
+  .vstor { background: #2F4A3A; color: #FFD66B; box-shadow: 0 0 18px 4px rgba(255,214,107,.7); }
+
+  .slutlager {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(20,35,63,.72);
+    color: var(--himmel-text);
+    text-align: center;
+    animation: tona .4s ease-out;
+  }
+  .slutlager b { font: 700 9cqw var(--rubrik-typsnitt); }
+  .slutlager span { font-size: 5cqw; }
+  @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 20px; }
+  .slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 15px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>2048 <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Poäng</span><b id="poang">0</b></div>
+    <div id="tidRuta"><span>Tid kvar</span><b id="tid">5:00</b></div>
+    <div><span>Största</span><b id="storsta">2</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="brade" id="brade" role="application" aria-label="Spelbräde. Svep eller använd piltangenterna."></div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutRubrik"></h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Svep åt något håll (eller använd piltangenterna). Alla brickor glider dit.</li>
+      <li>Två brickor med samma tal slås ihop till en, och du får talet som poäng.</li>
+      <li>Du har 5 minuter. Klockan startar när du sveper första gången. När tiden är slut fryser brädet.</li>
+      <li>Alla får samma nya brickor i samma ordning. Högst poäng vinner, vid lika vinner största brickan. Guld från 7 000, silver från 4 500, brons från 2 500.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök på dagens bräde räknas. Klockan går även om du stänger sidan.</p>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Spela igen (nytt slumpat bräde)</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bräde</a></p>
+</main>
+
+<script src="../../js/gemensam.js"></script>
+<script src="../../js/luckor.js"></script>
+<script src="../../js/resultat.js"></script>
+<script>
+(function () {
+  var STORLEK = 4;
+  var SPELTID = 5 * 60 * 1000;
+  var GULD = 7000, SILVER = 4500, BRONS = 2500;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 6;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-2048';
+
+  function medalj(p) { return p >= GULD ? 'guld' : p >= SILVER ? 'silver' : p >= BRONS ? 'brons' : ''; }
+  function tal(n) { return n.toLocaleString('sv-SE'); }
+
+  // ===== Spelets tillstånd =====
+  // Dagens omgång sparas i telefonen, så att man inte kan börja om genom att ladda om sidan.
+  // Slumpen återskapas genom att dra lika många tal ur dagens frö som förra gången.
+  var sparNyckel = '2048:' + dag;
+  var s;          // { fro, drag, brade, poang, nastaId, start, slut: null | 'tid' | 'fullt', skickad }
+  var slump;
+  var ovning = false;
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function dra() { s.drag++; return slump(); }
+
+  function tommaRutor() {
+    var ut = [];
+    for (var i = 0; i < s.brade.length; i++) if (!s.brade[i]) ut.push(i);
+    return ut;
+  }
+
+  // Ny bricka: 2 (90 %) eller 4 (10 %) på en tom ruta. Båda valen kommer ur fröet.
+  function nyBricka() {
+    var tomma = tommaRutor();
+    if (!tomma.length) return;
+    var v = dra() < 0.9 ? 2 : 4;
+    var plats = tomma[Math.floor(dra() * tomma.length)];
+    s.brade[plats] = { id: s.nastaId++, v: v, ny: true };
+  }
+
+  function nyttTillstand(fro) {
+    s = { fro: fro, drag: 0, brade: [], poang: 0, nastaId: 1, start: null, slut: null, skickad: false };
+    for (var i = 0; i < STORLEK * STORLEK; i++) s.brade.push(null);
+    slump = Advent.skapaSlump(fro);
+    nyBricka();
+    nyBricka();
+    return s;
+  }
+
+  function aterstall(sparat) {
+    s = sparat;
+    slump = Advent.skapaSlump(s.fro);
+    for (var i = 0; i < s.drag; i++) slump();
+  }
+
+  function storsta() {
+    return s.brade.reduce(function (m, b) { return b && b.v > m ? b.v : m; }, 0);
+  }
+
+  // Rutornas index för varje rad i flyttriktningen, med den ruta brickorna glider mot först.
+  function linjer(riktning) {
+    var ut = [];
+    for (var a = 0; a < STORLEK; a++) {
+      var linje = [];
+      for (var b = 0; b < STORLEK; b++) {
+        var x, y;
+        if (riktning === 'vanster') { x = b; y = a; }
+        else if (riktning === 'hoger') { x = STORLEK - 1 - b; y = a; }
+        else if (riktning === 'upp') { x = a; y = b; }
+        else { x = a; y = STORLEK - 1 - b; }
+        linje.push(y * STORLEK + x);
+      }
+      ut.push(linje);
+    }
+    return ut;
+  }
+
+  // Flyttar alla brickor. Returnerar true om något hände.
+  function flytta(riktning) {
+    var flyttat = false;
+    s.brade.forEach(function (b) { if (b) { delete b.ny; delete b.fran; } });
+    linjer(riktning).forEach(function (linje) {
+      var brickor = linje.map(function (i) { return s.brade[i]; }).filter(Boolean);
+      var nya = [];
+      for (var k = 0; k < brickor.length; k++) {
+        var a = brickor[k], b = brickor[k + 1];
+        if (b && a.v === b.v) {
+          nya.push({ id: s.nastaId++, v: a.v * 2, fran: [a.id, b.id] });
+          s.poang += a.v * 2;
+          k++;
+        } else {
+          nya.push(a);
+        }
+      }
+      linje.forEach(function (i, j) {
+        var ny = nya[j] || null;
+        if (ny !== s.brade[i]) flyttat = true;
+        s.brade[i] = ny;
+      });
+    });
+    return flyttat;
+  }
+
+  function kanFlytta() {
+    if (tommaRutor().length) return true;
+    for (var y = 0; y < STORLEK; y++) {
+      for (var x = 0; x < STORLEK; x++) {
+        var v = s.brade[y * STORLEK + x].v;
+        if (x + 1 < STORLEK && s.brade[y * STORLEK + x + 1].v === v) return true;
+        if (y + 1 < STORLEK && s.brade[(y + 1) * STORLEK + x].v === v) return true;
+      }
+    }
+    return false;
+  }
+
+  function tidKvar() {
+    if (!s.start) return SPELTID;
+    return Math.max(0, s.start + SPELTID - Date.now());
+  }
+
+  // ===== Ritning =====
+  var brade = $('brade');
+  var element = {};   // brickans id -> element
+
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function placera(e, i) {
+    e.style.setProperty('--x', i % STORLEK);
+    e.style.setProperty('--y', Math.floor(i / STORLEK));
+  }
+
+  function brickElement(b, extra) {
+    var siffror = String(b.v).length;
+    var e = el('div', 'bricka ' + (b.v <= 2048 ? 'v' + b.v : 'vstor') + (siffror > 2 ? ' s' + Math.min(siffror, 5) : '') + (extra ? ' ' + extra : ''), String(b.v));
+    element[b.id] = e;
+    brade.appendChild(e);
+    return e;
+  }
+
+  function ritaBradet(utanAnimation) {
+    if (utanAnimation) {
+      brade.textContent = '';
+      element = {};
+      for (var i = 0; i < STORLEK * STORLEK; i++) placera(brade.appendChild(el('div', 'yta')), i);
+    }
+    var kvar = {};
+    s.brade.forEach(function (b, i) {
+      if (!b) return;
+      kvar[b.id] = true;
+      if (b.fran && !utanAnimation) {
+        // De två gamla brickorna glider till platsen och försvinner, den nya poppar fram.
+        b.fran.forEach(function (id) {
+          var gammal = element[id];
+          if (!gammal) return;
+          placera(gammal, i);
+          delete element[id];
+          setTimeout(function () { gammal.remove(); }, 110);
+        });
+        placera(brickElement(b, 'ihop'), i);
+      } else if (element[b.id]) {
+        placera(element[b.id], i);
+      } else {
+        placera(brickElement(b, b.ny && !utanAnimation ? 'ny' : ''), i);
+      }
+    });
+    Object.keys(element).forEach(function (id) {
+      if (!kvar[id]) { element[id].remove(); delete element[id]; }
+    });
+    var lager = brade.querySelector('.slutlager');
+    if (lager) lager.remove();
+    if (s.slut) {
+      lager = el('div', 'slutlager');
+      lager.appendChild(el('b', null, s.slut === 'tid' ? 'Tiden är slut!' : 'Brädet är fullt!'));
+      lager.appendChild(el('span', null, tal(s.poang) + ' poäng'));
+      brade.appendChild(lager);
+    }
+    ritaMatare();
+  }
+
+  function ritaMatare() {
+    $('poang').textContent = tal(s.poang);
+    $('storsta').textContent = tal(storsta());
+    var kvar = tidKvar();
+    $('tid').textContent = Advent.formateraTid(Math.ceil(kvar / 1000));
+    $('tidRuta').classList.toggle('bradskande', !!s.start && !s.slut && kvar <= 30000);
+    $('tips').textContent = s.slut ? '' : s.start ? '' : 'Svep för att börja. Klockan startar då.';
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = !s.slut;
+    if (!s.slut) return;
+    var m = medalj(s.poang);
+    $('slutRubrik').textContent = s.slut === 'tid' ? 'Tiden är slut!' : 'Brädet är fullt!';
+    $('slutPoang').textContent = tal(s.poang) + ' p';
+    $('slutText').textContent = 'Största bricka: ' + tal(storsta()) + '. ' +
+      (m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() {
+    stoppaKlockan();
+    klocka = setInterval(function () {
+      if (tidKvar() <= 0) avsluta('tid');
+      else ritaMatare();
+    }, 250);
+  }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  function avsluta(orsak) {
+    if (s.slut) return;
+    s.slut = orsak;
+    stoppaKlockan();
+    sparaDagens();
+    ritaBradet();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  // ===== Drag =====
+  function drag(riktning) {
+    if (!s || s.slut) return;
+    if (s.start && tidKvar() <= 0) { avsluta('tid'); return; }
+    if (!flytta(riktning)) return;
+    if (!s.start) { s.start = Date.now(); startaKlockan(); }
+    nyBricka();
+    sparaDagens();
+    ritaBradet();
+    if (!kanFlytta()) avsluta('fullt');
+  }
+
+  var TANGENTER = {
+    ArrowLeft: 'vanster', ArrowRight: 'hoger', ArrowUp: 'upp', ArrowDown: 'ner',
+    a: 'vanster', d: 'hoger', w: 'upp', s: 'ner'
+  };
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    var r = TANGENTER[e.key];
+    if (!r) return;
+    e.preventDefault();
+    drag(r);
+  });
+
+  // Svep: räknas från där fingret sattes ner till där det lyftes, minst 24 px.
+  var nere = null;
+  brade.addEventListener('pointerdown', function (e) {
+    nere = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    try { brade.setPointerCapture(e.pointerId); } catch (fel) { /* ignorera */ }
+  });
+  function slapp(e) {
+    if (!nere || e.pointerId !== nere.id) return;
+    var dx = e.clientX - nere.x, dy = e.clientY - nere.y;
+    nere = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) drag(dx > 0 ? 'hoger' : 'vanster');
+    else drag(dy > 0 ? 'ner' : 'upp');
+  }
+  brade.addEventListener('pointerup', slapp);
+  brade.addEventListener('pointercancel', function () { nere = null; });
+  // Hindrar att sidan scrollar eller zoomar när man sveper på brädet (äldre Safari bryr sig inte om touch-action).
+  brade.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Dagens första omgång skickas när den är slut. Är man inte inloggad skickas den när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var max = dagens.brade.reduce(function (m, b) { return b && b.v > m ? b.v : m; }, 0);
+    // Poängen avgör, vid lika vinner största brickan (log2 av den, alltid under 100).
+    var varde = dagens.poang * 100 + Math.round(Math.log2(max));
+    R.skicka({ dag: dag, spel: '2048', status: 'klar', varde: varde, medalj: medalj(dagens.poang), text: tal(dagens.poang) + ' p · största ' + tal(max) })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); } });
+
+  // ===== Visa en omgång =====
+  function visa(arOvning) {
+    stoppaKlockan();
+    ovning = arOvning;
+    $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    var sparat = !ovning && Advent.lasa(sparNyckel, null);
+    if (sparat && sparat.fro === dagensFro) aterstall(sparat);
+    else nyttTillstand(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : dagensFro);
+    ritaBradet(true);
+    if (s.start && !s.slut) {
+      if (tidKvar() <= 0) avsluta('tid');
+      else startaKlockan();
+    }
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  visa(false);
+})();
+</script>
+</body>
+</html>
