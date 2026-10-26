@@ -1,3 +1,4 @@
+/** @OnlyCurrentDoc */
 // Familjens adventskalender: resultat i ett privat Google Sheet.
 // Klistras in i arkets Apps Script (Tillägg > Apps Script) och publiceras som webbapp:
 //   Kör som: Jag   Åtkomst: Alla
