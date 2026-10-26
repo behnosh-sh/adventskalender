@@ -97,7 +97,7 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
   overflow: auto;
   border-radius: 16px;
   background: #F3E9DA;
-  touch-action: pan-x pan-y;
+  touch-action: none;
   -webkit-overflow-scrolling: touch;
   position: relative;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
@@ -111,6 +111,7 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
   margin: 0 auto;
 }
 .c {
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   width: var(--cs); height: var(--cs);
   display: flex; align-items: center; justify-content: center;
   font-weight: 700;
@@ -631,10 +632,16 @@ let tryckInfo = null;
 const KORT_TRYCK = 200;
 const LANGT_TRYCK = 280;
 
+// Spelet sköter själv att flytta banan. Då kan webbläsarens egna gester (meny vid
+// långt tryck, markering, förstoringsglas) stängas av helt på spelplanen.
 ram.addEventListener("contextmenu", e => e.preventDefault());
+ram.addEventListener("selectstart", e => e.preventDefault());
+ram.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
+let glid = null;
 
 ram.addEventListener("pointerdown", e => {
   if (!e.isPrimary) return;
+  cancelAnimationFrame(glid);
   const c = e.target.closest(".c");
   tryckInfo = {
     t0: performance.now(), id: e.pointerId, x: e.clientX, y: e.clientY, sl: ram.scrollLeft, st: ram.scrollTop,
@@ -664,19 +671,35 @@ ram.addEventListener("pointermove", e => {
   const dx = e.clientX - tryckInfo.x, dy = e.clientY - tryckInfo.y;
   if (!tryckInfo.flyttad && Math.hypot(dx, dy) > 8) {
     tryckInfo.flyttad = true; slappVisning(tryckInfo);
-    if (tryckInfo.mus) ram.classList.add("drar");
+    ram.classList.add("drar");
   }
-  // Mus: dra för att flytta (pekskärm scrollar själv)
-  if (tryckInfo.mus && tryckInfo.flyttad) {
+  // Dra för att flytta, och kom ihåg farten så att banan kan glida vidare
+  if (tryckInfo.flyttad) {
+    const nu = performance.now(), dt = Math.max(1, nu - (tryckInfo.tSen || nu - 16));
+    tryckInfo.vx = (e.clientX - (tryckInfo.xSen ?? tryckInfo.x)) / dt;
+    tryckInfo.vy = (e.clientY - (tryckInfo.ySen ?? tryckInfo.y)) / dt;
+    tryckInfo.xSen = e.clientX; tryckInfo.ySen = e.clientY; tryckInfo.tSen = nu;
     ram.scrollLeft = tryckInfo.sl - dx; ram.scrollTop = tryckInfo.st - dy;
   }
 });
+function glidVidare(vx, vy) {
+  cancelAnimationFrame(glid);
+  let senast = performance.now();
+  const steg = nu => {
+    const dt = nu - senast; senast = nu;
+    ram.scrollLeft -= vx * dt; ram.scrollTop -= vy * dt;
+    const f = Math.pow(0.995, dt); vx *= f; vy *= f;
+    if (Math.hypot(vx, vy) > 0.02) glid = requestAnimationFrame(steg);
+  };
+  glid = requestAnimationFrame(steg);
+}
 function slappt(e) {
   if (!tryckInfo || e.pointerId !== tryckInfo.id) return;
   slappVisning(tryckInfo);
   ram.classList.remove("drar");
   const t = tryckInfo; tryckInfo = null;
   if (e.type === "pointercancel") return;
+  if (t.flyttad && !t.mus && t.tSen && performance.now() - t.tSen < 80) glidVidare(t.vx || 0, t.vy || 0);
   // Spärren räknas från när fingret släpps, hur länge man än höll inne
   if (t.lang) { sparrCell = t.cell; sparrTill = performance.now() + SPARR_TID; }
   if (t.flyttad || t.lang || t.cell == null) return;
@@ -686,11 +709,6 @@ function slappt(e) {
 }
 ram.addEventListener("pointerup", slappt);
 ram.addEventListener("pointercancel", slappt);
-ram.addEventListener("scroll", () => {
-  if (tryckInfo && !tryckInfo.mus) {
-    tryckInfo.flyttad = true; slappVisning(tryckInfo);
-  }
-}, { passive: true });
 
 function zooma(steg) {
   const ny = Math.max(0, Math.min(zoomSteg.length - 1, zoomNiva + steg));
