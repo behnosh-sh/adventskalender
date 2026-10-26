@@ -139,7 +139,12 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
 }
 .kontroller button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--skugga); }
 .kontroller .tips { flex: 1; font-size: 13px; line-height: 1.25; color: #6F8274; text-align: center; }
-.c.trycks { filter: brightness(1.12); transform: scale(0.92); transition: transform .25s; }
+.c.trycks { filter: brightness(1.12); transform: scale(0.92); transition: transform .3s; }
+/* Medan man håller inne växer en flagga fram, så man ser när man kan släppa */
+.c.laddar::after { content: "🚩"; font-size: calc(var(--cs) * 0.58); animation: ladda var(--ladd-tid) linear forwards; }
+@keyframes ladda { from { opacity: .15; transform: scale(.4); } to { opacity: .85; transform: scale(1); } }
+.c.pop { animation: pop .25s ease-out; }
+@keyframes pop { 0% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
 /* Resultat */
 .slut {
@@ -174,8 +179,9 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
       <div class="hjalp">
         <b>Så spelar du:</b> Banan startar med ett öppet område vid ★.<br>
         <b>Tryck på en grön ruta</b> för att gräva.<br>
-        <b>Tryck på en siffra</b> så gör spelet det som är säkert: är det lika många gröna rutor runt siffran som minor sätts flaggorna ut, och har siffran redan alla sina flaggor öppnas resten.<br>
-        <b>Håll inne</b> (eller högerklicka) på en grön ruta för att sätta eller ta bort en flagga själv. Tryck på en flagga för att ta bort den.<br>
+        <b>Håll inne</b> (eller högerklicka) på en grön ruta för att sätta en flagga. En flagga växer fram medan du håller, och när den sitter kan du släppa. Släpper du halvvägs händer ingenting.<br>
+        <b>Tryck på en flagga</b> för att ta bort den.<br>
+        <b>Tryck på en siffra</b> som har alla sina flaggor runt sig så öppnas resten av grannarna.<br>
         Banan går alltid att lösa utan att gissa. Dra för att flytta, + och − för att zooma.
       </div>
     </div>
@@ -192,7 +198,7 @@ h1 { margin: 2px 0 8px; font-size: 26px; line-height: 1.1; text-align: center; }
     <div class="kontroller">
       <button id="zoom-ut" aria-label="Zooma ut">−</button>
       <button id="zoom-in" aria-label="Zooma in">+</button>
-      <span class="tips">Håll inne = flagga<br>Tryck på siffra = smart</span>
+      <span class="tips">Håll inne = flagga<br>Tryck på siffra = öppna runt</span>
       <button id="avbryt" aria-label="Avbryt" style="font-size:18px">✕</button>
     </div>
   </div>
@@ -547,23 +553,18 @@ function vaxlaFlagga(i) {
   if (navigator.vibrate) navigator.vibrate(15);
 }
 
-// Tryck på en siffra: flagga grannarna om det är givet, annars öppna dem om alla flaggor redan sitter.
-function smartSiffra(i) {
+// Tryck på en siffra som har alla sina flaggor: öppna resten av grannarna.
+function oppnaRunt(i) {
   const b = spel.bana;
   const nb = grannar(b.W, b.H, i);
   const f = nb.filter(j => spel.flagg[j]).length;
-  const dolda = nb.filter(j => !spel.oppen[j] && !spel.flagg[j]);
-  if (!dolda.length) return;
-  if (f === b.siffror[i]) {
-    for (const j of dolda) { if (spel.slut) return; oppnaCell(j); }
-  } else if (f + dolda.length === b.siffror[i]) {
-    for (const j of dolda) vaxlaFlagga(j);
-  }
+  if (f !== b.siffror[i]) return;
+  for (const j of nb) { if (spel.slut) return; if (!spel.oppen[j] && !spel.flagg[j]) oppnaCell(j); }
 }
 
 function tryck(i, flagga) {
   if (!spel || spel.slut) return;
-  if (spel.oppen[i]) { if (spel.bana.siffror[i] > 0) smartSiffra(i); return; }
+  if (spel.oppen[i]) { if (spel.bana.siffror[i] > 0) oppnaRunt(i); return; }
   if (flagga || spel.flagg[i]) vaxlaFlagga(i); else oppnaCell(i);
 }
 
@@ -625,14 +626,18 @@ function visaResultat(vann, orsak, t) {
 // ===== Inmatning =====
 const ram = $("ram");
 let tryckInfo = null;
-const LANGT_TRYCK = 280;
+// Kortare än KORT_TRYCK = gräv. Mellan KORT_TRYCK och LANGT_TRYCK = ingenting (ångrat).
+// Efter LANGT_TRYCK sätts flaggan direkt, medan fingret fortfarande är kvar.
+const KORT_TRYCK = 200;
+const LANGT_TRYCK = 380;
+const LADD_START = 110;
 
 ram.addEventListener("contextmenu", e => e.preventDefault());
 
 ram.addEventListener("pointerdown", e => {
   const c = e.target.closest(".c");
   tryckInfo = {
-    id: e.pointerId, x: e.clientX, y: e.clientY, sl: ram.scrollLeft, st: ram.scrollTop,
+    t0: performance.now(), id: e.pointerId, x: e.clientX, y: e.clientY, sl: ram.scrollLeft, st: ram.scrollTop,
     cell: c ? +c.dataset.i : null, flyttad: false, lang: false, mus: e.pointerType === "mouse",
     knapp: e.button,
   };
@@ -640,21 +645,31 @@ ram.addEventListener("pointerdown", e => {
   if (c && spel && !spel.oppen[+c.dataset.i]) {
     c.classList.add("trycks");
     tryckInfo.el = c;
+    if (!spel.flagg[+c.dataset.i]) {
+      c.style.setProperty("--ladd-tid", (LANGT_TRYCK - LADD_START) + "ms");
+      tryckInfo.laddTimer = setTimeout(() => {
+        if (tryckInfo && !tryckInfo.flyttad && tryckInfo.el === c) c.classList.add("laddar");
+      }, LADD_START);
+    }
     tryckInfo.timer = setTimeout(() => {
       if (tryckInfo && !tryckInfo.flyttad) {
         tryckInfo.lang = true;
-        c.classList.remove("trycks");
+        c.classList.remove("trycks", "laddar");
         tryck(tryckInfo.cell, true);
+        cellEl[tryckInfo.cell].classList.add("pop");
       }
     }, LANGT_TRYCK);
   }
 });
+function slappVisning(t) {
+  clearTimeout(t.timer); clearTimeout(t.laddTimer);
+  if (t.el) t.el.classList.remove("trycks", "laddar");
+}
 ram.addEventListener("pointermove", e => {
   if (!tryckInfo || e.pointerId !== tryckInfo.id) return;
   const dx = e.clientX - tryckInfo.x, dy = e.clientY - tryckInfo.y;
   if (!tryckInfo.flyttad && Math.hypot(dx, dy) > 8) {
-    tryckInfo.flyttad = true; clearTimeout(tryckInfo.timer);
-    if (tryckInfo.el) tryckInfo.el.classList.remove("trycks");
+    tryckInfo.flyttad = true; slappVisning(tryckInfo);
     if (tryckInfo.mus) ram.classList.add("drar");
   }
   // Mus: dra för att flytta (pekskärm scrollar själv)
@@ -664,20 +679,21 @@ ram.addEventListener("pointermove", e => {
 });
 function slappt(e) {
   if (!tryckInfo || e.pointerId !== tryckInfo.id) return;
-  clearTimeout(tryckInfo.timer);
-  if (tryckInfo.el) tryckInfo.el.classList.remove("trycks");
+  slappVisning(tryckInfo);
   ram.classList.remove("drar");
   const t = tryckInfo; tryckInfo = null;
   if (e.type === "pointercancel") return;
   if (t.flyttad || t.lang || t.cell == null) return;
+  // Ett påbörjat långt tryck som släpps för tidigt gräver inte
+  if (spel && !spel.oppen[t.cell] && !spel.flagg[t.cell] && performance.now() - t.t0 > KORT_TRYCK) return;
   tryck(t.cell, false);
 }
 ram.addEventListener("pointerup", slappt);
+ram.addEventListener("animationend", e => { if (e.animationName === "pop") e.target.classList.remove("pop"); });
 ram.addEventListener("pointercancel", slappt);
 ram.addEventListener("scroll", () => {
   if (tryckInfo && !tryckInfo.mus) {
-    tryckInfo.flyttad = true; clearTimeout(tryckInfo.timer);
-    if (tryckInfo.el) tryckInfo.el.classList.remove("trycks");
+    tryckInfo.flyttad = true; slappVisning(tryckInfo);
   }
 }, { passive: true });
 
