@@ -106,7 +106,10 @@
 <a class="rad" id="rad" href="#"><span id="radtext"></span><span class="oppna" id="radknapp">Öppna</span></a>
 
 <script src="js/gemensam.js"></script>
-<script src="js/luckor.js"></script>
+<script>
+  // Listan över luckor ändras ofta under bygget. Hämta den alltid färsk så att nya luckor syns direkt.
+  document.write('<script src="js/luckor.js?t=' + Date.now() + '"><\/script>');
+</script>
 <script>
 (function () {
   var NS = 'http://www.w3.org/2000/svg';
