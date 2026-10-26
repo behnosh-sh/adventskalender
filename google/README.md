@@ -7,6 +7,7 @@ Resultaten sparas i ett privat Google Sheet. Sidan pratar bara med ett litet App
 
 1. Skapa ett nytt Google Sheet, t.ex. "Adventskalender resultat". Dela det inte.
 2. I arket: **Tillägg > Apps Script**. Ta bort det som står där och klistra in hela `resultat.gs`. Spara.
+   Första raden ska vara `/** @OnlyCurrentDoc */`. Den gör att scriptet bara får komma åt just det här arket.
 3. Välj funktionen **installera** i listan överst och tryck **Kör**. Godkänn behörigheterna
    (Google varnar för att appen inte är verifierad: **Avancerat > Gå till ... (osäkert)**, det är ditt eget script).
    Nu finns flikarna **Spelare** och **Resultat** i arket.
