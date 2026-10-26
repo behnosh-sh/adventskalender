@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Connections</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css">
+<style>
+  :root {
+    --grupp-0: #F6D66B;
+    --grupp-1: #A9CF6B;
+    --grupp-2: #A9C3EE;
+    --grupp-3: #C79BD6;
+    --grupp-text: #22302A;
+  }
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+
+  .start { display: grid; gap: 12px; margin-bottom: 16px; text-align: center; }
+  .start p { margin: 0; line-height: 1.4; }
+
+  .status { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 10px; font-weight: 600; color: var(--himmel-dampad); }
+  .liv { display: inline-flex; gap: 6px; vertical-align: middle; margin-left: 6px; }
+  .liv span { width: 13px; height: 13px; border-radius: 50%; background: var(--himmel-text); transition: background .3s, transform .3s; }
+  .liv span.borta { background: transparent; box-shadow: inset 0 0 0 2px var(--himmel-dampad); transform: scale(.8); }
+  .klocka { font-variant-numeric: tabular-nums; }
+
+  .bord { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .grupp {
+    grid-column: 1 / -1; border-radius: 14px; padding: 10px 8px; min-height: 66px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+    color: var(--grupp-text); animation: fram .35s ease-out;
+  }
+  .grupp b { font-family: var(--rubrik-typsnitt); font-size: 17px; line-height: 1.15; }
+  .grupp span { font-size: 14px; font-weight: 500; letter-spacing: .03em; margin-top: 2px; }
+  .grupp.g0 { background: var(--grupp-0); }
+  .grupp.g1 { background: var(--grupp-1); }
+  .grupp.g2 { background: var(--grupp-2); }
+  .grupp.g3 { background: var(--grupp-3); }
+  .grupp.missad { opacity: .8; }
+  @keyframes fram { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .bricka {
+    aspect-ratio: 1 / .78; min-width: 0; border: 0; border-radius: 12px; padding: 0 3px;
+    background: var(--kort); color: var(--text); box-shadow: 0 3px 0 rgba(0,0,0,.25);
+    font: 700 15px var(--text-typsnitt); letter-spacing: .01em; text-transform: uppercase;
+    cursor: pointer; overflow: hidden; white-space: nowrap; transition: background .15s, color .15s, transform .15s;
+  }
+  .bricka.delad { white-space: normal; hyphens: manual; line-height: 1.1; }
+  .bricka.vald { background: var(--gron-mork); color: #fff; transform: translateY(1px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .bricka:disabled { cursor: default; }
+  .bricka.hopp { animation: hopp .3s ease-out; }
+  .bord.skaka .bricka.vald { animation: skaka .4s ease-in-out; }
+  @keyframes hopp { 50% { transform: translateY(-6px); } }
+  @keyframes skaka { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .grupp, .bricka.hopp, .bord.skaka .bricka.vald { animation: none; }
+  }
+
+  .besked { min-height: 26px; margin: 10px 0 4px; text-align: center; font-weight: 600; color: var(--glod); }
+  .kontroller { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; margin: 6px 0 16px; }
+  .kontroller .knapp { padding: 12px 8px; font-size: 16px; }
+  .knapp:disabled { opacity: .5; cursor: default; filter: none; }
+
+  .slut { display: grid; gap: 8px; margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0; font-size: 24px; }
+  .slut p { margin: 0; }
+  .rutor { font-size: 22px; line-height: 1.25; letter-spacing: 2px; }
+  .slut .info { font-size: 15px; color: var(--dampad); }
+  .slut .info:empty { display: none; }
+
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Connections <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="start kort" id="start" hidden>
+    <p>Sexton engelska ord, fyra hemliga grupper. Klockan startar när du trycker.</p>
+    <button class="knapp" id="startknapp" type="button">Starta</button>
+  </div>
+
+  <section id="spel" hidden>
+    <div class="status">
+      <span>Misstag kvar<span class="liv" id="liv" aria-hidden="true"><span></span><span></span><span></span><span></span></span></span>
+      <span class="klocka" id="klocka">0:00</span>
+    </div>
+    <div class="bord" id="bord"></div>
+    <p class="besked" id="besked" aria-live="polite"></p>
+    <div class="kontroller" id="kontroller">
+      <button class="knapp ljus" id="blanda" type="button">Blanda</button>
+      <button class="knapp ljus" id="avmarkera" type="button">Avmarkera</button>
+      <button class="knapp" id="gissa" type="button" disabled>Gissa</button>
+    </div>
+  </section>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutrubrik"></h2>
+    <p class="rutor" id="rutor"></p>
+    <p id="sluttext"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <div class="knappar" id="gavuppRuta" hidden>
+    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+  </div>
+
+  <section id="tavla"></section>
+
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Hitta fyra grupper med fyra ord som hör ihop. Markera fyra ord och tryck <b>Gissa</b>.</li>
+      <li>Se upp för ord som verkar passa i flera grupper. Bara en lösning går ihop.</li>
+      <li>Grupperna blir svårare från gul till lila. Fyra bom och spelet är slut.</li>
+      <li>Färre misstag vinner, och tiden avgör vid lika. Guld vid 0 misstag, silver vid 1, brons vid 2–3.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök på dagens rutnät räknas.</p>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Öva på ett annat rutnät</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens rutnät</a></p>
+</main>
+
+<script src="../../js/gemensam.js"></script>
+<script src="../../js/luckor.js"></script>
+<script src="../../js/resultat.js"></script>
+<script>
+(function () {
+  // Varje rutnät är fyra grupper [kategori, [fyra ord]], från lättast (gul) till svårast (lila).
+
+  // Testset som får visas. Används som övning och som dagens rutnät innan tävlingen börjar.
+  var TESTSET = [
+    [['Christmas sweets', ['FUDGE', 'TOFFEE', 'MARZIPAN', 'BRITTLE']],
+     ['Things with needles', ['PINE', 'HEDGEHOG', 'CACTUS', 'COMPASS']],
+     ['___cake', ['PAN', 'CUP', 'CHEESE', 'SPONGE']],
+     ['___star', ['SEA', 'ROCK', 'POP', 'LONE']]],
+    [["Santa's reindeer", ['DASHER', 'DANCER', 'COMET', 'CUPID']],
+     ['Chocolate bars', ['MARS', 'GALAXY', 'BOUNTY', 'TWIX']],
+     ['Dances', ['SALSA', 'TANGO', 'WALTZ', 'DISCO']],
+     ['___ball', ['SNOW', 'FOOT', 'MEAT', 'BASKET']]],
+    [['Kitchen tools', ['WHISK', 'LADLE', 'GRATER', 'PEELER']],
+     ['Card games', ['SNAP', 'POKER', 'BRIDGE', 'RUMMY']],
+     ['___fish', ['SWORD', 'GOLD', 'CAT', 'JELLY']],
+     ['Sound like letters', ['TEA', 'PEA', 'BEE', 'JAY']]],
+    [['Winter clothes', ['SCARF', 'MITTENS', 'BEANIE', 'BOOTS']],
+     ['Shades of blue', ['NAVY', 'TEAL', 'COBALT', 'SKY']],
+     ['Swedish brands', ['IKEA', 'VOLVO', 'SPOTIFY', 'ABBA']],
+     ['Hidden numbers', ['OFTEN', 'LONELY', 'WEIGHT', 'CANINE']]],
+    [['Board games', ['CHESS', 'MONOPOLY', 'CLUEDO', 'RISK']],
+     ['Christmas tree decorations', ['TINSEL', 'BAUBLE', 'STAR', 'LIGHTS']],
+     ['___fly', ['BUTTER', 'DRAGON', 'FIRE', 'HOUSE']],
+     ['___board', ['KEY', 'SKATE', 'CARD', 'DART']]]
+  ];
+
+  // Tävlingsrutnäten ligger förvrängda så att ingen ser dem av misstag (även Behnosh ska kunna spela).
+  var FORVRANGT =
+    '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';
+
+  // Dagar med Connections. Varje dag får ett eget tävlingsrutnät ur poolen, valt med dagens frö.
+  var TAVLINGSDAGAR = [3];
+
+  function avvrang(text) {
+    var bin = atob(text), slump = Advent.skapaSlump('connections-forvrangning');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  var POOL = avvrang(FORVRANGT);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 3;
+  Advent.markeraOppnad(dag);
+
+  // Tävlingen gäller från luckans datum. Innan dess är dagens rutnät ett ur testsetet.
+  function harBorjat(d) { return new Date() >= new Date(2026, 11, d); }
+
+  // Tävlingsrutnät per dag, olika för varje dag: "p3" = POOL[3].
+  var tavlingsrutnat = {};
+  (function () {
+    var tagna = {};
+    TAVLINGSDAGAR.forEach(function (d) {
+      var slump = Advent.dagensSlump(d), i;
+      do { i = Math.floor(slump() * POOL.length); } while (tagna[i]);
+      tagna[i] = true;
+      tavlingsrutnat[d] = 'p' + i;
+    });
+  })();
+  var dagensId = harBorjat(dag) && tavlingsrutnat[dag]
+    ? tavlingsrutnat[dag]
+    : 't' + Math.floor(Advent.dagensSlump(dag)() * TESTSET.length);
+
+  function rutnat(id) { return (id[0] === 'p' ? POOL : TESTSET)[+id.slice(1)]; }
+
+  // Övning: testsetet, och poolen utom tävlingsrutnät vars dag inte har kommit än.
+  function ovningsIdn() {
+    var idn = TESTSET.map(function (_, i) { return 't' + i; });
+    if (harBorjat(dag)) {
+      var sparade = {};
+      TAVLINGSDAGAR.forEach(function (d) { if (!harBorjat(d)) sparade[tavlingsrutnat[d]] = true; });
+      POOL.forEach(function (_, i) { if (!sparade['p' + i]) idn.push('p' + i); });
+    }
+    return idn;
+  }
+
+  var FARG = ['🟨', '🟩', '🟦', '🟪'];
+  var MAX_MISSTAG = 4;
+
+  // ===== Spelets tillstånd =====
+  // Dagens rutnät sparas i telefonen, så att man inte kan börja om genom att ladda om sidan.
+  var sparNyckel = 'connections:' + dag + ':' + dagensId;
+  var s;          // { id, ordning, losta, gissningar, start, slut, skickad }
+  var vald = [];
+  var ovning = false;
+  var klockTimer = null;
+
+  function nyttTillstand(id, slump) {
+    var ord = [];
+    rutnat(id).forEach(function (g) { ord = ord.concat(g[1]); });
+    return { id: id, ordning: blanda(ord, slump), losta: [], gissningar: [], start: null, slut: null, skickad: false };
+  }
+
+  function blanda(lista, slump) {
+    lista = lista.slice();
+    for (var i = lista.length - 1; i > 0; i--) {
+      var j = Math.floor(slump() * (i + 1)), t = lista[i];
+      lista[i] = lista[j]; lista[j] = t;
+    }
+    return lista;
+  }
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function gruppFor(ordet) {
+    var g = rutnat(s.id);
+    for (var i = 0; i < 4; i++) if (g[i][1].indexOf(ordet) !== -1) return i;
+    return -1;
+  }
+  function misstag() {
+    return s.gissningar.filter(function (gs) { return !arRatt(gs); }).length;
+  }
+  function arRatt(gissning) {
+    var g = gruppFor(gissning[0]);
+    return gissning.every(function (o) { return gruppFor(o) === g; });
+  }
+  function arKlart() { return s.losta.length === 4 || misstag() >= MAX_MISSTAG; }
+  function sekunder() { return s.start ? Math.round(((s.slut || Date.now()) - s.start) / 1000) : 0; }
+
+  // ===== Ritning =====
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ritaGrupp(i, missad) {
+    var g = rutnat(s.id)[i];
+    var rad = el('div', 'grupp g' + i + (missad ? ' missad' : ''));
+    rad.appendChild(el('b', null, g[0]));
+    rad.appendChild(el('span', null, g[1].join(', ')));
+    return rad;
+  }
+
+  function ritaBord() {
+    var bord = $('bord');
+    bord.textContent = '';
+    s.losta.forEach(function (i) { bord.appendChild(ritaGrupp(i)); });
+    if (arKlart()) {
+      // Visa de grupper man inte hann hitta.
+      for (var i = 0; i < 4; i++) if (s.losta.indexOf(i) === -1) bord.appendChild(ritaGrupp(i, true));
+    } else {
+      s.ordning.forEach(function (ordet) {
+        if (s.losta.indexOf(gruppFor(ordet)) !== -1) return;
+        var b = el('button', 'bricka' + (vald.indexOf(ordet) !== -1 ? ' vald' : ''), ordet);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', vald.indexOf(ordet) !== -1);
+        b.addEventListener('click', function () { valj(ordet, b); });
+        bord.appendChild(b);
+      });
+      passaText();
+    }
+    var kvar = MAX_MISSTAG - misstag();
+    Array.prototype.forEach.call($('liv').children, function (p, i) { p.classList.toggle('borta', i >= kvar); });
+    $('gissa').disabled = vald.length !== 4 || arKlart();
+    $('avmarkera').disabled = !vald.length;
+    $('kontroller').hidden = arKlart();
+  }
+
+  // Långa ord får mindre text så att de ryms i brickan. Räcker inte det delas ordet på två rader.
+  function passaText() {
+    Array.prototype.forEach.call($('bord').querySelectorAll('.bricka'), function (b) {
+      var ordet = b.dataset.ord || b.textContent;
+      b.dataset.ord = ordet;
+      b.textContent = ordet;
+      b.classList.remove('delad');
+      var storlek = 15;
+      b.style.fontSize = storlek + 'px';
+      while (b.scrollWidth > b.clientWidth && storlek > 11) {
+        storlek -= 0.5;
+        b.style.fontSize = storlek + 'px';
+      }
+      if (b.scrollWidth > b.clientWidth) {
+        var mitt = Math.ceil(ordet.length / 2);
+        b.textContent = ordet.slice(0, mitt) + '\u00AD' + ordet.slice(mitt);
+        b.classList.add('delad');
+        b.style.fontSize = '13px';
+      }
+    });
+  }
+  function passaOm() { if (s && s.start && !arKlart()) passaText(); }
+  window.addEventListener('resize', passaOm);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(passaOm);
+
+  function visaKlocka() { $('klocka').textContent = Advent.formateraTid(sekunder()); }
+  function startaKlocka() {
+    clearInterval(klockTimer);
+    visaKlocka();
+    if (!arKlart()) klockTimer = setInterval(visaKlocka, 1000);
+  }
+
+  var beskedTimer;
+  function besked(text) {
+    $('besked').textContent = text;
+    clearTimeout(beskedTimer);
+    beskedTimer = setTimeout(function () { $('besked').textContent = ''; }, 2200);
+  }
+
+  // ===== Spelandet =====
+  function valj(ordet, knapp) {
+    if (arKlart()) return;
+    var i = vald.indexOf(ordet);
+    if (i !== -1) vald.splice(i, 1);
+    else if (vald.length < 4) vald.push(ordet);
+    else return;
+    knapp.classList.toggle('vald', i === -1);
+    knapp.setAttribute('aria-pressed', i === -1);
+    $('gissa').disabled = vald.length !== 4;
+    $('avmarkera').disabled = !vald.length;
+  }
+
+  function samma(a, b) { return a.slice().sort().join() === b.slice().sort().join(); }
+
+  function gissa() {
+    if (vald.length !== 4 || arKlart()) return;
+    if (s.gissningar.some(function (g) { return samma(g, vald); })) { besked('Den har du redan gissat.'); return; }
+    var gissning = vald.slice();
+    s.gissningar.push(gissning);
+    if (arRatt(gissning)) {
+      s.losta.push(gruppFor(gissning[0]));
+      vald = [];
+    } else {
+      var antal = {};
+      gissning.forEach(function (o) { var g = gruppFor(o); antal[g] = (antal[g] || 0) + 1; });
+      var nara = Object.keys(antal).some(function (g) { return antal[g] === 3; });
+      if (misstag() < MAX_MISSTAG) besked(nara ? 'En ifrån!' : 'Inte riktigt.');
+      $('bord').classList.remove('skaka');
+      void $('bord').offsetWidth;
+      $('bord').classList.add('skaka');
+    }
+    if (arKlart()) {
+      s.slut = Date.now();
+      vald = [];
+    }
+    sparaDagens();
+    setTimeout(function () {
+      $('bord').classList.remove('skaka');
+      ritaBord();
+      if (arKlart()) { startaKlocka(); visaSlut(); }
+    }, arRatt(gissning) ? 0 : 450);
+  }
+
+  // ===== Slut och resultat =====
+  // Varje gissning blir en ruta: gruppens färg om den var rätt, annars ett kryss.
+  function rutorText() {
+    return s.gissningar.map(function (g) { return arRatt(g) ? FARG[gruppFor(g[0])] : '❌'; }).join('');
+  }
+  function medalj() {
+    var m = misstag();
+    if (s.losta.length < 4) return '';
+    return m === 0 ? 'guld' : m === 1 ? 'silver' : 'brons';
+  }
+  function resultatet() {
+    var m = misstag(), sek = sekunder();
+    var vann = s.losta.length === 4;
+    return {
+      varde: (vann ? m : MAX_MISSTAG) * 10000 + Math.min(sek, 9999),
+      medalj: medalj(),
+      text: vann ? rutorText() + ' · ' + Advent.formateraTid(sek) : '4 bom · ' + rutorText()
+    };
+  }
+
+  function visaSlut() {
+    var vann = s.losta.length === 4, m = misstag();
+    $('slut').hidden = false;
+    $('slutrubrik').textContent = vann ? (m === 0 ? 'Felfritt!' : 'Klart!') : '4 bom';
+    $('rutor').textContent = rutorText();
+    $('sluttext').textContent = vann
+      ? Advent.formateraTid(sekunder()) + ' och ' + (m === 1 ? '1 misstag' : m + ' misstag') + (medalj() ? ' · ' + { guld: 'Guld', silver: 'Silver', brons: 'Brons' }[medalj()] : '')
+      : 'Grupperna du inte hittade syns ovanför.';
+    if (!ovning) forsokSkicka();
+    uppdateraGavUpp();
+  }
+
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Dagens första försök skickas när det är klart. Är man inte inloggad skickas det när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) { uppdateraGavUpp(); return; }
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; uppdateraGavUpp(); return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; uppdateraGavUpp(); return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var gammalt = s;
+    s = dagens;
+    var r = resultatet();
+    s = gammalt;
+    R.skicka({ dag: dag, spel: 'connections', status: 'klar', varde: r.varde, medalj: r.medalj, text: r.text })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.';
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; uppdateraGavUpp(); });
+  }
+
+  // "Ge upp" syns när man är inloggad, inte har något på tavlan och inte har spelat klart dagens rutnät.
+  function uppdateraGavUpp() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    $('gavuppRuta').hidden = ovning || !kanSkicka() || !!(dagens && dagens.slut);
+  }
+  $('gavupp').addEventListener('click', function () {
+    if (!kanSkicka()) return;
+    if (!confirm('Ge upp? Då kan du inte skicka något resultat för den här luckan.')) return;
+    R.skicka({ dag: dag, spel: 'connections', status: 'gav upp', medalj: '', text: '' })
+      .then(uppdateraGavUpp, function (fel) { alert(fel.message); });
+  });
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); uppdateraGavUpp(); } });
+
+  // ===== Visa ett rutnät =====
+  function visa(id, arOvning) {
+    ovning = arOvning;
+    vald = [];
+    clearInterval(klockTimer);
+    $('under').textContent = ovning ? 'Övningsrutnät' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('slut').hidden = true;
+    $('skickat').textContent = '';
+    if (ovning) {
+      s = nyttTillstand(id, Advent.nySlump());
+    } else {
+      s = Advent.lasa(sparNyckel, null) || nyttTillstand(id, Advent.dagensSlump(dag));
+    }
+    var startat = !!s.start;
+    $('start').hidden = startat;
+    $('spel').hidden = !startat;
+    if (startat) {
+      ritaBord();
+      startaKlocka();
+      if (arKlart()) visaSlut();
+    }
+    uppdateraGavUpp();
+  }
+
+  $('startknapp').addEventListener('click', function () {
+    s.start = Date.now();
+    sparaDagens();
+    $('start').hidden = true;
+    $('spel').hidden = false;
+    ritaBord();
+    startaKlocka();
+  });
+  $('gissa').addEventListener('click', gissa);
+  $('avmarkera').addEventListener('click', function () { vald = []; ritaBord(); });
+  $('blanda').addEventListener('click', function () {
+    s.ordning = blanda(s.ordning, Advent.nySlump());
+    sparaDagens();
+    ritaBord();
+  });
+
+  var aktuellt = dagensId;
+  $('igen').addEventListener('click', function () {
+    var idn = ovningsIdn().filter(function (id) { return id !== aktuellt && id !== dagensId; });
+    if (!idn.length) idn = [aktuellt];
+    aktuellt = idn[Math.floor(Advent.nySlump()() * idn.length)];
+    visa(aktuellt, true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    aktuellt = dagensId;
+    visa(dagensId, false);
+  });
+
+  visa(dagensId, false);
+})();
+</script>
+</body>
+</html>
