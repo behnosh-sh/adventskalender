@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Femtonspel</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+
+  /* Brädet: brickorna flyttas med left/top. Varje bricka visar sin bit av bilden. */
+  .brade {
+    --mellan: 1.2cqw;
+    --ruta: calc((100% - 5 * var(--mellan)) / 4);
+    container-type: inline-size;
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 16px;
+    aspect-ratio: 1;
+    border-radius: 16px;
+    background: #2C4A6E;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+  }
+  .bricka {
+    position: absolute;
+    width: var(--ruta);
+    height: var(--ruta);
+    left: calc(var(--mellan) + var(--x) * (var(--ruta) + var(--mellan)));
+    top: calc(var(--mellan) + var(--y) * (var(--ruta) + var(--mellan)));
+    border-radius: 6px;
+    background-image: url(tomte.jpg);
+    background-size: 400% 400%;
+    background-position: calc(var(--bx) * 100% / 3) calc(var(--by) * 100% / 3);
+    cursor: pointer;
+    transition: left 90ms ease-out, top 90ms ease-out;
+  }
+  .bricka span {
+    position: absolute;
+    top: 1.2cqw;
+    left: 1.2cqw;
+    min-width: 5.5cqw;
+    padding: .3cqw 1cqw;
+    border-radius: 999px;
+    background: rgba(20,35,63,.72);
+    color: #fff;
+    font: 600 3.6cqw/1.2 var(--text-typsnitt);
+    text-align: center;
+  }
+  .helbild {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: url(tomte.jpg) center / cover;
+    animation: tona .8s ease-out;
+  }
+  .slutlager {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(20,35,63,.72);
+    color: var(--himmel-text);
+    text-align: center;
+    animation: tona .4s ease-out;
+  }
+  .slutlager b { font: 600 9cqw var(--text-typsnitt); }
+  @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .bricka { transition: none; }
+    .helbild, .slutlager { animation: none; }
+  }
+
+  .forhand { display: block; width: 33%; max-width: 140px; margin: 0 auto 16px; border-radius: 8px; opacity: .9; }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 14px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Femtonspel <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Tid</span><b id="tid">0:00</b></div>
+    <div><span>Drag</span><b id="drag">0</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="brade" id="brade" role="application" aria-label="Spelbräde. Tryck på en bricka bredvid det tomma hålet, eller använd piltangenterna."></div>
+  <img class="forhand" id="forhand" src="tomte.jpg" alt="Så ska bilden se ut: Jenny Nyströms tomte med julbock vid fönstret.">
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutRubrik"></h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Tryck på en bricka i samma rad eller kolumn som det tomma hålet, så glider den (och brickorna emellan) dit. Piltangenterna går också bra.</li>
+      <li>Lägg tillbaka bitarna så att bilden blir hel. Siffrorna i hörnen visar ordningen, 1 uppe till vänster och 15 näst sist i nedre raden.</li>
+      <li>Klockan startar vid första draget. Alla får samma blandning. Snabbast vinner, vid lika tid vinner färst drag.</li>
+      <li>Guld under 3 minuter, silver under 5, brons under 8.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
+    <p class="liten">Bild: Jenny Nyström, Tomte med julbock.</p>
+  </details>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bräde</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=7"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  var N = 4;
+  var HAL = N * N - 1;   // brickan som är det tomma hålet
+  var GULD = 180, SILVER = 300, BRONS = 480;   // sekunder
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 14;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-femton';
+
+  function medalj(sek) { return sek < GULD ? 'guld' : sek < SILVER ? 'silver' : sek < BRONS ? 'brons' : ''; }
+  function tidText(ms) { return Advent.formateraTid(Math.floor(ms / 1000)); }
+
+  // ===== Spelets tillstånd =====
+  // s.brade[plats] = bricka (0–14), HAL för hålet. Bricka b hör hemma på plats b.
+  var sparNyckel = 'femton:' + dag;
+  var s;          // { fro, brade, drag, start, tid, slut: null | 'klar' | 'gavupp', skickad }
+  var ovning = false;
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  // Slumpad blandning ur fröet. Hälften av alla blandningar går inte att lösa;
+  // då byter vi plats på två brickor, vilket alltid gör den lösbar.
+  function blanda(fro) {
+    var slump = Advent.skapaSlump(fro);
+    var b = [];
+    for (var i = 0; i <= HAL; i++) b.push(i);
+    do {
+      for (var j = b.length - 1; j > 0; j--) {
+        var k = Math.floor(slump() * (j + 1));
+        var t = b[j]; b[j] = b[k]; b[k] = t;
+      }
+      if (!losbar(b)) {
+        var a = b[0] === HAL ? 1 : 0, c = b[2] === HAL ? 3 : 2;
+        t = b[a]; b[a] = b[c]; b[c] = t;
+      }
+    } while (lost(b));
+    return b;
+  }
+
+  function losbar(b) {
+    var inv = 0;
+    for (var i = 0; i < b.length; i++) {
+      for (var j = i + 1; j < b.length; j++) {
+        if (b[i] !== HAL && b[j] !== HAL && b[i] > b[j]) inv++;
+      }
+    }
+    var radNerifran = N - Math.floor(b.indexOf(HAL) / N);
+    return (inv + radNerifran) % 2 === 1;
+  }
+
+  function lost(b) {
+    for (var i = 0; i < b.length; i++) if (b[i] !== i) return false;
+    return true;
+  }
+
+  function nyttTillstand(fro) {
+    s = { fro: fro, brade: blanda(fro), drag: 0, start: null, tid: null, slut: null, skickad: false };
+  }
+
+  function forflutet() {
+    if (s.tid != null) return s.tid;
+    return s.start ? Date.now() - s.start : 0;
+  }
+
+  // ===== Ritning =====
+  var brade = $('brade');
+  var element = [];   // bricka -> element
+
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function byggBradet() {
+    brade.textContent = '';
+    element = [];
+    for (var b = 0; b < HAL; b++) {
+      var e = el('div', 'bricka');
+      e.style.setProperty('--bx', b % N);
+      e.style.setProperty('--by', Math.floor(b / N));
+      e.appendChild(el('span', null, String(b + 1)));
+      e.dataset.bricka = b;
+      element[b] = e;
+      brade.appendChild(e);
+    }
+  }
+
+  function ritaBradet() {
+    s.brade.forEach(function (b, i) {
+      if (b === HAL) return;
+      element[b].style.setProperty('--x', i % N);
+      element[b].style.setProperty('--y', Math.floor(i / N));
+    });
+    var gammalt = brade.querySelectorAll('.helbild, .slutlager');
+    for (var i = 0; i < gammalt.length; i++) gammalt[i].remove();
+    if (s.slut === 'klar') brade.appendChild(el('div', 'helbild'));
+    if (s.slut === 'gavupp') {
+      var lager = el('div', 'slutlager');
+      lager.appendChild(el('b', null, 'Du gav upp'));
+      brade.appendChild(lager);
+    }
+    $('forhand').hidden = s.slut === 'klar';
+    ritaMatare();
+  }
+
+  function ritaMatare() {
+    $('tid').textContent = tidText(forflutet());
+    $('drag').textContent = s.drag;
+    $('tips').textContent = s.slut ? '' : s.start ? '' : 'Tryck på en bricka bredvid hålet. Klockan startar då.';
+    $('geUpp').hidden = ovning || !!s.slut;
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = !s.slut;
+    if (!s.slut) return;
+    if (s.slut === 'gavupp') {
+      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutPoang').textContent = '';
+      $('slutText').textContent = 'Testa gärna att öva, med en annan blandning.';
+      return;
+    }
+    var m = medalj(s.tid / 1000);
+    $('slutRubrik').textContent = 'Bilden är hel!';
+    $('slutPoang').textContent = tidText(s.tid);
+    $('slutText').textContent = s.drag + ' drag. ' +
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() { stoppaKlockan(); klocka = setInterval(ritaMatare, 250); }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  function avsluta(orsak) {
+    if (s.slut) return;
+    s.slut = orsak;
+    s.tid = forflutet();
+    stoppaKlockan();
+    sparaDagens();
+    ritaBradet();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  // ===== Drag =====
+  // Flyttar brickan på plats p (och brickorna mellan den och hålet) mot hålet.
+  function tryck(p) {
+    if (!s || s.slut || p < 0 || p > HAL) return;
+    var h = s.brade.indexOf(HAL);
+    var px = p % N, py = Math.floor(p / N), hx = h % N, hy = Math.floor(h / N);
+    var steg;
+    if (py === hy && px !== hx) steg = px > hx ? 1 : -1;
+    else if (px === hx && py !== hy) steg = py > hy ? N : -N;
+    else return;
+    if (!s.start) { s.start = Date.now(); startaKlockan(); }
+    while (h !== p) {
+      s.brade[h] = s.brade[h + steg];
+      s.brade[h + steg] = HAL;
+      h += steg;
+      s.drag++;
+    }
+    sparaDagens();
+    ritaBradet();
+    if (lost(s.brade)) avsluta('klar');
+  }
+
+  brade.addEventListener('click', function (e) {
+    var t = e.target.closest('.bricka');
+    if (t) tryck(s.brade.indexOf(+t.dataset.bricka));
+  });
+
+  // Pil åt vänster flyttar brickan till höger om hålet åt vänster, och så vidare.
+  var PILAR = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    var r = PILAR[e.key];
+    if (!r || !s) return;
+    e.preventDefault();
+    var h = s.brade.indexOf(HAL);
+    var x = h % N + r[0], y = Math.floor(h / N) + r[1];
+    if (x >= 0 && x < N && y >= 0 && y < N) tryck(y * N + x);
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var data = dagens.slut === 'gavupp'
+      ? { dag: dag, spel: 'femton', status: 'gav upp', medalj: '', text: '' }
+      // Tiden i tiondelar avgör, vid lika vinner färst drag (alltid under 10 000).
+      : { dag: dag, spel: 'femton', status: 'klar', varde: Math.floor(dagens.tid / 100) * 10000 + Math.min(dagens.drag, 9999),
+          medalj: medalj(dagens.tid / 1000), text: tidText(dagens.tid) + ' · ' + dagens.drag + ' drag' };
+    R.skicka(data)
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa en omgång =====
+  function visa(arOvning) {
+    stoppaKlockan();
+    ovning = arOvning;
+    $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    var sparat = !ovning && Advent.lasa(sparNyckel, null);
+    if (sparat && sparat.fro === dagensFro) s = sparat;
+    else nyttTillstand(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : dagensFro);
+    byggBradet();
+    ritaBradet();
+    if (s.start && !s.slut) startaKlockan();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('geUpp').addEventListener('click', function () {
+    if (!confirm('Vill du ge upp? Då räknas inte dagens försök.')) return;
+    avsluta('gavupp');
+    $('tavla').scrollIntoView({ behavior: 'smooth' });
+  });
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  visa(false);
+})();
+</script>
+</body>
+</html>
