@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nerdle</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 16px; color: var(--accent); font-weight: 600; }
+
+  .jord { text-align: center; font-size: 72px; line-height: 1; margin: 8px 0 4px; }
+  .intro { margin: 0; text-align: center; line-height: 1.4; }
+
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .regler b { font-weight: 700; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+
+  .skicka { display: grid; gap: 10px; margin-bottom: 16px; }
+  .skicka h2 { margin: 0; font-size: 18px; }
+  .skicka label { font-weight: 600; }
+  .skicka textarea { font: inherit; font-size: 15px; color: var(--text); border: 2px solid var(--kant); border-radius: 14px; padding: 10px; background: var(--kort); resize: vertical; min-height: 110px; }
+  .skicka .last { margin: 0; font-size: 15px; color: var(--dampad); }
+  .skicka .last b { color: var(--text); }
+  .skicka .fel { margin: 0; font-size: 15px; color: var(--fel, #A23B2A); }
+  .skicka .fel:empty, .skicka .last:empty { display: none; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Nerdle</h1>
+  <p class="under" id="under"></p>
+
+  <div class="kort">
+    <div class="jord" aria-hidden="true">🧮</div>
+    <p class="intro">Som Wordle, fast med en räkneuppgift. Gissa dagens uträkning på högst sex försök. Färst gissningar vinner.</p>
+  </div>
+
+  <div class="knappar">
+    <a class="knapp" id="spela" href="https://www.nerdlegame.com/" target="_blank" rel="noopener">Spela</a>
+  </div>
+
+  <div class="skicka kort" id="skicka" hidden>
+    <h2>Ditt resultat</h2>
+    <label for="inklistrat">Klistra in texten från Share</label>
+    <textarea id="inklistrat" placeholder="nerdlegame 1789 4/6&#10;&#10;⬛⬛🟪⬛⬛🟪⬛🟩&#10;🟪🟪🟩⬛⬛⬛🟩🟩&#10;⬛⬛🟩🟩🟩🟪🟩🟩&#10;🟩🟩🟩🟩🟩🟩🟩🟩"></textarea>
+    <p class="last" id="last"></p>
+    <p class="fel" id="skickafel"></p>
+    <button class="knapp" id="skickaknapp" type="button" disabled>Skicka till familjen</button>
+    <button class="knapp diskret" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <p class="liten">Bara ditt första resultat räknas.</p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Tryck <b>Spela</b>. Dagens Nerdle öppnas (vanliga, med 8 rutor, inget konto behövs). Alla får samma uträkning i dag.</li>
+      <li>Skriv en uträkning som stämmer, till exempel <b>12+35=47</b>. Grönt är rätt tecken på rätt plats, lila finns med men på fel plats, svart finns inte med.</li>
+      <li>När spelet är slut trycker du <b>Share</b>, kommer tillbaka hit och klistrar in texten.</li>
+    </ol>
+    <p class="liten">Färst gissningar vinner, lika ger delad plats. Klarar man det inte på sex försök hamnar man sist bland dem som spelat.<br>Medaljer: guld 1 till 3 gissningar, silver 4, brons 5.<br>Nerdle byter uträkning vid midnatt.</p>
+  </details>
+
+  <div class="knappar">
+    <a class="knapp diskret" href="https://www.nerdlegame.com/replay.html" target="_blank" rel="noopener">Öva</a>
+  </div>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=6"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 13;
+  Advent.markeraOppnad(dag);
+  $('under').textContent = 'Lucka ' + dag;
+
+  function medalj(gissningar) {
+    if (gissningar <= 3) return 'guld';
+    if (gissningar === 4) return 'silver';
+    if (gissningar === 5) return 'brons';
+    return '';
+  }
+
+  // Nerdles pussel är numrerade, ett per dag. Nr 1742 var 27 okt 2026 (nr 1741 var 26 okt enligt Behnoshs delningstext).
+  function dagensNummer() {
+    var nu = new Date();
+    var idag = Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate());
+    return 1742 + Math.round((idag - Date.UTC(2026, 9, 27)) / 86400000);
+  }
+
+  // Plockar ut antal gissningar ur Nerdles delningstext:
+  // "nerdlegame 1741 4/6\n\n⬛⬛🟪⬛⬛🟪⬛🟩\n…\n🟩🟩🟩🟩🟩🟩🟩🟩"
+  // X/6 betyder att man inte klarade det. Mini, Maxi m.fl. har eget namn före "nerdle" och avvisas.
+  // Nerdle byter pussel vid midnatt, så numret ska vara dagens. Från iPhone kan texten komma URL-kodad.
+  function lasDelning(text) {
+    if (/%[0-9A-F]{2}/i.test(text)) {
+      try { text = decodeURIComponent(text.replace(/\+/g, ' ')); } catch (e) { /* inte URL-kodad ändå */ }
+    }
+    var rad = text.match(/(\S*)[ \t]*nerdlegame\s+(\d+)\s+([1-6X])\s*\/\s*6/i);
+    if (!rad) return { fel: 'Det här ser inte ut att vara dagens Nerdle. Spela via knappen Spela och klistra in texten från Share.' };
+    if (rad[1] && !/^#?$/.test(rad[1])) return { fel: 'Det här är ' + rad[1] + ' Nerdle. Spela vanliga Nerdle via knappen Spela.' };
+    var nr = +rad[2], idag = dagensNummer();
+    if (nr !== idag) return { fel: 'Texten är från Nerdle nr ' + nr + ', men dagens är nr ' + idag + '. Spela dagens Nerdle först.' };
+    if (rad[3].toUpperCase() === 'X') return { gissningar: 7, text: 'klarade inte' };
+    var g = +rad[3];
+    return { gissningar: g, text: g === 1 ? '1 gissning' : g + ' gissningar' };
+  }
+
+  var lastResultat = null;
+  Advent.Resultat.tavla($('tavla'), dag, {
+    vidStatus: function (d) { $('skicka').hidden = !d || d.harSpelat; }
+  });
+
+  $('inklistrat').addEventListener('input', function () {
+    var t = $('inklistrat').value.trim();
+    $('skickafel').textContent = '';
+    $('last').textContent = '';
+    lastResultat = null;
+    if (t) {
+      var r = lasDelning(t);
+      if (r.fel) $('skickafel').textContent = r.fel;
+      else {
+        lastResultat = r;
+        $('last').textContent = 'Vi läste: ';
+        $('last').appendChild(document.createElement('b')).textContent = r.text;
+      }
+    }
+    $('skickaknapp').disabled = !lastResultat;
+  });
+
+  function skicka(resultat) {
+    $('skickaknapp').disabled = true;
+    $('gavupp').disabled = true;
+    $('skickafel').textContent = '';
+    Advent.Resultat.skicka(resultat).then(function () {
+      $('tavla').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, function (fel) {
+      $('skickafel').textContent = fel.message;
+      $('skickaknapp').disabled = !lastResultat;
+      $('gavupp').disabled = false;
+    });
+  }
+  $('skickaknapp').addEventListener('click', function () {
+    if (!lastResultat) return;
+    // Lägst vinner. X/6 skickas som 7 så att det hamnar efter 6/6.
+    skicka({
+      dag: dag, spel: 'nerdle', status: 'klar',
+      medalj: medalj(lastResultat.gissningar),
+      varde: lastResultat.gissningar,
+      text: lastResultat.text
+    });
+  });
+  $('gavupp').addEventListener('click', function () {
+    if (!confirm('Ge upp? Då kan du inte skicka något resultat för den här luckan.')) return;
+    skicka({ dag: dag, spel: 'nerdle', status: 'gav upp', medalj: '', text: '' });
+  });
+})();
+</script>
+</body>
+</html>

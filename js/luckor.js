@@ -13,7 +13,8 @@ window.LUCKOR = {
   9: { titel: 'Revealed', sokvag: 'spel/revealed/' },
   10: { titel: 'Snake', sokvag: 'spel/snake/', lagreArBattre: false },
   11: { titel: 'Wikitrivia', sokvag: 'spel/wikitrivia/', lagreArBattre: false },
-  12: { titel: 'Labyrinten', sokvag: 'spel/labyrint/' }
+  12: { titel: 'Labyrinten', sokvag: 'spel/labyrint/' },
+  13: { titel: 'Nerdle', sokvag: 'spel/nerdle/' }
 };
 
 // Under bygget är alla luckor öppna. Sätt till false när datumlåset ska gälla.
