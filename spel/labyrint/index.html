@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labyrinten</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<style>
+  :root { --guld: #F2C230; --silver: #C9CED3; --brons: #D49A6A; }
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
+  .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+
+  /* Medaljgränserna för dagens tre banor, ovanför banan. */
+  .granser { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 0 0 10px; }
+  .grans { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .prick { width: 18px; height: 18px; border-radius: 50%; display: inline-block; box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
+  .prick.guld { background: var(--guld); }
+  .prick.silver { background: var(--silver); }
+  .prick.brons { background: var(--brons); }
+
+  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
+
+  /* Banan: canvas med labyrintens proportioner. Dra var som helst på den. */
+  .bana {
+    container-type: inline-size;
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 16px;
+    border-radius: 18px;
+    background: #0E1A30;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+  }
+  .bana canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .lager {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(20,35,63,.72);
+    color: var(--himmel-text);
+    text-align: center;
+    pointer-events: none;
+    animation: tona .35s ease-out;
+  }
+  .lager b { font: 700 9cqw var(--rubrik-typsnitt); }
+  .lager span { font-size: 5cqw; font-weight: 600; }
+  @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .lager { animation: none; } }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 20px; }
+  .slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 15px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Labyrinten <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2>Dagens labyrinter</h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="slutBanor"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <div class="matare">
+    <div><span>Bana</span><b id="banaNr">1 av 3</b></div>
+    <div><span>Tid</span><b id="tid">0:00,0</b></div>
+  </div>
+  <div class="granser" id="granser" aria-label="Medaljgränser för alla tre banorna"></div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="bana" id="bana" role="application" aria-label="Labyrint. Dra med fingret eller använd piltangenterna för att gå.">
+    <canvas id="duk"></canvas>
+  </div>
+
+  <div class="knappar" id="nastaKnappar" hidden>
+    <button class="knapp" id="spelaIgen" type="button">Nya övningslabyrinter</button>
+  </div>
+
+  <section id="tavla"></section>
+
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Dra med fingret var som helst på banan (eller använd piltangenterna). Pepparkaksgubben går åt samma håll, men inte genom väggar.</li>
+      <li>Hitta fram till julklappen. Det är mörkt, så du ser bara närmast runt dig. Gångar du redan har gått i syns svagt.</li>
+      <li>Det går bra att backa. Smulorna visar vägen från start till där du står.</li>
+      <li>Tre labyrinter i rad som blir större. Klockan startar när du börjar gå på varje bana och står still mellan banorna. Den sammanlagda tiden räknas.</li>
+      <li>Alla får samma labyrinter. Lägst tid vinner. Medaljgränserna står ovanför banan.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan mitt på en bana.</p>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Öva (nya slumpade labyrinter)</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens labyrinter</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=5"></script>
+<script src="../../js/resultat.js?v=2"></script>
+<script>
+(function () {
+  // Banornas storlek, kolumner × rader (stående mobil).
+  var BANOR = [[8, 11], [10, 14], [12, 17]];
+  // Hur långt man ser runt gubben, i rutor.
+  var SIKT = 2.6;
+  // Medaljgränser i sekunder per ruta på de tre banornas kortaste vägar tillsammans (gissade, justeras efter provspel).
+  var PER_RUTA = { guld: 0.45, silver: 0.7, brons: 1.0 };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 12;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-labyrint';
+
+  var N = 1, O = 2, S = 4, V = 8;
+  var RIKTNINGAR = { upp: [0, -1, N], ner: [0, 1, S], vanster: [-1, 0, V], hoger: [1, 0, O] };
+  var MOTSATT = {}; MOTSATT[N] = S; MOTSATT[S] = N; MOTSATT[O] = V; MOTSATT[V] = O;
+
+  // ===== Labyrinterna =====
+  // Djupet först med slumpad ordning: långa slingrande gångar och exakt en väg mellan två rutor.
+  // Start uppe till vänster, målet är den ruta i nedersta raden som ligger längst bort från start.
+  function skapaLabyrint(b, h, slump) {
+    var oppen = new Array(b * h).fill(0), sett = new Array(b * h).fill(false);
+    var stack = [0];
+    sett[0] = true;
+    while (stack.length) {
+      var c = stack[stack.length - 1], x = c % b, y = Math.floor(c / b);
+      var grannar = [];
+      ['upp', 'ner', 'vanster', 'hoger'].forEach(function (r) {
+        var d = RIKTNINGAR[r], nx = x + d[0], ny = y + d[1];
+        if (nx >= 0 && ny >= 0 && nx < b && ny < h && !sett[ny * b + nx]) grannar.push([ny * b + nx, d[2]]);
+      });
+      if (!grannar.length) { stack.pop(); continue; }
+      var g = grannar[Math.floor(slump() * grannar.length)];
+      oppen[c] |= g[1];
+      oppen[g[0]] |= MOTSATT[g[1]];
+      sett[g[0]] = true;
+      stack.push(g[0]);
+    }
+    var avstand = avstandFran(oppen, b, h, 0);
+    var mal = (h - 1) * b;
+    for (var i = (h - 1) * b; i < b * h; i++) if (avstand[i] > avstand[mal]) mal = i;
+    return { b: b, h: h, oppen: oppen, start: 0, mal: mal, kortast: avstand[mal] };
+  }
+
+  function avstandFran(oppen, b, h, fran) {
+    var avst = new Array(b * h).fill(-1), ko = [fran];
+    avst[fran] = 0;
+    while (ko.length) {
+      var c = ko.shift(), x = c % b, y = Math.floor(c / b);
+      for (var r in RIKTNINGAR) {
+        var d = RIKTNINGAR[r];
+        if (!(oppen[c] & d[2])) continue;
+        var n = (y + d[1]) * b + x + d[0];
+        if (avst[n] < 0) { avst[n] = avst[c] + 1; ko.push(n); }
+      }
+    }
+    return avst;
+  }
+
+  function skapaBanor(fro) {
+    var slump = Advent.skapaSlump(fro);
+    return BANOR.map(function (m) { return skapaLabyrint(m[0], m[1], slump); });
+  }
+
+  function granserFor(banor) {
+    var rutor = banor.reduce(function (sum, l) { return sum + l.kortast; }, 0);
+    return {
+      guld: Math.round(rutor * PER_RUTA.guld),
+      silver: Math.round(rutor * PER_RUTA.silver),
+      brons: Math.round(rutor * PER_RUTA.brons)
+    };
+  }
+
+  function tiondelar(ms) { return Math.round(ms / 100); }
+  function tidText(ms) {
+    var t = Math.max(0, tiondelar(ms));
+    return Math.floor(t / 600) + ':' + ('0' + Math.floor(t / 10) % 60).slice(-2) + ',' + (t % 10);
+  }
+  function medalj(ms, g) {
+    var sek = ms / 1000;
+    return sek <= g.guld ? 'guld' : sek <= g.silver ? 'silver' : sek <= g.brons ? 'brons' : '';
+  }
+
+  // ===== Tillstånd =====
+  // Dagens försök sparas i telefonen efter varje steg: vilken bana, var gubben står, smulspåret,
+  // rutorna man har varit i och när klockan startade på banan. Klockan går vidare om sidan stängs.
+  var sparNyckel = 'labyrint:' + dag;
+  var s;            // { fro, bana, tider: [ms], start: ms | null, spar: [ruta], besokt: [ruta], slut, skickad }
+  var ovning = false;
+  var dagensS, banor, granser;
+
+  function nyttTillstand(fro) { return { fro: fro, bana: 0, tider: [], start: null, spar: [0], besokt: [0], slut: false, skickad: false }; }
+  function spara() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function lab() { return banor[Math.min(s.bana, banor.length - 1)]; }
+  function har() { return s.spar[s.spar.length - 1]; }
+  function nuTid() {
+    var klara = s.tider.reduce(function (a, t) { return a + t; }, 0);
+    return klara + (s.start != null && !s.slut ? Date.now() - s.start : 0);
+  }
+
+  // ===== Gå =====
+  // Ett steg åt ett håll. Backar man ett steg plockas sista smulan upp, annars läggs en ny.
+  function ga(r) {
+    if (s.slut || mellanBanor) return false;
+    var l = lab(), c = har(), x = c % l.b, y = Math.floor(c / l.b), d = RIKTNINGAR[r];
+    if (!(l.oppen[c] & d[2])) return false;
+    var n = (y + d[1]) * l.b + x + d[0];
+    if (s.start == null) { s.start = Date.now(); startaKlockan(); }
+    if (s.spar.length > 1 && s.spar[s.spar.length - 2] === n) s.spar.pop();
+    else s.spar.push(n);
+    if (s.besokt.indexOf(n) < 0) s.besokt.push(n);
+    if (n === l.mal) banaKlar();
+    else spara();
+    tips('');
+    return true;
+  }
+
+  var mellanBanor = false;
+  function banaKlar() {
+    var tid = Date.now() - s.start;
+    s.tider.push(tid);
+    s.start = null;
+    s.bana++;
+    stoppaKlockan();
+    if (s.bana >= banor.length) {
+      s.slut = true;
+      s.bana = banor.length - 1;
+      spara();
+      visaLager('Alla tre klara!', tidText(nuTid()));
+      ritaMatare();
+      ritaSlut();
+      if (!ovning) forsokSkicka();
+      else $('nastaKnappar').hidden = false;
+      return;
+    }
+    // Kort paus med banans tid, sedan nästa labyrint. Klockan står still tills man går igen.
+    mellanBanor = true;
+    s.spar = [banor[s.bana].start];
+    s.besokt = [banor[s.bana].start];
+    spara();
+    visuell = null;
+    anpassaStorlek(true);
+    visaLager('Bana ' + s.bana + ' klar!', tidText(tid));
+    ritaMatare();
+    setTimeout(function () {
+      mellanBanor = false;
+      nere = null;
+      visaLager(null);
+      tips('Bana ' + (s.bana + 1) + ' av ' + banor.length + '. Klockan startar när du går.');
+    }, 1400);
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() {
+    stoppaKlockan();
+    klocka = setInterval(ritaMatare, 100);
+  }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  // ===== Styrning =====
+  var TANGENTER = {
+    ArrowLeft: 'vanster', ArrowRight: 'hoger', ArrowUp: 'upp', ArrowDown: 'ner',
+    a: 'vanster', d: 'hoger', w: 'upp', s: 'ner'
+  };
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    var r = TANGENTER[e.key];
+    if (!r) return;
+    e.preventDefault();
+    ga(r);
+  });
+
+  // Dra: fingret kan vara var som helst på banan, så att det inte skymmer gubben.
+  // Varje gång fingret har rört sig ungefär en ruta tar gubben ett steg åt det hållet.
+  // Är det vägg åt huvudhållet men fingret också rört sig åt sidan tar han sidogången i stället,
+  // så att man kan runda hörn med en mjuk rörelse.
+  var bana = $('bana');
+  var nere = null;
+  function stegLangd() { return Math.max(16, Math.min(34, rutaPx * 0.75)); }
+  bana.addEventListener('pointerdown', function (e) {
+    nere = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, id: e.pointerId };
+    try { bana.setPointerCapture(e.pointerId); } catch (fel) { /* ignorera */ }
+  });
+  bana.addEventListener('pointermove', function (e) {
+    if (!nere || e.pointerId !== nere.id) return;
+    nere.dx += e.clientX - nere.x;
+    nere.dy += e.clientY - nere.y;
+    nere.x = e.clientX;
+    nere.y = e.clientY;
+    var st = stegLangd(), varv = 0;
+    while ((Math.abs(nere.dx) >= st || Math.abs(nere.dy) >= st) && varv++ < 20) {
+      var vagrat = Math.abs(nere.dx) >= Math.abs(nere.dy);
+      var hu = vagrat ? (nere.dx > 0 ? 'hoger' : 'vanster') : (nere.dy > 0 ? 'ner' : 'upp');
+      var sida = vagrat ? (nere.dy > 0 ? 'ner' : 'upp') : (nere.dx > 0 ? 'hoger' : 'vanster');
+      var sidaMangd = Math.abs(vagrat ? nere.dy : nere.dx);
+      if (ga(hu)) {
+        if (vagrat) nere.dx -= Math.sign(nere.dx) * st; else nere.dy -= Math.sign(nere.dy) * st;
+      } else if (sidaMangd >= st * 0.4 && ga(sida)) {
+        if (vagrat) nere.dy = 0; else nere.dx = 0;
+      } else {
+        // Vägg: släng rörelsen åt det hållet så att den inte sparas upp.
+        if (vagrat) nere.dx = 0; else nere.dy = 0;
+      }
+    }
+    // Lite rörelse åt sidan som inte används får inte ligga kvar för evigt.
+    nere.dx = Math.max(-st * 1.5, Math.min(st * 1.5, nere.dx));
+    nere.dy = Math.max(-st * 1.5, Math.min(st * 1.5, nere.dy));
+  });
+  function slapp() { nere = null; }
+  bana.addEventListener('pointerup', slapp);
+  bana.addEventListener('pointercancel', slapp);
+  // Hindrar att sidan scrollar eller zoomar när man drar (äldre Safari bryr sig inte om touch-action).
+  bana.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+  // ===== Ritning =====
+  var duk = $('duk'), ctx = duk.getContext('2d');
+  var dimma = document.createElement('canvas'), dctx = dimma.getContext('2d');
+  var bredd = 0, hojd = 0, rutaPx = 30, pr = 1;
+  var visuell = null;   // gubbens ritade läge i rutor, glider mot rutan han står på
+
+  function anpassaStorlek(tvinga) {
+    var l = lab();
+    bana.style.aspectRatio = l.b + ' / ' + l.h;
+    var b = bana.clientWidth;
+    pr = window.devicePixelRatio || 1;
+    if (!tvinga && b === bredd && duk.width === Math.round(b * pr)) return;
+    bredd = b;
+    rutaPx = b / l.b;
+    hojd = rutaPx * l.h;
+    duk.width = dimma.width = Math.round(bredd * pr);
+    duk.height = dimma.height = Math.round(hojd * pr);
+    ctx.setTransform(pr, 0, 0, pr, 0, 0);
+    dctx.setTransform(pr, 0, 0, pr, 0, 0);
+  }
+
+  function ritaVaggar(l, ruta) {
+    ctx.strokeStyle = '#EEF3FA';
+    ctx.lineWidth = Math.max(2, ruta * 0.14);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (var c = 0; c < l.oppen.length; c++) {
+      var x = (c % l.b) * ruta, y = Math.floor(c / l.b) * ruta, o = l.oppen[c];
+      if (!(o & N)) { ctx.moveTo(x, y); ctx.lineTo(x + ruta, y); }
+      if (!(o & V)) { ctx.moveTo(x, y); ctx.lineTo(x, y + ruta); }
+      if (c % l.b === l.b - 1 && !(o & O)) { ctx.moveTo(x + ruta, y); ctx.lineTo(x + ruta, y + ruta); }
+      if (Math.floor(c / l.b) === l.h - 1 && !(o & S)) { ctx.moveTo(x, y + ruta); ctx.lineTo(x + ruta, y + ruta); }
+    }
+    ctx.stroke();
+  }
+
+  function mitt(c, l, ruta) { return [(c % l.b + 0.5) * ruta, (Math.floor(c / l.b) + 0.5) * ruta]; }
+
+  function ritaKlapp(cx, cy, ruta) {
+    var k = ruta * 0.56;
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,214,107,.85)';
+    ctx.shadowBlur = ruta * 0.6;
+    ctx.fillStyle = '#D8434B';
+    ctx.fillRect(cx - k / 2, cy - k / 2 + k * 0.08, k, k * 0.92);
+    ctx.restore();
+    ctx.fillStyle = '#FFD66B';
+    ctx.fillRect(cx - k * 0.08, cy - k / 2 + k * 0.08, k * 0.16, k * 0.92);
+    ctx.fillRect(cx - k / 2, cy - k * 0.02, k, k * 0.16);
+    ctx.beginPath();
+    ctx.ellipse(cx - k * 0.16, cy - k * 0.5, k * 0.16, k * 0.1, 0.5, 0, 2 * Math.PI);
+    ctx.ellipse(cx + k * 0.16, cy - k * 0.5, k * 0.16, k * 0.1, -0.5, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  // Pepparkaksgubbe utan ansikte: huvud, armar och ben som runda streck, vita knappar.
+  function ritaGubbe(cx, cy, ruta) {
+    var u = ruta * 0.4;
+    ctx.save();
+    ctx.strokeStyle = '#E0995A';
+    ctx.fillStyle = '#E0995A';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = u * 0.42;
+    ctx.beginPath();
+    ctx.moveTo(cx - u * 0.62, cy - u * 0.12); ctx.lineTo(cx + u * 0.62, cy - u * 0.12);
+    ctx.moveTo(cx, cy - u * 0.2); ctx.lineTo(cx, cy + u * 0.3);
+    ctx.moveTo(cx, cy + u * 0.3); ctx.lineTo(cx - u * 0.4, cy + u * 0.8);
+    ctx.moveTo(cx, cy + u * 0.3); ctx.lineTo(cx + u * 0.4, cy + u * 0.8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy - u * 0.58, u * 0.34, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(cx, cy - u * 0.05, u * 0.08, 0, 2 * Math.PI);
+    ctx.arc(cx, cy + u * 0.2, u * 0.08, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function ritaOm() {
+    if (!bredd || !s) return;
+    var l = lab(), ruta = rutaPx;
+    ctx.clearRect(0, 0, bredd, hojd);
+
+    // Rutor man har varit i är lite ljusare.
+    ctx.fillStyle = 'rgba(143,211,168,.10)';
+    s.besokt.forEach(function (c) {
+      ctx.fillRect((c % l.b) * ruta, Math.floor(c / l.b) * ruta, ruta, ruta);
+    });
+
+    // Smulspåret från start till där gubben står.
+    ctx.fillStyle = '#E3A35F';
+    s.spar.forEach(function (c, i) {
+      if (i === s.spar.length - 1) return;
+      var p = mitt(c, l, ruta);
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], Math.max(1.5, ruta * 0.08), 0, 2 * Math.PI);
+      ctx.fill();
+    });
+
+    ritaVaggar(l, ruta);
+
+    // Dimman: mörker överallt utom runt gubben. Rutor man har varit i syns svagt.
+    var mal = visuell || [har() % l.b, Math.floor(har() / l.b)];
+    var gx = (mal[0] + 0.5) * ruta, gy = (mal[1] + 0.5) * ruta;
+    dctx.globalCompositeOperation = 'source-over';
+    dctx.clearRect(0, 0, bredd, hojd);
+    dctx.fillStyle = '#0B1426';
+    dctx.fillRect(0, 0, bredd, hojd);
+    dctx.globalCompositeOperation = 'destination-out';
+    dctx.fillStyle = 'rgba(0,0,0,.5)';
+    s.besokt.forEach(function (c) {
+      dctx.fillRect((c % l.b) * ruta - 0.5, Math.floor(c / l.b) * ruta - 0.5, ruta + 1, ruta + 1);
+    });
+    var R = SIKT * ruta;
+    var g = dctx.createRadialGradient(gx, gy, R * 0.45, gx, gy, R);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    dctx.fillStyle = g;
+    dctx.beginPath();
+    dctx.arc(gx, gy, R, 0, 2 * Math.PI);
+    dctx.fill();
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(dimma, 0, 0);
+    ctx.restore();
+
+    // Julklappen syns alltid, så att man vet åt vilket håll man ska.
+    var m = mitt(l.mal, l, ruta);
+    ritaKlapp(m[0], m[1], ruta);
+    ritaGubbe(gx, gy, ruta);
+  }
+
+  // Gubben glider mjukt mellan rutorna.
+  function animera() {
+    if (s && bredd) {
+      var l = lab(), c = har(), mx = c % l.b, my = Math.floor(c / l.b);
+      if (!visuell) visuell = [mx, my];
+      var dx = mx - visuell[0], dy = my - visuell[1];
+      // Långt bort (ny bana eller många steg på en gång): hoppa nästan hela vägen.
+      var k = Math.abs(dx) + Math.abs(dy) > 3 ? 0.6 : 0.35;
+      visuell[0] = Math.abs(dx) < 0.01 ? mx : visuell[0] + dx * k;
+      visuell[1] = Math.abs(dy) < 0.01 ? my : visuell[1] + dy * k;
+      ritaOm();
+    }
+    requestAnimationFrame(animera);
+  }
+
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function visaLager(rubrik, text) {
+    var lager = bana.querySelector('.lager');
+    if (lager) lager.remove();
+    if (!rubrik) return;
+    lager = el('div', 'lager');
+    lager.appendChild(el('b', null, rubrik));
+    if (text) lager.appendChild(el('span', null, text));
+    bana.appendChild(lager);
+  }
+
+  function ritaMatare() {
+    $('banaNr').textContent = s.slut ? 'Klar' : (s.bana + 1) + ' av ' + banor.length;
+    $('tid').textContent = tidText(nuTid());
+  }
+
+  function ritaGranser() {
+    var box = $('granser');
+    box.textContent = '';
+    ['guld', 'silver', 'brons'].forEach(function (m) {
+      var g = el('span', 'grans');
+      g.appendChild(el('span', 'prick ' + m));
+      g.appendChild(document.createTextNode(Advent.formateraTid(granser[m])));
+      box.appendChild(g);
+    });
+  }
+
+  function tips(text) { $('tips').textContent = text; }
+
+  function standardTips() {
+    if (s.slut) return tips('');
+    if (s.start != null) return tips('');
+    tips(s.bana === 0 ? 'Dra med fingret för att gå. Klockan startar då.' : 'Bana ' + (s.bana + 1) + ' av ' + banor.length + '. Klockan startar när du går.');
+  }
+
+  function ritaSlut() {
+    var visa = !ovning && s.slut;
+    $('slut').hidden = !visa;
+    if (!visa) return;
+    var tot = nuTid(), m = medalj(tot, granser);
+    $('slutPoang').textContent = tidText(tot);
+    $('slutText').textContent = m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : 'Ingen medalj den här gången.';
+    $('slutBanor').textContent = s.tider.map(function (t, i) { return 'Bana ' + (i + 1) + ': ' + tidText(t); }).join(' · ');
+  }
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Resultatet skickas när alla tre banorna är klara. Är man inte inloggad skickas det när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut || dagens.fro !== dagensFro) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var tot = dagens.tider.reduce(function (a, t) { return a + t; }, 0);
+    // Lägst vinner: sammanlagd tid i tiondelar.
+    R.skicka({ dag: dag, spel: 'labyrint', status: 'klar', varde: tiondelar(tot), medalj: medalj(tot, granserFor(skapaBanor(dagensFro))), text: tidText(tot) })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa dagens eller övning =====
+  function visa(arOvning, fro) {
+    ovning = arOvning;
+    stoppaKlockan();
+    mellanBanor = false;
+    nere = null;
+    if (ovning) {
+      s = nyttTillstand(fro || 'ovning-' + Math.floor(Math.random() * 4294967296));
+    } else {
+      dagensS = Advent.lasa(sparNyckel, null);
+      if (!dagensS || dagensS.fro !== dagensFro) dagensS = nyttTillstand(dagensFro);
+      s = dagensS;
+    }
+    banor = skapaBanor(s.fro);
+    granser = granserFor(banor);
+    $('under').textContent = ovning ? 'Övning, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('igen').hidden = ovning;
+    $('nastaKnappar').hidden = true;
+    $('skickat').textContent = '';
+    visuell = null;
+    anpassaStorlek(true);
+    visaLager(s.slut ? 'Klart för i dag' : null, s.slut ? tidText(nuTid()) : null);
+    if (s.start != null && !s.slut) startaKlockan();
+    ritaGranser();
+    ritaMatare();
+    standardTips();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('spelaIgen').addEventListener('click', function () { visa(true); });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  window.addEventListener('resize', function () { anpassaStorlek(false); });
+  visa(false);
+  requestAnimationFrame(animera);
+})();
+</script>
+</body>
+</html>
