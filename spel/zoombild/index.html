@@ -19,7 +19,14 @@
   .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
 
   .ruta { position: relative; width: 100%; max-width: 440px; margin: 0 auto 10px; aspect-ratio: 1; }
-  .ruta canvas { display: block; width: 100%; height: 100%; border-radius: 16px; background: #2C4A6E; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .ruta canvas { display: block; width: 100%; height: 100%; border-radius: 16px; background: #2C4A6E; box-shadow: 0 4px 0 rgba(0,0,0,.25); transition: box-shadow .2s; }
+  .ruta.fel canvas { box-shadow: 0 0 0 5px #E0605A, 0 4px 0 rgba(0,0,0,.25); animation: skaka .45s; }
+  .ruta.ratt canvas { box-shadow: 0 0 0 5px #4CC37A, 0 4px 0 rgba(0,0,0,.25); }
+  @keyframes skaka { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-9px); } 40%, 80% { transform: translateX(9px); } }
+  .stampel { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: 90%; padding: 10px 20px; border-radius: 999px;
+    background: #4CC37A; color: #10261A; font: 600 22px var(--text-typsnitt); text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .tips.felsvar { color: #FFB4AE; font-weight: 600; font-size: 16px; }
+  @media (prefers-reduced-motion: reduce) { .ruta.fel canvas { animation: none; } }
   .stegrad { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }
   .stegrad i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.18); }
   .stegrad i.sedd { background: var(--himmel-text); }
@@ -65,7 +72,7 @@
       <div><span>Steg</span><b id="stegNr">1/6</b></div>
       <div><span>Poäng</span><b id="poang">0</b></div>
     </div>
-    <div class="ruta"><canvas id="duk" width="880" height="880" aria-label="Inzoomad bild"></canvas></div>
+    <div class="ruta" id="ruta"><canvas id="duk" width="880" height="880" aria-label="Inzoomad bild"></canvas><div class="stampel" id="stampel" aria-live="polite" hidden></div></div>
     <div class="stegrad" id="stegrad"></div>
     <p class="tips" id="tips" aria-live="polite"></p>
     <form class="gissa" id="gissaForm" autocomplete="off">
@@ -212,6 +219,8 @@
   var ovning = false;
   var ovningsIndex = 0;
   var meddelande = '';
+  var felsvar = false;
+  var visarRatt = false;
 
   function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
   function nyttTillstand(o) { s = { omg: o.id, bild: 0, steg: 0, poang: [], gissningar: [[]], koppling: null, slut: null, skickad: false }; }
@@ -231,17 +240,42 @@
   }
 
   var duk = $('duk'), ctx = duk.getContext('2d');
-  function ritaBild() {
-    var b = omg.bilder[Math.min(s.bild, omg.bilder.length - 1)];
-    var z = ZOOM[s.steg];
+  var visad = null;   // { fil, z } som syns just nu, så att zoomen kan glida från förra läget
+  var animering = 0;
+  var lugn = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function ritaVy(img, b, z) {
+    var w = img.naturalWidth, h = img.naturalHeight;
+    var sida = Math.min(w, h) / z;
+    var x = Math.max(0, Math.min(w - sida, b.fokus[0] * w - sida / 2));
+    var y = Math.max(0, Math.min(h - sida, b.fokus[1] * h - sida / 2));
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, x, y, sida, sida, 0, 0, duk.width, duk.height);
+  }
+  // Ritar bilden b vid förstoring z. Är det samma bild som nyss glider zoomen dit på en halv sekund.
+  function zoomaTill(b, z, klar) {
+    var fran = visad && visad.fil === b.fil ? visad.z : z;
+    visad = { fil: b.fil, z: z };
     hamtaBild(b.fil, function (img) {
-      var w = img.naturalWidth, h = img.naturalHeight;
-      var sida = Math.min(w, h) / z;
-      var x = Math.max(0, Math.min(w - sida, b.fokus[0] * w - sida / 2));
-      var y = Math.max(0, Math.min(h - sida, b.fokus[1] * h - sida / 2));
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, x, y, sida, sida, 0, 0, duk.width, duk.height);
+      var start = performance.now(), nr = ++animering, tid = lugn || fran === z ? 0 : 550;
+      (function steg(nu) {
+        if (nr !== animering) return;
+        var t = tid ? Math.min(1, (nu - start) / tid) : 1;
+        var e = 1 - Math.pow(1 - t, 3);
+        ritaVy(img, b, fran * Math.pow(z / fran, e));
+        if (t < 1) requestAnimationFrame(steg); else if (klar) klar();
+      })(start);
     });
+  }
+  function ritaBild() {
+    zoomaTill(omg.bilder[Math.min(s.bild, omg.bilder.length - 1)], ZOOM[s.steg]);
+  }
+  function blinka(klass) {
+    var r = $('ruta');
+    r.classList.remove(klass);
+    void r.offsetWidth;
+    r.classList.add(klass);
+    clearTimeout(blinka.t);
+    blinka.t = setTimeout(function () { r.classList.remove(klass); }, 900);
   }
 
   // ===== Ritning =====
@@ -267,7 +301,9 @@
       ZOOM.forEach(function (_, i) { rad.appendChild(el('i', i <= s.steg ? 'sedd' : '')); });
       var sista = s.steg === ZOOM.length - 1;
       $('tips').textContent = meddelande || (s.steg === 0 ? 'Vad tror du att det är?' : sista ? 'Hela bilden. Sista chansen!' : '');
+      $('tips').classList.toggle('felsvar', !!felsvar);
       meddelande = '';
+      felsvar = false;
       $('zooma').textContent = sista ? 'Jag vet inte (+1)' : 'Zooma ut (+1)';
       var g = s.gissningar[s.bild] || (s.gissningar[s.bild] = []);
       $('fel').textContent = g.length ? 'Inte rätt: ' + g.join(', ') : '';
@@ -329,22 +365,49 @@
   $('gissaForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var t = $('gissning').value.trim();
-    if (!t || s.slut) return;
+    if (!t || s.slut || visarRatt) return;
     $('gissning').value = '';
     var b = omg.bilder[s.bild];
     if (arRatt(t, b.godkant)) {
       klarMedBild(s.steg + 1);
-      meddelande = 'Rätt, det var ' + b.svar.toLowerCase() + '! Här kommer nästa.';
-    } else {
-      s.gissningar[s.bild].push(t);
-      nastaSteg();
+      sparaDagens();
+      visaRatt(b);
+      return;
     }
+    s.gissningar[s.bild].push(t);
+    var sista = s.steg === ZOOM.length - 1;
+    nastaSteg();
+    meddelande = sista ? 'Inte rätt, det var ' + b.svar.toLowerCase() + '. Här kommer nästa bild.' : '”' + t + '” var inte rätt. Bilden zoomar ut.';
+    felsvar = true;
+    blinka('fel');
     sparaDagens();
     rita();
   });
 
+  // Rätt svar: visa hela bilden med grön kant och svaret en stund innan nästa bild.
+  function visaRatt(b) {
+    visarRatt = true;
+    $('gissaForm').querySelector('button').disabled = true;
+    $('zooma').disabled = true;
+    $('tips').classList.remove('felsvar');
+    $('tips').textContent = s.bild < omg.bilder.length ? 'Här kommer nästa bild…' : '';
+    $('stampel').textContent = 'Rätt! ' + b.svar;
+    $('stampel').hidden = false;
+    $('ruta').classList.add('ratt');
+    zoomaTill(b, 1, function () {
+      setTimeout(function () {
+        $('stampel').hidden = true;
+        $('ruta').classList.remove('ratt');
+        $('gissaForm').querySelector('button').disabled = false;
+        $('zooma').disabled = false;
+        visarRatt = false;
+        rita();
+      }, 1600);
+    });
+  }
+
   $('zooma').addEventListener('click', function () {
-    if (s.slut) return;
+    if (s.slut || visarRatt) return;
     nastaSteg();
     sparaDagens();
     rita();
