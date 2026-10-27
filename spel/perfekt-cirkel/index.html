@@ -65,6 +65,9 @@
   .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
   .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
   .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .knappar.nasta { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); margin-top: 0; }
+  .knappar.nasta .knapp { padding: 10px 8px; line-height: 1.2; }
+  .knappar.nasta small { display: block; font-size: 13px; font-weight: 500; opacity: .85; }
   .tavla { margin-bottom: 16px; }
 </style>
 </head>
@@ -86,7 +89,8 @@
     <div class="betyg" id="betyg" hidden><b id="betygProcent"></b><span id="betygText"></span></div>
   </div>
 
-  <div class="knappar" id="dagensKnappar" hidden>
+  <div class="knappar nasta" id="nastaKnappar" hidden>
+    <button class="knapp" id="ritaIgen" type="button"></button>
     <button class="knapp gul" id="nojd" type="button"></button>
   </div>
 
@@ -104,7 +108,7 @@
     <ol>
       <li>Rita en cirkel runt pricken i ett enda drag, med fingret eller musen. Strecket är grönt där det är runt och blir gult och rött där det slirar.</li>
       <li>När du har ritat ett helt varv räknas cirkeln. Du får procent efter hur rund den är och hur bra den ligger runt pricken.</li>
-      <li>Du har 3 försök och det bästa räknas. Du kan också nöja dig tidigare och skicka direkt.</li>
+      <li>Du har 3 försök och det bästa räknas. Tryck "Rita igen" för nästa försök, eller nöj dig tidigare och skicka direkt.</li>
       <li>Högst procent vinner. Guld från 95 %, silver från 90 %, brons från 80 %. Guld blir en julgranskula.</li>
     </ol>
     <p class="liten">Ritar du bara en liten bit, eller en för liten cirkel, räknas det inte som ett försök. Släpper du mitt i en cirkel räknas den, men du förlorar procent för biten som fattas.</p>
@@ -133,7 +137,7 @@
   Advent.markeraOppnad(dag);
 
   function medalj(p) { return p >= GULD ? 'guld' : p >= SILVER ? 'silver' : p >= BRONS ? 'brons' : ''; }
-  function procent(p) { return p.toFixed(1).replace('.', ',') + ' %'; }
+  function procent(p) { return p.toFixed(1).replace('.', ',') + '\u00a0%'; }
   function omdome(p) {
     return p >= 98 ? 'Är du en passare?' : p >= GULD ? 'Nästan perfekt!' : p >= SILVER ? 'Riktigt rund!' :
       p >= BRONS ? 'Bra cirkel!' : p >= 65 ? 'Lite potatisformad' : p >= 40 ? 'Mer ägg än cirkel' : 'Är det en pepparkaksgubbe?';
@@ -338,10 +342,22 @@
       $('senaste').textContent = s.forsok.length ? procent(s.forsok[s.forsok.length - 1]) : '–';
       $('basta').textContent = s.basta == null ? '–' : procent(s.basta);
     }
-    var kanNoja = !ovning && !s.slut && s.forsok.length > 0;
-    $('dagensKnappar').hidden = !kanNoja;
-    if (kanNoja) $('nojd').textContent = 'Nöj dig och skicka ' + procent(s.basta);
-    yta.classList.toggle('las', !ovning && s.slut);
+    // Medan ett resultat visas är rutan låst. Nästa försök börjar med knappen "Rita igen".
+    var nasta = !!visas && (ovning || !s.slut);
+    $('nastaKnappar').hidden = !nasta;
+    knapptext($('ritaIgen'), 'Rita igen', ovning ? '' : 'försök ' + (s.forsok.length + 1) + ' av ' + FORSOK);
+    $('nojd').hidden = ovning;
+    knapptext($('nojd'), 'Skicka ' + (s.basta == null ? '' : procent(s.basta)), 'och nöj dig');
+    yta.classList.toggle('las', !!visas);
+  }
+
+  function knapptext(knapp, text, under) {
+    knapp.textContent = text;
+    if (under) {
+      var e = document.createElement('small');
+      e.textContent = under;
+      knapp.appendChild(e);
+    }
   }
 
   function tips(text, arFel) {
@@ -350,10 +366,11 @@
   }
 
   function standardTips() {
-    if (ovning) tips('Rita en cirkel runt pricken.');
+    if (ovning) tips(visas ? '' : 'Rita en cirkel runt pricken.');
     else if (s.slut) tips('');
     else if (!s.forsok.length) tips('Rita en cirkel runt pricken i ett enda drag.');
-    else tips('Rita igen om du vill. Det bästa av ' + FORSOK + ' försök räknas.');
+    else if (visas) tips('Det bästa av ' + FORSOK + ' försök räknas.');
+    else tips('Rita nu! Försök ' + (s.forsok.length + 1) + ' av ' + FORSOK + '.');
   }
 
   function ritaSlut() {
@@ -373,7 +390,7 @@
   function vinkelTill(p) { return Math.atan2(p[1] - 0.5, p[0] - 0.5); }
 
   yta.addEventListener('pointerdown', function (e) {
-    if (ritar || (!ovning && s.slut)) return;
+    if (ritar || visas || (!ovning && s.slut)) return;
     var p = punkt(e);
     ritar = { bana: [p], vinkel: 0, forraVinkel: vinkelTill(p), id: e.pointerId };
     try { yta.setPointerCapture(e.pointerId); } catch (fel) { /* ignorera */ }
@@ -418,7 +435,15 @@
   function klar() {
     var r = ritar;
     ritar = null;
-    var resultat = r.bana.length > 2 ? bedom(r.bana, r.vinkel) : { fel: 'Rita ett helt varv runt pricken.' };
+    var strack = 0;
+    for (var i = 1; i < r.bana.length; i++) strack += langd(r.bana[i - 1], r.bana[i]);
+    // Ett tryck eller ett litet ryck är inget försök att rita. Det ignoreras tyst.
+    if (strack < 0.05) {
+      ritaOm();
+      standardTips();
+      return;
+    }
+    var resultat = bedom(r.bana, r.vinkel);
     if (resultat.fel) {
       visas = null;
       ritaOm();
@@ -466,6 +491,15 @@
     ritaSlut();
     forsokSkicka();
   }
+
+  $('ritaIgen').addEventListener('click', function () {
+    if (!ovning && s.slut) return;
+    visas = null;
+    ritaOm();
+    visaBetyg();
+    ritaMatare();
+    standardTips();
+  });
 
   $('nojd').addEventListener('click', function () {
     if (ovning || s.slut || !s.forsok.length) return;
