@@ -396,7 +396,7 @@ function skapaBana(froText, profil) {
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 let dag = parseInt(params.get("dag"), 10);
-if (!(dag >= 1 && dag <= 24)) dag = 1;
+if (!(dag >= 1 && dag <= 24)) dag = 10;
 const dagensFro = froForDag(dag);
 try { if (window.Advent && Advent.markeraOppnad) Advent.markeraOppnad(dag); } catch (e) {}
 // Banversionen ingår i nycklarna, så att sparade tider från en äldre (svårare) bana glöms.
