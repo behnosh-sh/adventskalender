@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perfekt cirkel</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
+  .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
+  .tips.fel { color: #FF8A7A; }
+
+  /* Ritytan: kvadratisk, pricken i mitten. Poängen visas mitt i när man släppt. */
+  .rityta {
+    container-type: inline-size;
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 16px;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    background: #1C3156;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  .rityta canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .rityta.las { cursor: default; }
+  .betyg {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    pointer-events: none;
+    color: var(--himmel-text);
+    text-shadow: 0 2px 8px rgba(0,0,0,.5);
+    animation: tona .35s ease-out;
+  }
+  .betyg b { display: block; font: 700 15cqw/1 var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .betyg span { display: block; margin-top: 4px; font-size: 4.6cqw; font-weight: 600; }
+  @keyframes tona { from { opacity: 0; transform: translateY(-50%) scale(.9); } to { opacity: 1; transform: translateY(-50%) scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .betyg { animation: none; } }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 20px; }
+  .slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 15px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Perfekt cirkel <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span id="forsokEtikett">Försök</span><b id="forsok">1 av 3</b></div>
+    <div><span>Senaste</span><b id="senaste">–</b></div>
+    <div><span>Bästa</span><b id="basta">–</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="rityta" id="rityta" role="application" aria-label="Ritruta. Rita en cirkel runt pricken med fingret eller musen.">
+    <canvas id="duk"></canvas>
+    <div class="betyg" id="betyg" hidden><b id="betygProcent"></b><span id="betygText"></span></div>
+  </div>
+
+  <div class="knappar" id="dagensKnappar" hidden>
+    <button class="knapp gul" id="nojd" type="button"></button>
+  </div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2>Dagens cirkel</h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Rita en cirkel runt pricken i ett enda drag, med fingret eller musen. Strecket är grönt där det är runt och blir gult och rött där det slirar.</li>
+      <li>När du har ritat ett helt varv räknas cirkeln. Du får procent efter hur rund den är och hur bra den ligger runt pricken.</li>
+      <li>Du har 3 försök och det bästa räknas. Du kan också nöja dig tidigare och skicka direkt.</li>
+      <li>Högst procent vinner. Guld från 95 %, silver från 90 %, brons från 80 %. Guld blir en julgranskula.</li>
+    </ol>
+    <p class="liten">Ritar du bara en liten bit, eller en för liten cirkel, räknas det inte som ett försök. Släpper du mitt i en cirkel räknas den, men du förlorar procent för biten som fattas.</p>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Öva (räknas inte)</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens cirkel</a></p>
+</main>
+
+<script src="../../js/gemensam.js"></script>
+<script src="../../js/luckor.js"></script>
+<script src="../../js/resultat.js"></script>
+<script>
+(function () {
+  var FORSOK = 3;
+  var GULD = 95, SILVER = 90, BRONS = 80;
+  var MIN_RADIE = 0.15;      // av rutans bredd
+  var MIN_VINKEL = Math.PI / 2;
+  var STRANGHET = 3;         // procent som dras per procent medelavvikelse i radie
+  var PUNKTER = 200;         // strecket delas upp i lika långa bitar innan det bedöms
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 8;
+  Advent.markeraOppnad(dag);
+
+  function medalj(p) { return p >= GULD ? 'guld' : p >= SILVER ? 'silver' : p >= BRONS ? 'brons' : ''; }
+  function procent(p) { return p.toFixed(1).replace('.', ',') + ' %'; }
+  function omdome(p) {
+    return p >= 98 ? 'Är du en passare?' : p >= GULD ? 'Nästan perfekt!' : p >= SILVER ? 'Riktigt rund!' :
+      p >= BRONS ? 'Bra cirkel!' : p >= 65 ? 'Lite potatisformad' : p >= 40 ? 'Mer ägg än cirkel' : 'Är det en pepparkaksgubbe?';
+  }
+
+  // ===== Tillstånd =====
+  // Dagens försök sparas i telefonen, så att man inte kan börja om genom att ladda om sidan.
+  // Bästa ritningen sparas som punkter (0–1 av rutans bredd) så att den kan visas igen.
+  var sparNyckel = 'cirkel:' + dag;
+  var s;          // { forsok: [poäng], basta: poäng | null, bastaBana: [[x, y]], bastaRadie, slut, skickad }
+  var ovning = false;
+  var senastePoang = null;
+
+  function nyttTillstand() { return { forsok: [], basta: null, bastaBana: null, slut: false, skickad: false }; }
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  // ===== Bedömning =====
+  function langd(a, b) { return Math.hypot(b[0] - a[0], b[1] - a[1]); }
+
+  // Delar upp strecket i n lika långa bitar så att det inte spelar roll hur fort man ritar.
+  function jamna(bana, n) {
+    var total = 0;
+    for (var i = 1; i < bana.length; i++) total += langd(bana[i - 1], bana[i]);
+    if (!total) return [bana[0]];
+    var steg = total / n, ut = [bana[0]], kvar = steg, j = 1, fore = bana[0];
+    while (j < bana.length && ut.length < n) {
+      var d = langd(fore, bana[j]);
+      if (d >= kvar) {
+        var t = kvar / d;
+        fore = [fore[0] + t * (bana[j][0] - fore[0]), fore[1] + t * (bana[j][1] - fore[1])];
+        ut.push(fore);
+        kvar = steg;
+      } else {
+        kvar -= d;
+        fore = bana[j];
+        j++;
+      }
+    }
+    return ut;
+  }
+
+  // Poäng 0–100: hur mycket avståndet till pricken varierar, gånger hur stor del av varvet som ritats.
+  // Banan är i rutans enheter (0–1), pricken ligger i 0,5 / 0,5.
+  function bedom(bana, vinkel) {
+    var r = jamna(bana, PUNKTER).map(function (p) { return Math.hypot(p[0] - 0.5, p[1] - 0.5); });
+    var medel = r.reduce(function (a, b) { return a + b; }, 0) / r.length;
+    if (Math.abs(vinkel) < MIN_VINKEL) return { fel: 'Rita ett helt varv runt pricken.' };
+    if (medel < MIN_RADIE) return { fel: 'För liten! Rita en större cirkel.' };
+    var avvikelse = r.reduce(function (a, b) { return a + Math.abs(b - medel); }, 0) / r.length / medel;
+    var tackning = Math.min(1, Math.abs(vinkel) / (2 * Math.PI));
+    var poang = Math.max(0, 100 * (1 - STRANGHET * avvikelse)) * tackning;
+    return { poang: Math.round(poang * 10) / 10, radie: medel };
+  }
+
+  // ===== Ritning =====
+  var yta = $('rityta'), duk = $('duk'), ctx = duk.getContext('2d');
+  var bredd = 0;
+
+  function anpassaStorlek() {
+    var b = yta.clientWidth, pr = window.devicePixelRatio || 1;
+    if (b === bredd && duk.width === Math.round(b * pr)) return;
+    bredd = b;
+    duk.width = duk.height = Math.round(b * pr);
+    ctx.setTransform(pr, 0, 0, pr, 0, 0);
+    ritaOm();
+  }
+
+  // Färg efter hur långt punkten ligger från medelradien: grön, gul, röd.
+  function farg(avvikelse) {
+    var t = Math.min(1, avvikelse / 0.12);
+    var hue = 140 - 140 * t;
+    return 'hsl(' + hue + ', 70%, ' + (62 - 4 * t) + '%)';
+  }
+
+  function ritaPrick() {
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,214,107,.8)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = '#FFD66B';
+    ctx.beginPath();
+    ctx.arc(bredd / 2, bredd / 2, 5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function ritaBana(bana) {
+    if (!bana || bana.length < 2) return;
+    var r = bana.map(function (p) { return Math.hypot(p[0] - 0.5, p[1] - 0.5); });
+    ctx.lineWidth = Math.max(5, bredd * 0.016);
+    ctx.lineCap = 'round';
+    for (var i = 1; i < bana.length; i++) {
+      // Jämför med medelradien hittills, så att färgen stämmer medan man ritar.
+      var medel = 0;
+      for (var k = 0; k <= i; k++) medel += r[k];
+      medel /= i + 1;
+      ctx.strokeStyle = farg(Math.abs(r[i] - medel) / medel);
+      ctx.beginPath();
+      ctx.moveTo(bana[i - 1][0] * bredd, bana[i - 1][1] * bredd);
+      ctx.lineTo(bana[i][0] * bredd, bana[i][1] * bredd);
+      ctx.stroke();
+    }
+  }
+
+  function ritaFacit(radie) {
+    ctx.save();
+    ctx.setLineDash([6, 8]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(238,243,250,.55)';
+    ctx.beginPath();
+    ctx.arc(bredd / 2, bredd / 2, radie * bredd, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Guld: cirkeln blir en röd julgranskula med glitter, hängande i ett band från kanten.
+  function ritaKula(radie) {
+    var c = bredd / 2, R = radie * bredd;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,214,107,.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(c, 0);
+    ctx.lineTo(c, c - R - R * 0.16);
+    ctx.stroke();
+
+    var g = ctx.createRadialGradient(c - R * 0.35, c - R * 0.4, R * 0.1, c, c, R);
+    g.addColorStop(0, '#F27A7A');
+    g.addColorStop(0.55, '#C8323A');
+    g.addColorStop(1, '#7E1A24');
+    ctx.fillStyle = g;
+    ctx.globalAlpha = 0.92;
+    ctx.beginPath();
+    ctx.arc(c, c, R, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Glitter: samma mönster varje gång.
+    var slump = Advent.skapaSlump('cirkel-glitter');
+    for (var i = 0; i < 70; i++) {
+      var v = slump() * 2 * Math.PI, d = Math.sqrt(slump()) * R * 0.92;
+      ctx.fillStyle = slump() < 0.6 ? 'rgba(255,214,107,.9)' : 'rgba(255,255,255,.85)';
+      ctx.beginPath();
+      ctx.arc(c + Math.cos(v) * d, c + Math.sin(v) * d, 0.8 + slump() * 1.8, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    // Glans
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.beginPath();
+    ctx.ellipse(c - R * 0.38, c - R * 0.42, R * 0.22, R * 0.12, -0.7, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Hätta
+    var hb = R * 0.32, hh = R * 0.18;
+    var hg = ctx.createLinearGradient(c - hb / 2, 0, c + hb / 2, 0);
+    hg.addColorStop(0, '#B8892A');
+    hg.addColorStop(0.5, '#FFE08A');
+    hg.addColorStop(1, '#B8892A');
+    ctx.fillStyle = hg;
+    ctx.fillRect(c - hb / 2, c - R - hh * 0.75, hb, hh);
+    ctx.restore();
+  }
+
+  // visas: { bana, poang, radie } som ska visas på ytan, eller null för tom yta.
+  var visas = null;
+  var ritar = null;   // { bana, vinkel, forraVinkel, id } medan fingret är nere
+
+  function ritaOm() {
+    if (!bredd) return;
+    ctx.clearRect(0, 0, bredd, bredd);
+    if (ritar) {
+      ritaPrick();
+      ritaBana(ritar.bana);
+      return;
+    }
+    if (visas && visas.poang >= GULD) ritaKula(visas.radie);
+    else if (visas) ritaFacit(visas.radie);
+    if (visas) ritaBana(visas.bana);
+    if (!visas || visas.poang < GULD) ritaPrick();
+  }
+
+  function visaBetyg() {
+    $('betyg').hidden = !visas || !!ritar;
+    if (!visas) return;
+    $('betygProcent').textContent = procent(visas.poang);
+    $('betygText').textContent = omdome(visas.poang);
+    // Starta animationen igen
+    var b = $('betyg');
+    b.style.animation = 'none';
+    void b.offsetWidth;
+    b.style.animation = '';
+  }
+
+  function ritaMatare() {
+    if (ovning) {
+      $('forsokEtikett').textContent = 'Ritade';
+      $('forsok').textContent = String(ovningAntal);
+      $('senaste').textContent = senastePoang == null ? '–' : procent(senastePoang);
+      $('basta').textContent = ovningBasta == null ? '–' : procent(ovningBasta);
+    } else {
+      $('forsokEtikett').textContent = 'Försök';
+      $('forsok').textContent = s.slut ? 'Klar' : Math.min(s.forsok.length + 1, FORSOK) + ' av ' + FORSOK;
+      $('senaste').textContent = s.forsok.length ? procent(s.forsok[s.forsok.length - 1]) : '–';
+      $('basta').textContent = s.basta == null ? '–' : procent(s.basta);
+    }
+    var kanNoja = !ovning && !s.slut && s.forsok.length > 0;
+    $('dagensKnappar').hidden = !kanNoja;
+    if (kanNoja) $('nojd').textContent = 'Nöj dig och skicka ' + procent(s.basta);
+    yta.classList.toggle('las', !ovning && s.slut);
+  }
+
+  function tips(text, arFel) {
+    $('tips').textContent = text;
+    $('tips').classList.toggle('fel', !!arFel);
+  }
+
+  function standardTips() {
+    if (ovning) tips('Rita en cirkel runt pricken.');
+    else if (s.slut) tips('');
+    else if (!s.forsok.length) tips('Rita en cirkel runt pricken i ett enda drag.');
+    else tips('Rita igen om du vill. Det bästa av ' + FORSOK + ' försök räknas.');
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = ovning || !s.slut;
+    if (ovning || !s.slut) return;
+    var m = medalj(s.basta);
+    $('slutPoang').textContent = procent(s.basta);
+    $('slutText').textContent = omdome(s.basta) + ' ' +
+      (m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Ritande med finger eller mus =====
+  function punkt(e) {
+    var rekt = duk.getBoundingClientRect();
+    return [(e.clientX - rekt.left) / rekt.width, (e.clientY - rekt.top) / rekt.height];
+  }
+  function vinkelTill(p) { return Math.atan2(p[1] - 0.5, p[0] - 0.5); }
+
+  yta.addEventListener('pointerdown', function (e) {
+    if (ritar || (!ovning && s.slut)) return;
+    var p = punkt(e);
+    ritar = { bana: [p], vinkel: 0, forraVinkel: vinkelTill(p), id: e.pointerId };
+    try { yta.setPointerCapture(e.pointerId); } catch (fel) { /* ignorera */ }
+    tips('');
+    visaBetyg();
+    ritaOm();
+  });
+
+  yta.addEventListener('pointermove', function (e) {
+    if (!ritar || e.pointerId !== ritar.id) return;
+    var handelser = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    if (!handelser.length) handelser = [e];
+    for (var i = 0; i < handelser.length; i++) {
+      var p = punkt(handelser[i]);
+      var v = vinkelTill(p), d = v - ritar.forraVinkel;
+      if (d > Math.PI) d -= 2 * Math.PI;
+      if (d < -Math.PI) d += 2 * Math.PI;
+      // Ett helt varv är klart: kapa exakt vid 360 grader och avsluta.
+      if (Math.abs(ritar.vinkel + d) >= 2 * Math.PI) {
+        var behov = (ritar.vinkel >= 0 ? 2 * Math.PI : -2 * Math.PI) - ritar.vinkel;
+        var t = d ? behov / d : 1, forra = ritar.bana[ritar.bana.length - 1];
+        ritar.bana.push([forra[0] + t * (p[0] - forra[0]), forra[1] + t * (p[1] - forra[1])]);
+        ritar.vinkel += behov;
+        klar();
+        return;
+      }
+      ritar.vinkel += d;
+      ritar.forraVinkel = v;
+      ritar.bana.push(p);
+    }
+    ritaOm();
+  });
+
+  function slapp(e) { if (ritar && e.pointerId === ritar.id) klar(); }
+  yta.addEventListener('pointerup', slapp);
+  yta.addEventListener('pointercancel', slapp);
+  // Hindrar att sidan scrollar eller zoomar när man ritar (äldre Safari bryr sig inte om touch-action).
+  yta.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+  var ovningAntal = 0, ovningBasta = null;
+
+  function klar() {
+    var r = ritar;
+    ritar = null;
+    var resultat = r.bana.length > 2 ? bedom(r.bana, r.vinkel) : { fel: 'Rita ett helt varv runt pricken.' };
+    if (resultat.fel) {
+      visas = null;
+      ritaOm();
+      visaBetyg();
+      tips(resultat.fel + ' Det räknas inte som ett försök.', true);
+      return;
+    }
+    // Spara banan glest och avrundat, det räcker för att visa den igen.
+    var bana = jamna(r.bana, PUNKTER).map(function (p) {
+      return [Math.round(p[0] * 1000) / 1000, Math.round(p[1] * 1000) / 1000];
+    });
+    bana.push(r.bana[r.bana.length - 1]);
+    visas = { bana: bana, poang: resultat.poang, radie: resultat.radie };
+    senastePoang = resultat.poang;
+
+    if (ovning) {
+      ovningAntal++;
+      if (ovningBasta == null || resultat.poang > ovningBasta) ovningBasta = resultat.poang;
+    } else {
+      s.forsok.push(resultat.poang);
+      if (s.basta == null || resultat.poang > s.basta) {
+        s.basta = resultat.poang;
+        s.bastaBana = bana;
+        s.bastaRadie = resultat.radie;
+      }
+      if (s.forsok.length >= FORSOK) s.slut = true;
+      sparaDagens();
+    }
+    ritaOm();
+    visaBetyg();
+    ritaMatare();
+    standardTips();
+    if (!ovning && s.slut) avsluta();
+  }
+
+  function avsluta() {
+    s.slut = true;
+    sparaDagens();
+    // Visa den bästa cirkeln, inte nödvändigtvis den sista.
+    visas = { bana: s.bastaBana, poang: s.basta, radie: s.bastaRadie };
+    ritaOm();
+    visaBetyg();
+    ritaMatare();
+    standardTips();
+    ritaSlut();
+    forsokSkicka();
+  }
+
+  $('nojd').addEventListener('click', function () {
+    if (ovning || s.slut || !s.forsok.length) return;
+    avsluta();
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Dagens bästa skickas när försöken är slut. Är man inte inloggad skickas den när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    // Tiondels procent som heltal, högst vinner.
+    R.skicka({ dag: dag, spel: 'cirkel', status: 'klar', varde: Math.round(dagens.basta * 10), medalj: medalj(dagens.basta), text: procent(dagens.basta) })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); } });
+
+  // ===== Visa dagens eller övning =====
+  var dagensS = Advent.lasa(sparNyckel, null) || nyttTillstand();
+
+  function visa(arOvning) {
+    ovning = arOvning;
+    ritar = null;
+    s = dagensS;
+    $('under').textContent = ovning ? 'Övning, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('igen').hidden = ovning;
+    $('skickat').textContent = '';
+    senastePoang = null;
+    visas = !ovning && s.slut ? { bana: s.bastaBana, poang: s.basta, radie: s.bastaRadie } : null;
+    ritaOm();
+    visaBetyg();
+    ritaMatare();
+    standardTips();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  window.addEventListener('resize', anpassaStorlek);
+  visa(false);
+  anpassaStorlek();
+})();
+</script>
+</body>
+</html>
