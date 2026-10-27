@@ -147,8 +147,8 @@ body::before {
 .tavla-rad { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--kant); font-size: 17px; }
 .tavla-rad:first-child { border-top: 0; }
 .tavla-rad .plats { width: 18px; font-weight: 700; color: var(--dampad); }
-.tavla-rad .vem { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.tavla-rad .hur { font-weight: 600; text-align: right; }
+.tavla-rad .vem { flex: 1 0 auto; white-space: nowrap; }
+.tavla-rad .hur { flex: 0 1 auto; min-width: 0; font-weight: 600; text-align: right; }
 .tavla-rad.jag .vem { font-weight: 700; }
 .tavla-rad.vantar { color: var(--dampad); }
 .tavla-rad.vantar .hur { font-weight: 500; font-size: 15px; }
