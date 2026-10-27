@@ -140,7 +140,7 @@
   function stegTid(langd) { return Math.max(70, 160 - 2.5 * (langd - START_LANGD)); }
 
   var $ = function (id) { return document.getElementById(id); };
-  var dag = Advent.hamtaDag() || 10;
+  var dag = Advent.hamtaDag() || 1;
   Advent.markeraOppnad(dag);
   var dagensFro = Advent.froForDag(dag) + '-snake';
 

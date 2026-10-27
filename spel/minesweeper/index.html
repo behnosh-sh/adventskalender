@@ -392,7 +392,7 @@ function skapaBana(froText) {
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 let dag = parseInt(params.get("dag"), 10);
-if (!(dag >= 1 && dag <= 24)) dag = 1;
+if (!(dag >= 1 && dag <= 24)) dag = 10;
 const dagensFro = froForDag(dag);
 try { if (window.Advent && Advent.markeraOppnad) Advent.markeraOppnad(dag); } catch (e) {}
 const lagringsNyckel = "minesweeper-basta:" + dagensFro;
