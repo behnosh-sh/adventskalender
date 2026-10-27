@@ -21,11 +21,13 @@
   .matare .kritisk b { color: #FF8A7A; animation: puls 1s ease-in-out infinite; }
 
   /* Tidsstapeln krymper hela tiden: grön, gul de sista 30 sekunderna, röd de sista 10. */
-  .tidsstapel { max-width: 440px; height: 10px; margin: 0 auto 12px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .tidsstapel { max-width: 440px; height: 14px; margin: 0 auto 12px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
   .tidsstapel div { height: 100%; width: 100%; border-radius: 999px; background: var(--gran-1); transition: width .25s linear, background-color .3s; }
   .tidsstapel.varning div { background: var(--glod); }
   .tidsstapel.kritisk div { background: #E0675A; }
   .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
+  .tips.varning { color: var(--glod); font-weight: 700; font-size: 17px; }
+  .tips.kritisk { color: #FF8A7A; font-weight: 700; font-size: 17px; animation: puls 1s ease-in-out infinite; }
 
   /* Brädet: rutorna ligger i ett rutnät, brickorna flyttas ovanpå med left/top. */
   .brade {
@@ -166,6 +168,7 @@
       <li>Alla får samma nya brickor i samma ordning. Högst poäng vinner, vid lika vinner största brickan. Guld från 4 000, silver från 2 800, brons från 1 800.</li>
     </ol>
     <p class="liten">Bara ditt första försök på dagens bräde räknas. Klockan går även om du stänger sidan.</p>
+    <p class="liten">Version 4</p>
   </div>
 
   <div class="knappar">
@@ -370,12 +373,18 @@
     var igang = !!s.start && !s.slut;
     var varning = igang && kvar <= 30000 && kvar > 10000;
     var kritisk = igang && kvar <= 10000;
-    [$('tidRuta'), $('tidsstapel'), brade].forEach(function (e) {
+    [$('tidRuta'), $('tidsstapel'), brade, $('tips')].forEach(function (e) {
       e.classList.toggle('varning', varning);
       e.classList.toggle('kritisk', kritisk);
     });
+    // Färgerna sätts också direkt på elementen, så att de syns även om någon webbläsare missar klasserna.
+    var farg = kritisk ? '#E0675A' : varning ? '#FFD66B' : '';
     $('tidsfyllning').style.width = (100 * kvar / SPELTID) + '%';
-    $('tips').textContent = s.slut ? '' : s.start ? '' : 'Svep för att börja. Klockan startar då.';
+    $('tidsfyllning').style.backgroundColor = farg;
+    $('tid').style.color = kritisk ? '#FF8A7A' : farg;
+    brade.style.boxShadow = farg ? '0 4px 0 rgba(0,0,0,.25), 0 0 0 4px ' + farg + ', 0 0 22px 6px ' + farg : '';
+    var sek = Math.ceil(kvar / 1000);
+    $('tips').textContent = s.slut ? '' : kritisk ? 'Bara ' + sek + ' sekunder kvar!' : varning ? 'Snart slut, ' + sek + ' sekunder kvar!' : s.start ? '' : 'Svep för att börja. Klockan startar då.';
   }
 
   function ritaSlut() {
