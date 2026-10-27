@@ -7,16 +7,16 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=3">
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
 <style>
-  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
-  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
-  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
 
   .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
   .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
-  .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
-  .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
   .matare .varning b { color: var(--glod); }
   .matare .kritisk b { color: #FF8A7A; animation: puls 1s ease-in-out infinite; }
 
@@ -25,9 +25,9 @@
   .tidsstapel div { height: 100%; width: 100%; border-radius: 999px; background: var(--gran-1); transition: width .25s linear, background-color .3s; }
   .tidsstapel.varning div { background: var(--glod); }
   .tidsstapel.kritisk div { background: #E0675A; }
-  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
-  .tips.varning { color: var(--glod); font-weight: 700; font-size: 17px; }
-  .tips.kritisk { color: #FF8A7A; font-weight: 700; font-size: 17px; animation: puls 1s ease-in-out infinite; }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+  .tips.varning { color: var(--glod); font-weight: 600; font-size: 16px; }
+  .tips.kritisk { color: #FF8A7A; font-weight: 600; font-size: 16px; animation: puls 1s ease-in-out infinite; }
 
   /* Brädet: rutorna ligger i ett rutnät, brickorna flyttas ovanpå med left/top. */
   .brade {
@@ -60,7 +60,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font: 700 13cqw/1 var(--rubrik-typsnitt);
+    font: 600 13cqw/1 var(--text-typsnitt);
     font-variant-numeric: tabular-nums;
     color: var(--text);
     background: #fff;
@@ -116,15 +116,15 @@
     text-align: center;
     animation: tona .4s ease-out;
   }
-  .slutlager b { font: 700 9cqw var(--rubrik-typsnitt); }
+  .slutlager b { font: 600 9cqw var(--text-typsnitt); }
   .slutlager span { font-size: 5cqw; }
   @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
 
   .slut { margin-bottom: 16px; text-align: center; }
-  .slut h2 { margin: 0 0 4px; font-size: 20px; }
-  .slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); }
   .slut p { margin: 4px 0; }
-  .slut .info { color: var(--dampad); font-size: 15px; }
+  .slut .info { color: var(--dampad); font-size: 14px; }
 
   .regler { margin-top: 16px; }
   .regler h2 { margin: 0 0 6px; font-size: 18px; }
@@ -393,7 +393,7 @@
     $('slutRubrik').textContent = s.slut === 'tid' ? 'Tiden är slut!' : 'Brädet är fullt!';
     $('slutPoang').textContent = tal(s.poang) + ' p';
     $('slutText').textContent = 'Största bricka: ' + tal(storsta()) + '. ' +
-      (m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : 'Ingen medalj den här gången.');
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
   }
 
   // ===== Klockan =====

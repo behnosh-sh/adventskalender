@@ -7,16 +7,16 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=3">
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
 <style>
   :root {
     --ratt: #5FAF7E;
     --ratt-ljus: #DDF0E3;
     --fel-ljus: #F6DDD8;
   }
-  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
-  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
-  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
 
   .start { display: grid; gap: 12px; margin-bottom: 16px; text-align: center; }
   .start p { margin: 0; line-height: 1.4; }
@@ -27,7 +27,7 @@
   .prickar span.nu { background: var(--himmel-text); box-shadow: none; }
   .prickar span.ratt { background: var(--ratt); box-shadow: none; }
   .prickar span.fel { background: var(--fel); box-shadow: none; }
-  .klocka { font-family: var(--rubrik-typsnitt); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .klocka { font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
   .klocka.paus { color: var(--himmel-dampad); }
 
   .serie-kort { margin-bottom: 16px; animation: fram .3s ease-out; }
@@ -40,7 +40,7 @@
   .ruta {
     display: flex; align-items: center; justify-content: center;
     min-width: 44px; height: 52px; padding: 0 8px; border-radius: 12px;
-    background: #EEF3F0; font: 700 22px var(--text-typsnitt); color: var(--text);
+    background: #EEF3F0; font: 600 24px var(--text-typsnitt); color: var(--text);
   }
   .serie.figurer .ruta { width: 52px; padding: 4px; }
   .ruta svg { width: 100%; height: 100%; display: block; }
@@ -54,7 +54,7 @@
   .val button {
     display: flex; align-items: center; justify-content: center; min-height: 58px; padding: 8px;
     border: 2px solid var(--kant); border-radius: 14px; background: var(--kort); color: var(--text);
-    font: 700 22px var(--text-typsnitt); cursor: pointer; overflow-wrap: anywhere;
+    font: 600 24px var(--text-typsnitt); cursor: pointer; overflow-wrap: anywhere;
   }
   .val.figurer button { height: 76px; }
   .val button svg { width: 56px; height: 56px; }
@@ -64,18 +64,18 @@
   .val button.fel { opacity: 1; border-color: var(--fel); background: var(--fel-ljus); }
 
   .forklaring { margin: 14px 0 0; }
-  .forklaring .omdome { margin: 0 0 6px; font-family: var(--rubrik-typsnitt); font-size: 22px; font-weight: 700; text-align: center; }
-  .forklaring .varfor { margin: 0; padding: 10px 12px; border-radius: 12px; background: #EEF3F0; line-height: 1.4; font-size: 15px; }
+  .forklaring .omdome { margin: 0 0 6px; font: 600 18px var(--text-typsnitt); text-align: center; }
+  .forklaring .varfor { margin: 0; padding: 10px 12px; border-radius: 12px; background: #EEF3F0; line-height: 1.4; font-size: 14px; }
   .forklaring .varfor b { display: block; margin-bottom: 2px; }
   .forklaring .knapp { margin-top: 16px; }
 
   .slut { display: grid; gap: 8px; margin-bottom: 16px; text-align: center; }
-  .slut h2 { margin: 0; font-size: 24px; }
+  .slut h2 { margin: 0; font-size: 18px; }
   .slut p { margin: 0; }
-  .poang { font-family: var(--rubrik-typsnitt); font-size: 44px; font-weight: 700; line-height: 1; }
-  .poang small { font-size: 18px; color: var(--dampad); }
+  .poang { font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; line-height: 1; }
+  .poang small { font-size: 14px; color: var(--dampad); }
   .rutor { font-size: 24px; letter-spacing: 3px; }
-  .slut .info { font-size: 15px; color: var(--dampad); }
+  .slut .info { font-size: 14px; color: var(--dampad); }
   .slut .info:empty { display: none; }
 
   .regler h2 { margin: 0 0 6px; font-size: 18px; }
@@ -535,7 +535,7 @@
     $('antalRatt').textContent = ratt;
     $('rutor').textContent = rutorText(s);
     $('sluttid').textContent = 'Tid: ' + tidText(s);
-    $('sluttext').textContent = m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : '';
+    $('sluttext').textContent = m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : '';
     $('sluttext').hidden = !m;
     if (!ovning) forsokSkicka();
     uppdateraGavUpp();

@@ -7,27 +7,23 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=3">
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
 <style>
-  :root { --guld: #F2C230; --silver: #C9CED3; --brons: #D49A6A; }
-  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
-  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
-  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
 
   .matare { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
   .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
-  .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
-  .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
 
   /* Medaljgränserna för dagens tre banor, ovanför banan. */
   .granser { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 0 0 10px; }
-  .grans { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
-  .prick { width: 18px; height: 18px; border-radius: 50%; display: inline-block; box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
-  .prick.guld { background: var(--guld); }
-  .prick.silver { background: var(--silver); }
-  .prick.brons { background: var(--brons); }
+  .grans { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .grans .medalj { width: auto; font-size: 18px; }
 
-  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
+  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
 
   /* Banan: canvas med labyrintens proportioner. Dra var som helst på den. */
   .bana {
@@ -59,16 +55,16 @@
     pointer-events: none;
     animation: tona .35s ease-out;
   }
-  .lager b { font: 700 9cqw var(--rubrik-typsnitt); }
+  .lager b { font: 600 9cqw var(--text-typsnitt); }
   .lager span { font-size: 5cqw; font-weight: 600; }
   @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .lager { animation: none; } }
 
   .slut { margin-bottom: 16px; text-align: center; }
-  .slut h2 { margin: 0 0 4px; font-size: 20px; }
-  .slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
   .slut p { margin: 4px 0; }
-  .slut .info { color: var(--dampad); font-size: 15px; }
+  .slut .info { color: var(--dampad); font-size: 14px; }
 
   .regler { margin-top: 16px; }
   .regler h2 { margin: 0 0 6px; font-size: 18px; }
@@ -524,7 +520,7 @@
     box.textContent = '';
     ['guld', 'silver', 'brons'].forEach(function (m) {
       var g = el('span', 'grans');
-      g.appendChild(el('span', 'prick ' + m));
+      g.appendChild(Advent.Resultat.medaljBricka(m));
       g.appendChild(document.createTextNode(Advent.formateraTid(granser[m])));
       box.appendChild(g);
     });
@@ -544,7 +540,7 @@
     if (!visa) return;
     var tot = nuTid(), m = medalj(tot, granser);
     $('slutPoang').textContent = tidText(tot);
-    $('slutText').textContent = m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : 'Ingen medalj den här gången.';
+    $('slutText').textContent = m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.';
     $('slutBanor').textContent = s.tider.map(function (t, i) { return 'Bana ' + (i + 1) + ': ' + tidText(t); }).join(' · ');
   }
 
