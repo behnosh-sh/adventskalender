@@ -12,7 +12,7 @@
   .sida {
     max-width: 480px;
     margin: 0 auto;
-    padding: max(24px, env(safe-area-inset-top)) 0 calc(96px + env(safe-area-inset-bottom));
+    padding: max(24px, env(safe-area-inset-top)) 0 calc(32px + env(safe-area-inset-bottom));
   }
   header { text-align: center; padding: 0 16px; }
   .datum { margin: 0; font-size: 15px; font-weight: 600; color: var(--accent); }
@@ -61,30 +61,6 @@
   .lampa { animation: blinka 3s ease-in-out infinite; }
   @keyframes blinka { 50% { opacity: .55; } }
 
-  .rad {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(18px + env(safe-area-inset-bottom));
-    width: min(442px, calc(100% - 32px));
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    background: var(--kort);
-    border-radius: 999px;
-    padding: 12px 20px;
-    box-shadow: 0 4px 0 rgba(0,0,0,.25);
-    color: var(--text);
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 600;
-  }
-  .rad:hover { color: var(--text); }
-  .rad .oppna { font-size: 15px; font-weight: 700; color: var(--gron); white-space: nowrap; }
-  .rad[aria-disabled="true"] { cursor: default; }
-  .rad[aria-disabled="true"] .oppna { color: var(--dampad); }
-
   .utv { text-align: center; font-size: 13px; color: var(--himmel-dampad); margin: 8px 16px 0; }
   .utv button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 
@@ -103,7 +79,6 @@
   <svg id="kalender" viewBox="0 0 390 620" role="list" aria-label="Luckor 1 till 24"></svg>
   <p class="utv" id="utv" hidden>Byggläge: alla luckor är öppna. <button type="button" id="nollstall">Vänd tillbaka granarna</button></p>
 </div>
-<a class="rad" id="rad" href="#"><span id="radtext"></span><span class="oppna" id="radknapp">Öppna</span></a>
 
 <script src="js/gemensam.js"></script>
 <script>
@@ -208,7 +183,6 @@
       g.gunga.classList.remove('ruska');
       void g.gunga.getBoundingClientRect();
       g.gunga.classList.add('ruska');
-      visaRad(n);
       return;
     }
     var redanOppnad = oppnade.indexOf(n) !== -1;
@@ -222,34 +196,6 @@
     setTimeout(function () { ritaGran(n); }, 300);
     setTimeout(function () { location.href = dit; }, 750);
   }
-
-  // Raden längst ner: dagens lucka, eller den man senast tryckte på.
-  var rad = document.getElementById('rad');
-  function visaRad(n) {
-    var l = window.LUCKOR[n];
-    var radtext = document.getElementById('radtext');
-    var knapp = document.getElementById('radknapp');
-    if (n === null) {
-      radtext.textContent = 'Tryck på en gran';
-      knapp.textContent = '';
-      rad.removeAttribute('href');
-      rad.setAttribute('aria-disabled', 'true');
-      return;
-    }
-    radtext.textContent = 'Lucka ' + n + ': ' + (l ? l.titel : 'kommer snart');
-    if (l && arOppningsbar(n)) {
-      knapp.textContent = 'Öppna';
-      rad.href = adress(n);
-      rad.removeAttribute('aria-disabled');
-      rad.onclick = function (e) { klick(n, e); };
-    } else {
-      knapp.textContent = l ? 'Inte än' : 'Snart';
-      rad.removeAttribute('href');
-      rad.setAttribute('aria-disabled', 'true');
-      rad.onclick = null;
-    }
-  }
-  visaRad(idag !== null ? idag : (window.ALLA_OPPNA ? 1 : null));
 
   if (window.ALLA_OPPNA) {
     document.getElementById('utv').hidden = false;
