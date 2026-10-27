@@ -20,17 +20,17 @@ body { overscroll-behavior: none; }
 button { font-family: inherit; color: inherit; cursor: pointer; }
 .app { display: flex; flex-direction: column; min-height: 100dvh; padding-bottom: max(40px, env(safe-area-inset-bottom)); }
 .app.spelar { height: 100dvh; min-height: 0; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
-h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
-.under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+.under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
 .app.spelar .under { margin-bottom: 10px; }
 .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font: 600 13px var(--text-typsnitt); vertical-align: middle; }
 
 /* Startkortet */
 .intro-kort { text-align: center; display: flex; flex-direction: column; gap: 12px; }
-.intro-kort .storlek { font: 700 22px var(--rubrik-typsnitt); }
+.intro-kort .storlek { font: 600 24px var(--text-typsnitt); }
 .intro-kort .rad { margin-top: -6px; font-size: 16px; color: var(--dampad); }
 .granser { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
-.grans { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 18px; }
+.grans { display: flex; align-items: center; gap: 6px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .grans .medalj { width: auto; font-size: 20px; }
 .basta { font-size: 16px; color: var(--gron-mork); font-weight: 600; }
 .basta:empty { display: none; }
@@ -45,8 +45,8 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
 .spel { display: none; flex: 1; flex-direction: column; min-height: 0; }
 .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
 .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
-.matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
-.matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+.matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+.matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
 .matare .varning b { color: var(--glod); }
 .matare .kritisk b { color: #FF8A7A; animation: puls 1s ease-in-out infinite; }
 /* Tidsstapeln krymper: grön, gul de sista 30 sekunderna, röd de sista 10. */
@@ -79,7 +79,7 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
   width: var(--cs); height: var(--cs);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--text-typsnitt);
-  font-weight: 700;
+  font-weight: 600;
   font-size: calc(var(--cs) * 0.62);
   line-height: 1;
   background: var(--ruta);
@@ -101,18 +101,18 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
 .kontroller { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
 .kontroller button {
   border: 0; background: var(--kort); color: var(--text); border-radius: 14px; box-shadow: 0 3px 0 rgba(0,0,0,.25);
-  height: 48px; min-width: 48px; font-size: 22px; font-weight: 700;
+  height: 48px; min-width: 48px; font-size: 22px; font-weight: 600;
 }
 .kontroller button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.25); }
-.kontroller .tips { flex: 1; font-size: 13px; line-height: 1.25; color: var(--himmel-dampad); text-align: center; }
+.kontroller .tips { flex: 1; font-size: 14px; line-height: 1.25; color: var(--himmel-dampad); text-align: center; }
 .c.trycks { filter: brightness(1.12); transform: scale(0.92); transition: transform .3s; }
 
 /* Resultatet efter en runda, som i de andra spelen */
 .slut { text-align: center; }
-.slut h2 { margin: 0 0 4px; font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); }
+.slut h2 { margin: 0 0 4px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); }
 .slut p { margin: 4px 0; }
-.slut .info { color: var(--dampad); font-size: 15px; }
+.slut .info { color: var(--dampad); font-size: 14px; }
 .slut .info:empty { display: none; }
 .slut .rekord { font-weight: 600; color: var(--gron-mork); }
 .slut .rekord:empty { display: none; }
