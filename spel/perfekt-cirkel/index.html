@@ -7,17 +7,17 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=3">
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
 <style>
-  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
-  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
-  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
 
   .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
   .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
-  .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
-  .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
-  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
   .tips.fel { color: #FF8A7A; }
 
   /* Ritytan: kvadratisk, pricken i mitten. Poängen visas mitt i när man släppt. */
@@ -49,16 +49,16 @@
     text-shadow: 0 2px 8px rgba(0,0,0,.5);
     animation: tona .35s ease-out;
   }
-  .betyg b { display: block; font: 700 15cqw/1 var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .betyg b { display: block; font: 600 15cqw/1 var(--text-typsnitt); font-variant-numeric: tabular-nums; }
   .betyg span { display: block; margin-top: 4px; font-size: 4.6cqw; font-weight: 600; }
   @keyframes tona { from { opacity: 0; transform: translateY(-50%) scale(.9); } to { opacity: 1; transform: translateY(-50%) scale(1); } }
   @media (prefers-reduced-motion: reduce) { .betyg { animation: none; } }
 
   .slut { margin-bottom: 16px; text-align: center; }
-  .slut h2 { margin: 0 0 4px; font-size: 20px; }
-  .slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); }
   .slut p { margin: 4px 0; }
-  .slut .info { color: var(--dampad); font-size: 15px; }
+  .slut .info { color: var(--dampad); font-size: 14px; }
 
   .regler { margin-top: 16px; }
   .regler h2 { margin: 0 0 6px; font-size: 18px; }
@@ -67,7 +67,7 @@
   .knappar { display: grid; gap: 12px; margin: 16px 0; }
   .knappar.nasta { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); margin-top: 0; }
   .knappar.nasta .knapp { padding: 10px 8px; line-height: 1.2; }
-  .knappar.nasta small { display: block; font-size: 13px; font-weight: 500; opacity: .85; }
+  .knappar.nasta small { display: block; font-size: 14px; font-weight: 400; opacity: .85; }
   .tavla { margin-bottom: 16px; }
 </style>
 </head>
@@ -379,7 +379,7 @@
     var m = medalj(s.basta);
     $('slutPoang').textContent = procent(s.basta);
     $('slutText').textContent = omdome(s.basta) + ' ' +
-      (m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : 'Ingen medalj den här gången.');
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
   }
 
   // ===== Ritande med finger eller mus =====
