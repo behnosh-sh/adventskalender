@@ -209,8 +209,12 @@ const SEK_PER_MINA = 0.4;  // extra tid för att tänka/flagga
 const SILVER_FAKTOR = 1.3;
 const BRONS_FAKTOR = 1.7;
 const GRANS_FAKTOR = 2.4;  // tidsgräns jämfört med guld
+const MINSTA_GRANS = 300;  // men alltid minst 5 minuter, så att alla hinner
 
-// Dagliga varianter: bredd (max 16 för stående mobil), höjd och mindensitet.
+// Dagens bana är alltid en lättare bana, så att hela familjen kan klara den.
+const DAGENS_PROFIL = { namn: "Lätt", b: [9, 10], h: [12, 14], d: [0.13, 0.14] };
+
+// Övningsbanor: bredd (max 16 för stående mobil), höjd och mindensitet.
 const PROFILER = [
   { namn: "Lätt",      b: [9, 11],  h: [12, 16], d: [0.14, 0.16] },
   { namn: "Mellan",    b: [12, 14], h: [16, 22], d: [0.17, 0.19] },
@@ -353,9 +357,9 @@ function berakna3BV(W, H, siffror, start) {
   return Math.max(1, bv - 1);
 }
 
-function skapaBana(froText) {
+function skapaBana(froText, profil) {
   const rng = rngFran(froText);
-  const p = PROFILER[Math.floor(rng() * PROFILER.length)];
+  const p = profil || PROFILER[Math.floor(rng() * PROFILER.length)];
   const W = heltal(rng, p.b[0], p.b[1]);
   const H = heltal(rng, p.h[0], p.h[1]);
   const d = p.d[0] + rng() * (p.d[1] - p.d[0]);
@@ -384,7 +388,7 @@ function skapaBana(froText) {
   senast.guld = guld;
   senast.silver = Math.round(guld * SILVER_FAKTOR);
   senast.brons = Math.round(guld * BRONS_FAKTOR);
-  senast.grans = Math.round(guld * GRANS_FAKTOR);
+  senast.grans = Math.max(MINSTA_GRANS, Math.round(guld * GRANS_FAKTOR));
   return senast;
 }
 
@@ -395,7 +399,9 @@ let dag = parseInt(params.get("dag"), 10);
 if (!(dag >= 1 && dag <= 24)) dag = 1;
 const dagensFro = froForDag(dag);
 try { if (window.Advent && Advent.markeraOppnad) Advent.markeraOppnad(dag); } catch (e) {}
-const lagringsNyckel = "minesweeper-basta:" + dagensFro;
+// Banversionen ingår i nycklarna, så att sparade tider från en äldre (svårare) bana glöms.
+const BANVERSION = "latt";
+const lagringsNyckel = "minesweeper-basta:" + BANVERSION + ":" + dagensFro;
 
 const lasBasta = () => { try { const v = parseFloat(localStorage.getItem(lagringsNyckel)); return isFinite(v) ? v : null; } catch (e) { return null; } };
 const sparaBasta = t => { try { localStorage.setItem(lagringsNyckel, String(t)); } catch (e) {} };
@@ -410,7 +416,7 @@ function medaljFor(t, b) {
 const MEDALJ_NAMN = { guld: "Guld", silver: "Silver", brons: "Brons" };
 const MEDALJ_EMOJI = { guld: "🥇", silver: "🥈", brons: "🥉" };
 
-const dagens = skapaBana(dagensFro);
+const dagens = skapaBana(dagensFro, DAGENS_PROFIL);
 
 // ===== Gemensam resultattavla =====
 // Det första klarade försöket på dagens bana sparas och skickas till tavlan (js/resultat.js).
@@ -418,8 +424,8 @@ const dagens = skapaBana(dagensFro);
 const R = window.Advent && Advent.Resultat;
 const lasa = (k, std) => (window.Advent ? Advent.lasa(k, std) : std);
 const spara = (k, v) => { if (window.Advent) Advent.spara(k, v); };
-const forstaNyckel = "minesweeper-forsta:" + dagensFro;
-const forsokNyckel = "minesweeper-forsok:" + dagensFro;
+const forstaNyckel = "minesweeper-forsta:" + BANVERSION + ":" + dagensFro;
+const forsokNyckel = "minesweeper-forsok:" + BANVERSION + ":" + dagensFro;
 let tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
 let skickar = false;
 
