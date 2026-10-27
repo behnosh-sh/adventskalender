@@ -98,13 +98,33 @@ body::before {
   padding: 6px 0;
 }
 
+/* Sektioner ligger direkt på himlen, åtskilda av tunna linjer ("Natthimmel").
+   Inuti en sektion pekar kortfärgerna om till himmelsfärgerna, så att spelens egna
+   regler med var(--text), var(--dampad) och var(--kant) fungerar utan ändring. */
 .kort {
-  background: var(--kort);
-  border-radius: 20px;
-  padding: 16px 18px;
-  color: var(--text);
-  box-shadow: 0 4px 0 rgba(0,0,0,.25);
+  --text: var(--himmel-text);
+  --dampad: var(--himmel-dampad);
+  --kant: rgba(255,255,255,.14);
+  --kort: rgba(255,255,255,.08);
+  --gron: var(--accent);
+  --gron-mork: var(--accent-hover);
+  --fel: #FFB4A6;
+  background: none;
+  color: var(--himmel-text);
+  padding: 18px 0;
+  border-top: 1px solid rgba(255,255,255,.14);
 }
+.kort a:not(.knapp) { color: var(--accent); }
+.kort a:not(.knapp):hover { color: var(--accent-hover); }
+
+/* "Så spelar du": en rad man trycker på för att öppna. */
+details.regler { padding: 0; border-bottom: 1px solid rgba(255,255,255,.14); }
+details.regler > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 14px 2px; }
+details.regler > summary::-webkit-details-marker { display: none; }
+details.regler > summary h2 { margin: 0; font-family: var(--text-typsnitt); font-size: 17px; font-weight: 600; }
+details.regler > summary::after { content: ""; width: 9px; height: 9px; margin-right: 4px; border-right: 2px solid var(--himmel-dampad); border-bottom: 2px solid var(--himmel-dampad); transform: rotate(45deg) translateY(-3px); transition: transform .2s; }
+details.regler[open] > summary::after { transform: rotate(-135deg) translateY(-3px); }
+details.regler[open] { padding-bottom: 14px; }
 
 .knapp {
   display: block;
@@ -114,29 +134,50 @@ body::before {
   padding: 14px 18px;
   font: 600 17px var(--text-typsnitt);
   color: #fff;
-  background: var(--gron);
-  box-shadow: 0 4px 0 var(--gron-mork);
+  background: #3E8A5E;
+  box-shadow: 0 4px 0 #2C6A46;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
 }
 .knapp:hover { color: #fff; filter: brightness(1.08); }
-.knapp:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--gron-mork); }
+.knapp:active { transform: translateY(2px); box-shadow: 0 2px 0 #2C6A46; }
+.knapp:disabled { opacity: .45; cursor: default; filter: none; }
+/* Andrahandsknapp: tunn kant, ingen fyllning. */
 .knapp.ljus {
-  color: var(--text);
-  background: var(--kort);
-  box-shadow: 0 4px 0 rgba(0,0,0,.25);
+  color: var(--himmel-text);
+  background: none;
+  border: 1.5px solid rgba(255,255,255,.3);
+  box-shadow: none;
+  padding: 12.5px 18px;
 }
-.knapp.ljus:hover { color: var(--text); }
-.knapp.ljus:active { box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.knapp.ljus:hover { color: var(--himmel-text); border-color: rgba(255,255,255,.55); }
+.knapp.ljus:active { transform: none; box-shadow: none; }
+/* Öva, ge upp och liknande: ser ut som en länk. */
+.knapp.diskret {
+  display: block;
+  width: auto;
+  margin: 0 auto;
+  padding: 8px 4px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--himmel-dampad);
+  font-weight: 500;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.knapp.diskret:hover { color: var(--himmel-text); filter: none; }
+.knapp.diskret:active { transform: none; box-shadow: none; }
 .knapp.gul {
-  color: var(--text);
+  color: #2F4A3A;
   background: var(--glod);
   box-shadow: 0 4px 0 #D9AE3C;
 }
-.knapp.gul:hover { color: var(--text); }
+.knapp.gul:hover { color: #2F4A3A; }
 
-.knapp:focus-visible, a:focus-visible, button:focus-visible {
+.knapp:focus-visible, a:focus-visible, button:focus-visible, summary:focus-visible {
   outline: 3px solid var(--glod);
   outline-offset: 3px;
 }
@@ -146,29 +187,21 @@ body::before {
 .tavla-lista { list-style: none; margin: 0; padding: 0; }
 .tavla-rad { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--kant); font-size: 17px; }
 .tavla-rad:first-child { border-top: 0; }
-.tavla-rad .plats { width: 18px; font-weight: 700; color: var(--dampad); }
+.tavla-rad .plats { display: none; }
 .tavla-rad .vem { flex: 1 0 auto; white-space: nowrap; }
 .tavla-rad .hur { flex: 0 1 auto; min-width: 0; font-weight: 600; text-align: right; }
 .tavla-rad.jag .vem { font-weight: 700; }
 .tavla-rad.vantar { color: var(--dampad); }
 .tavla-rad.vantar .hur { font-weight: 500; font-size: 15px; }
-.medalj { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
-.medalj.guld { background: #F2C230; color: #5A4200; }
-.medalj.silver { background: #C9CED3; color: #3A4148; }
-.medalj.brons { background: #D49A6A; color: #4A2A10; }
-.medalj.ingen { background: var(--oppnad); }
-.medalj.tom { border: 2px dashed var(--kant); }
-.tavla-antal { margin: 4px 0 2px; font-size: 17px; text-align: center; }
-.tavla-info { margin: 4px 0; font-size: 15px; color: var(--dampad); text-align: center; }
-.tavla-fel { margin: 6px 0 0; font-size: 15px; color: var(--fel, #A23B2A); text-align: center; min-height: 1em; }
+.medalj { flex: none; width: 24px; text-align: center; font-size: 19px; line-height: 1; }
+.tavla-antal { margin: 0; font-size: 15px; color: var(--dampad); }
+.tavla-info { margin: 0; font-size: 15px; color: var(--dampad); }
+.tavla-fel { margin: 6px 0 0; font-size: 15px; color: #FFB4A6; min-height: 1em; }
 .tavla-fel:empty { display: none; }
-.tavla-prickar { display: flex; justify-content: center; gap: 8px; margin: 10px 0 4px; }
-.tavla-prickar span { width: 26px; height: 26px; border-radius: 50%; border: 2px dashed var(--kant); }
-.tavla-prickar span.pa { background: var(--gran-1); border-color: var(--gran-1); }
 .tavla-kod { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: end; margin-top: 8px; }
 .tavla-kod label { grid-column: 1 / -1; font-weight: 600; }
-.tavla-kod input { font: inherit; font-size: 20px; font-weight: 600; letter-spacing: .2em; padding: 10px 12px; border: 2px solid var(--kant); border-radius: 14px; background: var(--kort); color: var(--text); min-width: 0; }
+.tavla-kod input { font: inherit; font-size: 20px; font-weight: 600; letter-spacing: .2em; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--kort); color: var(--text); min-width: 0; }
 .tavla-kod .knapp { width: auto; padding: 12px 20px; }
-.tavla-vem { margin: 12px 0 0; font-size: 13px; color: var(--dampad); text-align: center; }
-.lanklik { font: inherit; color: var(--gron); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+.tavla-vem { margin: 12px 0 0; font-size: 13px; color: var(--himmel-dampad); text-align: center; }
+.lanklik { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 .tavla-lista.utan-medalj .medalj { display: none; }

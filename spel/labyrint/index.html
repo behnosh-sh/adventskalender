@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   :root { --guld: #F2C230; --silver: #C9CED3; --brons: #D49A6A; }
   h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
@@ -109,8 +109,8 @@
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Dra med fingret var som helst på banan (eller använd piltangenterna). Pepparkaksgubben går åt samma håll, men inte genom väggar.</li>
       <li>Hitta fram till julklappen. Det är mörkt, så du ser bara närmast runt dig. Gångar du redan har gått i syns svagt.</li>
@@ -119,17 +119,17 @@
       <li>Alla får samma labyrinter. Lägst tid vinner. Medaljgränserna står ovanför banan.</li>
     </ol>
     <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan mitt på en bana.</p>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Öva (nya slumpade labyrinter)</button>
+    <button class="knapp diskret" id="igen" type="button">Öva (nya slumpade labyrinter)</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens labyrinter</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
 <script src="../../js/luckor.js?v=5"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   // Banornas storlek, kolumner × rader (stående mobil).

@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
   .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
@@ -159,8 +159,8 @@
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Svep åt något håll (eller använd piltangenterna). Alla brickor glider dit.</li>
       <li>Två brickor med samma tal slås ihop till en, och du får talet som poäng.</li>
@@ -168,17 +168,17 @@
       <li>Alla får samma nya brickor i samma ordning. Högst poäng vinner, vid lika vinner största brickan. Guld från 4 000, silver från 2 800, brons från 1 800.</li>
     </ol>
     <p class="liten">Bara ditt första försök på dagens bräde räknas. Klockan går även om du stänger sidan.</p>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Spela igen (nytt slumpat bräde)</button>
+    <button class="knapp diskret" id="igen" type="button">Spela igen (nytt slumpat bräde)</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bräde</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
 <script src="../../js/luckor.js?v=5"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   var STORLEK = 4;

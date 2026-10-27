@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14233F">
 <title>Minesweeper – Adventskalender</title>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
 /* Spelets egna färger. Allt annat (himmel, typsnitt, kort, knappar) kommer från gemensam.css. */
 :root {
@@ -134,7 +134,7 @@ h1 { margin: 2px 0 8px; font-size: 28px; line-height: 1.1; text-align: center; }
 .r-rekord { font-weight: 600; color: var(--accent); }
 .r-rekord:empty, .r-skickat:empty { display: none; }
 .r-rutor { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; margin-top: 4px; }
-.r-rutor .kort { padding: 10px 6px; border-radius: 16px; }
+.r-rutor .kort { padding: 10px 6px; border-radius: 16px; border-top: 0; background: rgba(255,255,255,.07); }
 .r-rutor span { display: block; font-size: 13px; color: var(--dampad); }
 .r-rutor b { display: block; margin-top: 2px; font-size: 18px; }
 .r-tavla { width: 100%; text-align: left; }
@@ -161,10 +161,13 @@ h1 { margin: 2px 0 8px; font-size: 28px; line-height: 1.1; text-align: center; }
       <div class="granser" id="i-medaljer"></div>
       <div class="basta" id="i-basta"></div>
       <button class="knapp" id="startknapp">Starta dagens bana</button>
-      <button class="knapp ljus" id="ovningsknapp">Spela igen (ny slumpad bana)</button>
-      <button class="knapp ljus" id="i-gavupp" hidden>Jag ger upp, visa resultaten</button>
+      <button class="knapp diskret" id="ovningsknapp">Spela igen (ny slumpad bana)</button>
+      <button class="knapp diskret" id="i-gavupp" hidden>Jag ger upp, visa resultaten</button>
+    </div>
+    <details class="regler kort">
+      <summary><h2>Så spelar du</h2></summary>
       <div class="hjalp">
-        <b>Så spelar du:</b> Banan startar med ett öppet område vid ★.<br>
+        Banan startar med ett öppet område vid ★.<br>
         <b>Tryck på en grön ruta</b> för att gräva.<br>
         <b>Håll inne</b> (eller högerklicka) på en grön ruta för att sätta en flagga.<br>
         <b>Tryck på en flagga</b> för att ta bort den.<br>
@@ -172,7 +175,7 @@ h1 { margin: 2px 0 8px; font-size: 28px; line-height: 1.1; text-align: center; }
         Banan går alltid att lösa utan att gissa. Dra för att flytta, + och − för att zooma.<br>
         Ditt första klarade försök på dagens bana skickas till tavlan.
       </div>
-    </div>
+    </details>
     <div id="i-tavlaplats"></div>
   </div>
 
@@ -220,7 +223,7 @@ h1 { margin: 2px 0 8px; font-size: 28px; line-height: 1.1; text-align: center; }
         <button class="knapp ljus" id="r-ovning">Ny slumpad bana</button>
         <button class="knapp ljus" id="r-tillbaka">Till luckan</button>
       </div>
-      <button class="knapp ljus" id="r-gavupp" hidden>Jag ger upp, visa resultaten</button>
+      <button class="knapp diskret" id="r-gavupp" hidden>Jag ger upp, visa resultaten</button>
       <a class="tillbaka" href="../../">← Till kalendern</a>
     </div>
   </section>
@@ -230,7 +233,7 @@ h1 { margin: 2px 0 8px; font-size: 28px; line-height: 1.1; text-align: center; }
 
 <script src="../../js/gemensam.js?v=2"></script>
 <script src="../../js/luckor.js?v=5"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 // ===== Inställningar =====
 // Fröet för varje dag hämtas från den gemensamma koden (js/gemensam.js, Advent.froForDag),

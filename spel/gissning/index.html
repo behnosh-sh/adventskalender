@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   :root {
     --zon-0: #5FAF7E;
@@ -139,13 +139,13 @@
   </div>
 
   <div class="knappar" id="gavuppRuta" hidden>
-    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
   </div>
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Gissa ett tal på varje fråga. Ingen tidsgräns, men inget googlande!</li>
       <li>Efter varje gissning får du se rätt svar och hur nära du kom, från grönt till rött.</li>
@@ -153,17 +153,17 @@
       <li>Varje fråga ger 0–100 poäng och poängen visas på slutet. Högst totalt vinner. Guld från 400, silver från 330, brons från 250.</li>
     </ol>
     <p class="liten">Bara ditt första försök på dagens frågor räknas.</p>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Öva med fem andra frågor</button>
+    <button class="knapp diskret" id="igen" type="button">Öva med fem andra frågor</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens frågor</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
 <script src="../../js/luckor.js?v=5"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   // Varje fråga är [fråga, rätt svar, enhet, "visste du"]. Svaret är alltid ett positivt tal.
