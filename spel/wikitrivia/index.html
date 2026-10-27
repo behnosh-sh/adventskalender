@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
   .under { margin: 0 0 16px; color: var(--accent); font-weight: 600; }
@@ -55,26 +55,26 @@
     <p class="last" id="last"></p>
     <p class="fel" id="skickafel"></p>
     <button class="knapp" id="skickaknapp" type="button" disabled>Skicka till familjen</button>
-    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
     <p class="liten">Bara ditt första resultat räknas.</p>
   </div>
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Tryck <b>Spela</b>. Dagens Wikitrivia öppnas (på engelska, inget konto behövs). Alla får samma kort i dag.</li>
       <li>Dra varje nytt kort till rätt plats på tidslinjen. Fel plats kostar ett av tre liv.</li>
       <li>När spelet är slut trycker du <b>Share</b>, kommer tillbaka hit och klistrar in texten.</li>
     </ol>
     <p class="liten">Flest rätt lagda kort vinner, lika poäng ger delad plats.<br>Medaljer: guld minst 20, silver minst 12, brons minst 6.<br>Wikitrivia byter kort klockan 01 svensk tid, så spela inte mellan 00 och 01.</p>
-  </div>
+  </details>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
 <script src="../../js/luckor.js?v=5"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };

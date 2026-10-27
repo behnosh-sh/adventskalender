@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   :root {
     --ratt: #5FAF7E;
@@ -124,13 +124,13 @@
   </div>
 
   <div class="knappar" id="gavuppRuta" hidden>
-    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
   </div>
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Du får fem serier, en i taget: tal, bokstäver eller figurer. Den sista är en ruta med 3×3 figurer där den nedre högra saknas.</li>
       <li>Hitta mönstret och tryck på det av de fyra alternativen som kommer härnäst. Du har ett försök per serie.</li>
@@ -138,17 +138,17 @@
       <li>Flest rätt vinner. Vid lika antal rätt vinner den som var snabbast. Guld för 5 rätt, silver för 4, brons för 3.</li>
     </ol>
     <p class="liten">Bara ditt första försök på dagens serier räknas.</p>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Öva med fem andra serier</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens serier</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
 <script src="../../js/luckor.js?v=5"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   // Varje serie är [nivå 1–5, typ, serie, alternativ, förklaring]. Första alternativet är det rätta.

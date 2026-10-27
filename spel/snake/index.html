@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
   .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
@@ -108,8 +108,8 @@
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Svep på spelplanen för att svänga (eller använd piltangenterna). Du kan hålla fingret kvar och svepa vidare åt nya håll.</li>
       <li>Ät julgranskulorna. Ormen blir en bit längre och lite snabbare för varje kula.</li>
@@ -118,17 +118,17 @@
       <li>Guld från längd 40, silver från 28, brons från 18.</li>
     </ol>
     <p class="liten">Klockan startar när du sveper första gången. Laddar du om sidan mitt i ett försök räknas försöket som slut.</p>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Öva (räknas inte)</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens orm</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
 <script src="../../js/luckor.js?v=5"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   var STORLEK = 15;
