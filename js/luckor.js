@@ -16,6 +16,7 @@ window.LUCKOR = {
   12: { titel: 'Labyrinten', sokvag: 'spel/labyrint/' },
   13: { titel: 'Nerdle', sokvag: 'spel/nerdle/' },
   14: { titel: 'Femtonspel', sokvag: 'spel/femton/' },
+  15: { titel: 'Zoombilden', sokvag: 'spel/zoombild/' },
   19: { titel: 'TimeGuessr', sokvag: 'spel/timeguessr/', lagreArBattre: false }
 };
 
