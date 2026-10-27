@@ -3,7 +3,9 @@
 //   <script src="../../js/resultat.js"></script>
 //
 // Ett spel gör så här:
-//   Advent.Resultat.tavla(elem, dag, { vidStatus: function (d) { ... } })  visar kodruta, låst tavla eller dagens tavla
+//   Advent.Resultat.tavla(elem, dag, { vidStatus: function (d) { ... }, sparNyckel })  visar kodruta, låst tavla eller dagens tavla
+//     sparNyckel (valfri, sträng eller lista): där spelet sparar dagens omgång med skickad: true. Har resultatet
+//     tagits bort ur arket töms de nycklarna och sidan laddas om, så att man kan spela om.
 //   Advent.Resultat.skicka({ dag, spel, status: 'klar' | 'gav upp', varde, medalj, text })  skickar och uppdaterar tavlan
 // varde är talet som tavlan sorteras på (t.ex. sekunder). text är det som visas, t.ex. "1:42" eller "5 klick · 1:12".
 // Om lägre eller högre är bättre står i js/luckor.js (lagreArBattre, standard true).
@@ -163,7 +165,19 @@
     });
   }
 
+  // Telefonen säger att dagens resultat är skickat men tavlan säger att man inte har spelat:
+  // raden har tagits bort ur arket. Då töms spelets sparade omgång och sidan laddas om.
+  function borttaget(m, dagdata) {
+    if (!m.sparNycklar.length || !dagdata || dagdata.harSpelat) return false;
+    var skickat = m.sparNycklar.some(function (k) { var v = Advent.lasa(k, null); return v && v.skickad; });
+    if (!skickat) return false;
+    m.sparNycklar.forEach(function (k) { Advent.spara(k, null); });
+    location.reload();
+    return true;
+  }
+
   function rita(m, svar) {
+    if (borttaget(m, svar.dag)) return;
     var ruta = m.innehall;
     ruta.textContent = '';
     if (svar.dag.harSpelat) {
@@ -212,7 +226,8 @@
     elem.appendChild(el('h2', null, 'Dagens tavla'));
     var innehall = el('div');
     elem.appendChild(innehall);
-    var m = { dag: dag, innehall: innehall, vidStatus: val && val.vidStatus };
+    var nycklar = val && val.sparNyckel;
+    var m = { dag: dag, innehall: innehall, vidStatus: val && val.vidStatus, sparNycklar: nycklar ? [].concat(nycklar) : [] };
     monterade.push(m);
     ladda(m);
     return m;

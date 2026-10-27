@@ -489,7 +489,7 @@ function uppdateraTavlaKnappar() {
 }
 
 if (R) {
-  R.tavla($("tavla"), dag, { vidStatus: d => { tavlaStatus = d; forsokSkicka(); } });
+  R.tavla($("tavla"), dag, { vidStatus: d => { tavlaStatus = d; forsokSkicka(); }, sparNyckel: forstaNyckel });
 } else {
   $("tavla").hidden = true;
 }
