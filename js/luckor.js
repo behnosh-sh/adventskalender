@@ -15,6 +15,7 @@ window.LUCKOR = {
   11: { titel: 'Wikitrivia', sokvag: 'spel/wikitrivia/', lagreArBattre: false },
   12: { titel: 'Labyrinten', sokvag: 'spel/labyrint/' },
   13: { titel: 'Nerdle', sokvag: 'spel/nerdle/' },
+  14: { titel: 'Femtonspel', sokvag: 'spel/femton/' },
   19: { titel: 'TimeGuessr', sokvag: 'spel/timeguessr/', lagreArBattre: false }
 };
 
