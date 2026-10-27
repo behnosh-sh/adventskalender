@@ -507,6 +507,7 @@
   });
 
   // ===== Resultattavlan =====
+  var dagensS = Advent.lasa(sparNyckel, null) || nyttTillstand();
   var R = Advent.Resultat;
   var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
   var skickar = false;
@@ -533,11 +534,18 @@
       .then(function () { skickar = false; });
   }
 
-  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); } });
+  R.tavla($('tavla'), dag, { vidStatus: function (d) {
+    tavlaStatus = d;
+    // Skickat men inte längre på tavlan: resultatet har tagits bort ur arket, så dagens cirkel börjar om.
+    if (d && !d.harSpelat && dagensS.skickad) {
+      dagensS = nyttTillstand();
+      Advent.spara(sparNyckel, null);
+      if (!ovning) visa(false);
+    }
+    forsokSkicka();
+  } });
 
   // ===== Visa dagens eller övning =====
-  var dagensS = Advent.lasa(sparNyckel, null) || nyttTillstand();
-
   function visa(arOvning) {
     ovning = arOvning;
     ritar = null;
