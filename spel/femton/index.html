@@ -90,7 +90,6 @@
     .helbild, .slutlager { animation: none; }
   }
 
-  .forhand { display: block; width: 33%; max-width: 140px; margin: 0 auto 16px; border-radius: 8px; opacity: .9; }
 
   .slut { margin-bottom: 16px; text-align: center; }
   .slut h2 { margin: 0 0 4px; font-size: 18px; }
@@ -119,7 +118,6 @@
   <p class="tips" id="tips" aria-live="polite"></p>
 
   <div class="brade" id="brade" role="application" aria-label="Spelbräde. Tryck på en bricka bredvid det tomma hålet, eller använd piltangenterna."></div>
-  <img class="forhand" id="forhand" src="tomte.jpg" alt="Så ska bilden se ut: Jenny Nyströms tomte med julbock vid fönstret.">
 
   <div class="slut kort" id="slut" hidden>
     <h2 id="slutRubrik"></h2>
@@ -257,7 +255,6 @@
       lager.appendChild(el('b', null, 'Du gav upp'));
       brade.appendChild(lager);
     }
-    $('forhand').hidden = s.slut === 'klar';
     ritaMatare();
   }
 
