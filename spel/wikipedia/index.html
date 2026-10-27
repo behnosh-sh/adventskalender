@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
   .under { margin: 0 0 16px; color: var(--accent); font-weight: 600; }
@@ -76,30 +76,30 @@
     <p class="last" id="last"></p>
     <p class="fel" id="skickafel"></p>
     <button class="knapp" id="skickaknapp" type="button" disabled>Skicka till familjen</button>
-    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
     <p class="liten">Bara ditt första resultat räknas.</p>
   </div>
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Tryck <b>Spela</b>. Spelet öppnas hos Wikispeedruns (på engelska, inget konto behövs).</li>
       <li>Ta dig från start till mål genom att bara klicka på länkar i artiklarna. Klick och tid räknas automatiskt.</li>
       <li>När du är framme trycker du <b>Share Run Summary</b>, kommer tillbaka hit och klistrar in resultatet.</li>
     </ol>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Öva på en annan bana</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bana</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
-<script src="../../js/luckor.js?v=4"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/luckor.js?v=5"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   // Handplockade par på engelska Wikipedia som går att klara på några minuter.

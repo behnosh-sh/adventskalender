@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14233F">
 <title>Minesweeper – Adventskalender</title>
-<link rel="stylesheet" href="../../css/gemensam.css?v=3">
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
 <style>
 /* Minfältets egna färger bygger på de gemensamma (gemensam.css). */
 :root {
@@ -31,7 +31,7 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
 .intro-kort .rad { margin-top: -6px; font-size: 16px; color: var(--dampad); }
 .granser { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
 .grans { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 18px; }
-.grans .medalj { width: 22px; height: 22px; font-size: 11px; }
+.grans .medalj { width: auto; font-size: 20px; }
 .basta { font-size: 16px; color: var(--gron-mork); font-weight: 600; }
 .basta:empty { display: none; }
 .tavla { margin-top: 16px; }
@@ -135,10 +135,10 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
     </div>
     <div id="i-tavlaplats"></div>
     <div class="knappar" id="i-gavupp-rad" hidden>
-      <button class="knapp ljus" id="i-gavupp">Jag ger upp, visa resultaten</button>
+      <button class="knapp diskret" id="i-gavupp">Jag ger upp, visa resultaten</button>
     </div>
-    <div class="regler kort">
-      <h2>Så spelar du</h2>
+    <details class="regler kort">
+      <summary><h2>Så spelar du</h2></summary>
       <ol>
         <li>Banan startar med ett öppet område vid ★. Den går alltid att lösa utan att gissa.</li>
         <li>Tryck på en grön ruta för att gräva. Håll inne (eller högerklicka) för att sätta en flagga, och tryck på flaggan för att ta bort den.</li>
@@ -147,9 +147,9 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
         <li>Snabbast vinner. Guld, silver och brons räknas ut från hur stor och svår dagens bana är.</li>
       </ol>
       <p class="info">Bara ditt första klarade försök på dagens bana räknas på tavlan.</p>
-    </div>
+    </details>
     <div class="knappar">
-      <button class="knapp ljus" id="ovningsknapp">Spela igen (ny slumpad bana)</button>
+      <button class="knapp diskret" id="ovningsknapp">Öva</button>
     </div>
   </div>
 
@@ -183,9 +183,9 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
     <div id="r-tavlaplats"></div>
     <div class="knappar">
       <button class="knapp" id="r-igen">Försök igen</button>
-      <button class="knapp ljus" id="r-ovning">Spela igen (ny slumpad bana)</button>
       <button class="knapp ljus" id="r-tillbaka">Till luckan</button>
-      <button class="knapp ljus" id="r-gavupp" hidden>Jag ger upp, visa resultaten</button>
+      <button class="knapp diskret" id="r-ovning">Öva</button>
+      <button class="knapp diskret" id="r-gavupp" hidden>Jag ger upp, visa resultaten</button>
     </div>
   </section>
 
@@ -193,8 +193,8 @@ h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
-<script src="../../js/luckor.js?v=4"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/luckor.js?v=5"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 // ===== Inställningar =====
 // Fröet för varje dag hämtas från den gemensamma koden (js/gemensam.js, Advent.froForDag),
@@ -408,6 +408,7 @@ function medaljFor(t, b) {
   return null;
 }
 const MEDALJ_NAMN = { guld: "Guld", silver: "Silver", brons: "Brons" };
+const MEDALJ_EMOJI = { guld: "🥇", silver: "🥈", brons: "🥉" };
 
 const dagens = skapaBana(dagensFro);
 
@@ -475,7 +476,7 @@ function visaIntro() {
   $("i-storlek").textContent = `${dagens.W} × ${dagens.H} · ${dagens.antal} minor`;
   $("i-grans").textContent = `${dagens.typ} · Tidsgräns ${dagens.grans} s`;
   $("i-medaljer").innerHTML = ["guld", "silver", "brons"].map(m =>
-    `<span class="grans"><span class="medalj ${m}" aria-label="${MEDALJ_NAMN[m]}">${MEDALJ_NAMN[m][0]}</span>${dagens[m]} s</span>`).join("");
+    `<span class="grans"><span class="medalj ${m}" aria-label="${MEDALJ_NAMN[m]}">${MEDALJ_EMOJI[m]}</span>${dagens[m]} s</span>`).join("");
   const b = lasBasta();
   if (b != null) {
     const m = medaljFor(b, dagens);
@@ -660,7 +661,7 @@ function visaResultat(vann, orsak, t) {
   if (vann) {
     const m = medaljFor(t, b);
     medaljEl.hidden = !m;
-    if (m) { medaljEl.className = "medalj " + m; medaljEl.textContent = MEDALJ_NAMN[m][0]; }
+    if (m) { medaljEl.className = "medalj " + m; medaljEl.textContent = MEDALJ_EMOJI[m]; }
     $("r-rubrik").textContent = m ? MEDALJ_NAMN[m] + "!" : "Klart, men ingen medalj";
     $("r-poang").textContent = fmt(t) + " s";
     const grans =

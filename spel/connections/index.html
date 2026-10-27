@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   :root {
     --grupp-0: #F6D66B;
@@ -113,13 +113,13 @@
   </div>
 
   <div class="knappar" id="gavuppRuta" hidden>
-    <button class="knapp ljus" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
   </div>
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Hitta fyra grupper med fyra ord som hör ihop. Markera fyra ord och tryck <b>Gissa</b>.</li>
       <li>Se upp för ord som verkar passa i flera grupper. Bara en lösning går ihop.</li>
@@ -127,17 +127,17 @@
       <li>Färre misstag vinner, och tiden avgör vid lika. Guld vid 0 misstag, silver vid 1, brons vid 2–3.</li>
     </ol>
     <p class="liten">Bara ditt första försök på dagens rutnät räknas.</p>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Öva på ett annat rutnät</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens rutnät</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
-<script src="../../js/luckor.js?v=4"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/luckor.js?v=5"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   // Varje rutnät är fyra grupper [kategori, [fyra ord]], från lättast (gul) till svårast (lila).

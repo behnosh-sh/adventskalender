@@ -15,7 +15,7 @@
 
   var KOD_NYCKEL = 'advent-kod';
   var NAMN_NYCKEL = 'advent-namn';
-  var MEDALJ_BOKSTAV = { guld: 'G', silver: 'S', brons: 'B' };
+  var MEDALJ_EMOJI = { guld: '🥇', silver: '🥈', brons: '🥉' };
   var MEDALJ_NAMN = { guld: 'Guld', silver: 'Silver', brons: 'Brons' };
 
   var monterade = [];
@@ -98,7 +98,7 @@
   }
 
   function medaljBricka(medalj) {
-    var b = el('span', 'medalj' + (medalj ? ' ' + medalj : ' ingen'), MEDALJ_BOKSTAV[medalj] || '');
+    var b = el('span', 'medalj' + (medalj ? ' ' + medalj : ' ingen'), MEDALJ_EMOJI[medalj] || '');
     if (medalj) b.setAttribute('aria-label', MEDALJ_NAMN[medalj]);
     else b.setAttribute('aria-hidden', 'true');
     return b;
@@ -113,21 +113,16 @@
     rader.forEach(function (r) {
       var rad = el('li', 'tavla-rad' + (r.spelare === jag ? ' jag' : '') + (r.status === 'ej' ? ' vantar' : ''));
       rad.appendChild(el('span', 'plats', r.plats ? String(r.plats) : ''));
-      rad.appendChild(r.status === 'ej' ? el('span', 'medalj tom') : medaljBricka(r.status === 'klar' ? r.medalj : ''));
+      rad.appendChild(r.status === 'ej' ? el('span', 'medalj') : medaljBricka(r.status === 'klar' ? r.medalj : ''));
       rad.appendChild(el('span', 'vem', r.spelare));
-      rad.appendChild(el('span', 'hur', r.status === 'ej' ? 'har inte spelat än' : r.status === 'klar' ? r.text : 'gav upp'));
+      rad.appendChild(el('span', 'hur', r.status === 'ej' ? 'inte än' : r.status === 'klar' ? r.text : 'gav upp'));
       lista.appendChild(rad);
     });
   }
 
   function ritaLast(ruta, dagdata, spelare) {
     var totalt = (spelare || []).length || 4;
-    ruta.appendChild(el('p', 'tavla-antal', dagdata.antal + ' av ' + totalt + ' har spelat'));
-    ruta.appendChild(el('p', 'tavla-info', 'Skicka ditt resultat för att se de andras.'));
-    var prickar = el('div', 'tavla-prickar');
-    prickar.setAttribute('aria-hidden', 'true');
-    for (var i = 0; i < totalt; i++) prickar.appendChild(el('span', i < dagdata.antal ? 'pa' : ''));
-    ruta.appendChild(prickar);
+    ruta.appendChild(el('p', 'tavla-info', dagdata.antal + ' av ' + totalt + ' har spelat. Skicka ditt resultat för att se de andras.'));
   }
 
   function ritaKodruta(m) {
@@ -187,13 +182,7 @@
     } else {
       ritaLast(ruta, svar.dag, svar.spelare);
     }
-    var vem = el('p', 'tavla-vem');
-    vem.appendChild(document.createTextNode('Du är ' + svar.namn + '. '));
-    var byt = el('button', 'lanklik', 'Byt person');
-    byt.type = 'button';
-    byt.addEventListener('click', function () { glomKod(); ladda(m); });
-    vem.appendChild(byt);
-    ruta.appendChild(vem);
+    // Vem man är och "Byt person" finns på resultatsidan.
     if (m.vidStatus) m.vidStatus(svar.dag, svar);
   }
 
@@ -244,6 +233,7 @@
     skicka: skicka,
     tavla: tavla,
     ritaRader: ritaRader,
+    ordna: ordna,
     medaljBricka: medaljBricka
   };
 })();

@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=2">
+<link rel="stylesheet" href="../../css/gemensam.css?v=3">
 <style>
   h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
   .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
@@ -103,8 +103,8 @@
 
   <section id="tavla"></section>
 
-  <div class="regler kort">
-    <h2>Så spelar du</h2>
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Rita en cirkel runt pricken i ett enda drag, med fingret eller musen. Strecket är grönt där det är runt och blir gult och rött där det slirar.</li>
       <li>När du har ritat ett helt varv räknas cirkeln. Du får procent efter hur rund den är och hur bra den ligger runt pricken.</li>
@@ -112,17 +112,17 @@
       <li>Högst procent vinner. Guld från 95 %, silver från 90 %, brons från 80 %. Guld blir en julgranskula.</li>
     </ol>
     <p class="liten">Ritar du bara en liten bit, eller en för liten cirkel, räknas det inte som ett försök. Släpper du mitt i en cirkel räknas den, men du förlorar procent för biten som fattas.</p>
-  </div>
+  </details>
 
   <div class="knappar">
-    <button class="knapp ljus" id="igen" type="button">Öva (räknas inte)</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens cirkel</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
-<script src="../../js/luckor.js?v=4"></script>
-<script src="../../js/resultat.js?v=2"></script>
+<script src="../../js/luckor.js?v=5"></script>
+<script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
   var FORSOK = 3;
