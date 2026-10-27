@@ -155,14 +155,29 @@
   // Nivå 1 tal, 2 figurer i rad, 3 bokstäver, 4 svårare tal, 5 en 3×3-ruta.
   // typ 'text' visar strängarna som de är. 'figur' och 'matris' ritar figurkoder (se ritaFigur).
 
-  // Exempel som får visas. Används som övning och som dagens serier innan tävlingen börjar.
+  // Exempel och övningsserier som får visas. Används som övning och som dagens serier innan tävlingen börjar.
   var TESTSET = [
     [1, 'text', ['2', '6', '12', '20', '30'], ['42', '40', '44', '36'], 'Skillnaden ökar med 2 varje gång: +4, +6, +8, +10 och sedan +12.'],
+    [1, 'text', ['5', '10', '20', '40', '80'], ['160', '120', '100', '140'], 'Dubbelt så mycket varje gång: 80 · 2 = 160.'],
+    [1, 'text', ['1', '3', '6', '10', '15'], ['21', '20', '18', '25'], 'Det ökar med 2, 3, 4, 5 och sedan 6.'],
+    [1, 'text', ['64', '32', '16', '8', '4'], ['2', '0', '1', '3'], 'Hälften varje gång.'],
+    [1, 'text', ['1', '2', '4', '7', '11'], ['16', '15', '14', '18'], 'Det ökar med 1, 2, 3, 4 och sedan 5.'],
     [2, 'figur', ['P@0', 'P@45', 'P@90', 'P@135'], ['P@180', 'P@0', 'P@225', 'P@90'], 'Pilen vrids ett åttondels varv medurs varje gång.'],
-    [3, 'text', ['J', 'F', 'M', 'A', 'M', 'J'], ['J', 'A', 'S', 'O'], 'Månadernas första bokstav: januari, februari, mars, april, maj, juni och sedan juli.'],
-    [4, 'text', ['1', '1', '2', '3', '5', '8'], ['13', '11', '12', '16'], 'Varje tal är summan av de två före: 5 + 8 = 13.'],
-    [5, 'matris', ['Cfx1', 'Cfx2', 'Cfx3', 'Ttx1', 'Ttx2', 'Ttx3', 'Ktx1', 'Ktx2'], ['Ktx3', 'Kfx3', 'Ttx3', 'Ktx2'], 'Varje rad har sin egen form, och varje kolumn har sitt eget antal: 1, 2, 3.'],
-    [5, 'matris', ['G100000000', 'G000010000', 'G100010000', 'G001000000', 'G000000100', 'G001000100', 'G000000001', 'G010000000'], ['G010000001', 'G010000000', 'G011000001', 'G000000001'], 'I varje rad är tredje rutan de två första lagda på varandra.']
+    [2, 'figur', ['Kt', 'Kh', 'Kf', 'Kt', 'Kh'], ['Kf', 'Kt', 'Kh', 'Cf'], 'Kvadraten går tom, halvfylld, fylld och börjar sedan om.'],
+    [2, 'figur', ['Tfx1', 'Tfx2', 'Tfx3', 'Tfx2', 'Tfx1'], ['Tfx2', 'Tfx1', 'Tfx3', 'Tfx4'], 'Antalet går upp till tre och ner till ett, fram och tillbaka.'],
+    [2, 'figur', ['G100000000', 'G010000000', 'G001000000', 'G000100000', 'G000010000'], ['G000001000', 'G000000100', 'G000010000', 'G100000000'], 'Den fyllda rutan går som när man läser: vänster till höger, rad för rad.'],
+    [2, 'figur', ['P@0', 'P@90', 'P@180', 'P@270'], ['P@0', 'P@90', 'P@45', 'P@315'], 'Pilen vrids ett kvarts varv medurs varje gång och är tillbaka där den började.'],
+    [3, 'text', ['T', 'F', 'S', 'Å', 'T', 'T'], ['F', 'T', 'S', 'E'], 'De jämna talen: två, fyra, sex, åtta, tio, tolv och sedan fjorton.'],
+    [3, 'text', ['N', 'U', 'S', 'J', 'M'], ['J', 'V', 'M', 'S'], 'Planeterna utifrån och in: Neptunus, Uranus, Saturnus, Jupiter, Mars och sedan Jorden.'],
+    [3, 'text', ['A', 'B', 'D', 'G', 'K'], ['P', 'O', 'Q', 'N'], 'Stegen i alfabetet blir längre: 1, 2, 3, 4 och sedan 5 bokstäver fram. K plus 5 är P.'],
+    [3, 'text', ['R', 'O', 'G', 'G', 'B', 'I'], ['V', 'L', 'R', 'S'], 'Regnbågens färger: röd, orange, gul, grön, blå, indigo och sedan violett.'],
+    [4, 'text', ['1', '2', '3', '6', '11', '20'], ['37', '31', '40', '34'], 'Varje tal är summan av de tre före: 6 + 11 + 20 = 37.'],
+    [4, 'text', ['1', '4', '9', '61', '52', '63'], ['94', '64', '49', '72'], 'Kvadrattalen skrivna baklänges: 16 blir 61, 25 blir 52, 36 blir 63 och 49 blir 94.'],
+    [4, 'text', ['8', '6', '9', '7', '10', '8'], ['11', '6', '9', '12'], 'Minus 2 och plus 3, om vartannat: 8 + 3 = 11.'],
+    [4, 'text', ['2', '5', '11', '23', '47'], ['95', '94', '71', '96'], 'Gånger 2 plus 1: 47 · 2 + 1 = 95.'],
+    [5, 'matris', ['G111100000', 'G110110000', 'G110100000', 'G011011001', 'G001111001', 'G001011001', 'G100110110', 'G110010011'], ['G100010010', 'G110110111', 'G010100101', 'G100110110'], 'Tredje rutan visar bara de rutor som är fyllda i båda de två första.'],
+    [5, 'matris', ['P@0x1', 'P@90x2', 'P@180x3', 'P@90x2', 'P@180x3', 'P@270x1', 'P@180x3', 'P@270x1'], ['P@0x2', 'P@0x3', 'P@90x2', 'P@270x2'], 'Pilarna vrids ett kvarts varv medurs för varje steg åt höger, och antalet går 1, 2, 3 runt. Efter 270 grader kommer 0 (uppåt), och efter 1 kommer 2.'],
+    [5, 'matris', ['Cf Tf', 'Tf Kf', 'Cf Kf', 'Kt Ct', 'Ct Tt', 'Kt Tt', 'Th Kh', 'Kh Ch'], ['Th Ch', 'Tt Ct', 'Th Kh', 'Kh Ch'], 'Formen som finns i båda de två första rutorna försvinner, och de andra två blir kvar i tredje rutan.']
   ];
 
   // Tävlingsserierna, förvrängda så att ingen ser dem av misstag.
@@ -187,41 +202,44 @@
     '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
-    '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' +
-    'N0Ys3PK1ZUPDWaSrB3+asoQd/2m3br+Swx334Pg=';
+    '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' +
+    'P134rWZBy1XXBNn6jLPJDOJoNiE=';
 
   // Dagar med Mönsterdagen. Varje dag får en serie per nivå ur poolen, vald med dagens frö.
   var TAVLINGSDAGAR = [7];
