@@ -27,6 +27,11 @@
   --snore: #8A6A55;
   --glod: #FFD66B;
 
+  /* Medaljer. */
+  --guld: #F2C230;
+  --silver: #C9CED3;
+  --brons: #D49A6A;
+
   --rubrik-typsnitt: Fraunces, Georgia, serif;
   --text-typsnitt: "Work Sans", system-ui, sans-serif;
 }
@@ -153,9 +158,9 @@ body::before {
 .tavla-rad.vantar { color: var(--dampad); }
 .tavla-rad.vantar .hur { font-weight: 500; font-size: 15px; }
 .medalj { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
-.medalj.guld { background: #F2C230; color: #5A4200; }
-.medalj.silver { background: #C9CED3; color: #3A4148; }
-.medalj.brons { background: #D49A6A; color: #4A2A10; }
+.medalj.guld { background: var(--guld); color: #5A4200; }
+.medalj.silver { background: var(--silver); color: #3A4148; }
+.medalj.brons { background: var(--brons); color: #4A2A10; }
 .medalj.ingen { background: var(--oppnad); }
 .medalj.tom { border: 2px dashed var(--kant); }
 .tavla-antal { margin: 4px 0 2px; font-size: 17px; text-align: center; }
