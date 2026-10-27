@@ -17,7 +17,14 @@
   .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
   .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
   .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
-  .matare .bradskande b { color: var(--glod); }
+  .matare .varning b { color: var(--glod); }
+  .matare .kritisk b { color: #FF8A7A; animation: puls 1s ease-in-out infinite; }
+
+  /* Tidsstapeln krymper hela tiden: grön, gul de sista 30 sekunderna, röd de sista 10. */
+  .tidsstapel { max-width: 440px; height: 10px; margin: 0 auto 12px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .tidsstapel div { height: 100%; width: 100%; border-radius: 999px; background: var(--gran-1); transition: width .25s linear, background-color .3s; }
+  .tidsstapel.varning div { background: var(--glod); }
+  .tidsstapel.kritisk div { background: #E0675A; }
   .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
 
   /* Brädet: rutorna ligger i ett rutnät, brickorna flyttas ovanpå med left/top. */
@@ -65,9 +72,18 @@
   .bricka.ihop { z-index: 2; animation: pop .14s ease-out 50ms backwards; }
   @keyframes fram { from { transform: scale(0); } to { transform: scale(1); } }
   @keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  /* Brädets kant glöder gult de sista 30 sekunderna och pulserar rött de sista 10. Brickorna påverkas inte. */
+  .brade { transition: box-shadow .3s; }
+  .brade.varning { box-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 0 3px var(--glod), 0 0 18px 4px rgba(255,214,107,.45); }
+  .brade.kritisk { box-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 0 4px #E0675A, 0 0 22px 6px rgba(224,103,90,.6); animation: kantpuls 1s ease-in-out infinite; }
+  @keyframes kantpuls {
+    50% { box-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 0 4px #FF8A7A, 0 0 30px 10px rgba(255,138,122,.75); }
+  }
+  @keyframes puls { 50% { opacity: .55; } }
   @media (prefers-reduced-motion: reduce) {
     .bricka { transition: none; }
     .bricka.ny, .bricka.ihop { animation: none; }
+    .brade.kritisk, .matare .kritisk b { animation: none; }
   }
 
   /* Brickornas färger: från snö via granar och lampor till guld. */
@@ -129,6 +145,7 @@
   </div>
   <p class="tips" id="tips" aria-live="polite"></p>
 
+  <div class="tidsstapel" id="tidsstapel" aria-hidden="true"><div id="tidsfyllning"></div></div>
   <div class="brade" id="brade" role="application" aria-label="Spelbräde. Svep eller använd piltangenterna."></div>
 
   <div class="slut kort" id="slut" hidden>
@@ -350,7 +367,14 @@
     $('storsta').textContent = tal(storsta());
     var kvar = tidKvar();
     $('tid').textContent = Advent.formateraTid(Math.ceil(kvar / 1000));
-    $('tidRuta').classList.toggle('bradskande', !!s.start && !s.slut && kvar <= 30000);
+    var igang = !!s.start && !s.slut;
+    var varning = igang && kvar <= 30000 && kvar > 10000;
+    var kritisk = igang && kvar <= 10000;
+    [$('tidRuta'), $('tidsstapel'), brade].forEach(function (e) {
+      e.classList.toggle('varning', varning);
+      e.classList.toggle('kritisk', kritisk);
+    });
+    $('tidsfyllning').style.width = (100 * kvar / SPELTID) + '%';
     $('tips').textContent = s.slut ? '' : s.start ? '' : 'Svep för att börja. Klockan startar då.';
   }
 
