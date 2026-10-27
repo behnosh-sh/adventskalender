@@ -139,8 +139,25 @@
       { fil: 't6.jpg', fokus: [0.46, 0.3], svar: 'Stjärnenatten (van Gogh)', godkant: ['stjärnenatt', 'stjärnenatten', 'van gogh', 'vangogh', 'starry night', 'målning', 'tavla', 'natthimmel'] }
     ] }
   ];
-  // Tävlingsomgångar läggs till förvrängda innan 1 december, en per tävlingsdag.
-  var TAVLING = {};
+  // Tävlingsomgången, förvrängd så att ingen ser svaren av misstag. Bilder från Wikimedia Commons.
+  var FORVRANGT =
+    'SGSIvi5/gK8RbPrjEWeHtzWRai6WthIzyAey1g3ynzPjGNRVw84urb2HsHCjgZLGfODBzw7q5TPVWxnr11pYlUcMCcZaOfi+xyWN' +
+    'JRbxolFrfWr2pP+CJxWgN0Q1vCkFpIe2jVJ/dGaYTPtoLv4Wzh9k7xUgDAvwWQzApe5MQoDptnrktTwPjbDAcAIGRD+hf5UKAEWX' +
+    'Pb9lGqX19WLwLUzuDRcKszaxf33/NryvmoqFm/R5wyfwu6LOiyLPipfvwxArlFEBHSUNYtwiZkboTimaizRCi9ftKms2yX0Q2u7W' +
+    'XQp4kORT4Ax2AWJWdHHHSMOh0E6/QNipI0TjxPjEzgon1UfNvocIoobrBTMsI0CSyCl71+eyfE2cNVZncrGzuSudsGq83Ud7R5sr' +
+    '+k4n/30aN/bR8MkfD97CW3LsuS9VAlLrtDeJ/QY/Vr5TM19foFG6GYOC2XsHkx1l6+Ww+sTwH1NOEJbtzCf5PdVAZCBOJMpMy3xn' +
+    'NIsCRCWMM+GWHWuFUxIYYQsH/ovy+z21z+q0YCSD5aQ5FxbauzFl5QxFmQsXJiF2NqpC16oEQevXWBNlhzgGUlE0jhZ/2g4vjK4Z' +
+    'GacOjxtp4L3kagsDgmLXYX01UfXFoZT8FCUtQGfAHR4wLRYM7iSXwynMMp9C9IEg3Rw+6mleY6rtI6Zs2BMy/RzveG0dMIPYg9XT' +
+    'x90NgMMQjN9rpORdSCNmLQLNe7EP7i6AC1ZS8ynazGgfhJk7OQRXtQljMWIv6rq+wYE6VN46ocFHtzHmgmKzXv6G6rDE6AZsgkeQ' +
+    'AKKrEmsfKwtePt3OwnTfDooCCpwwOT3jNHkMScJPPycl505b8GD898uwq5e7lVeQOIk0hx6v6dMSS5Q789KQWnmzHypamwO5kkHO' +
+    '8TyLyiLhPJOUcERxWSXLSeEudsld4b1+RW3GzdWNoRRHJje6fuUg5heeLZoYFs/Vt43wWMChiUNJJb3EtjpJ';
+  function avvrang(text) {
+    var bin = atob(text), slump = Advent.skapaSlump('zoombild-forvrangning');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  var TAVLING = { 15: avvrang(FORVRANGT) };
 
   var $ = function (id) { return document.getElementById(id); };
   var dag = Advent.hamtaDag() || 15;
@@ -288,6 +305,8 @@
     k.appendChild(el('span', null, 'Gemensamt: ' + omg.koppling[0]));
     k.appendChild(el('b', null, s.koppling ? '−' + BONUS : '0'));
     facit.appendChild(k);
+    var kallor = omg.bilder.filter(function (b) { return b.kalla; }).map(function (b) { return b.kalla; });
+    if (kallor.length) facit.appendChild(el('p', 'liten', 'Foto via Wikimedia Commons: ' + kallor.join(' · ')));
   }
 
   // ===== Drag =====
