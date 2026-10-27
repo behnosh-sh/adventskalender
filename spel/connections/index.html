@@ -525,7 +525,7 @@
       .then(uppdateraGavUpp, function (fel) { alert(fel.message); });
   });
 
-  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); uppdateraGavUpp(); } });
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); uppdateraGavUpp(); }, sparNyckel: sparNyckel });
 
   // ===== Visa ett rutnät =====
   function visa(id, arOvning) {

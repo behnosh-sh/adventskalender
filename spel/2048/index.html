@@ -491,7 +491,7 @@
       .then(function () { skickar = false; });
   }
 
-  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); } });
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
 
   // ===== Visa en omgång =====
   function visa(arOvning) {

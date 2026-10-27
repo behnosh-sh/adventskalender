@@ -534,16 +534,7 @@
       .then(function () { skickar = false; });
   }
 
-  R.tavla($('tavla'), dag, { vidStatus: function (d) {
-    tavlaStatus = d;
-    // Skickat men inte längre på tavlan: resultatet har tagits bort ur arket, så dagens cirkel börjar om.
-    if (d && !d.harSpelat && dagensS.skickad) {
-      dagensS = nyttTillstand();
-      Advent.spara(sparNyckel, null);
-      if (!ovning) visa(false);
-    }
-    forsokSkicka();
-  } });
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
 
   // ===== Visa dagens eller övning =====
   function visa(arOvning) {
