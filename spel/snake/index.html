@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snake</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 28px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-weight: 600; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 13px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 12px; font-weight: 600; color: var(--himmel-dampad); text-transform: uppercase; letter-spacing: .06em; }
+  .matare b { display: block; font: 700 22px var(--rubrik-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 15px; }
+  .tips.varning { color: var(--glod); font-weight: 700; }
+  .tips.kritisk { color: #FF8A7A; font-weight: 700; }
+
+  /* Banan: kvadratisk canvas. Svep var som helst på den. */
+  .bana {
+    container-type: inline-size;
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 16px;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    background: #1C3156;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    transition: box-shadow .3s;
+  }
+  .bana canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .bana.varning { box-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 0 3px var(--glod), 0 0 18px 4px rgba(255,214,107,.45); }
+  .bana.kritisk { box-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 0 4px #E0675A, 0 0 22px 6px rgba(224,103,90,.6); }
+  .lager {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(20,35,63,.66);
+    color: var(--himmel-text);
+    text-align: center;
+    pointer-events: none;
+    animation: tona .35s ease-out;
+  }
+  .lager b { font: 700 9cqw var(--rubrik-typsnitt); }
+  .lager span { font-size: 5cqw; font-weight: 600; }
+  @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .lager { animation: none; } }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 20px; }
+  .slut .poang { margin: 0; font: 700 40px var(--rubrik-typsnitt); }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 15px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .knappar.nasta { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); margin-top: 0; }
+  .knappar.nasta .knapp { padding: 10px 8px; line-height: 1.2; }
+  .knappar.nasta small { display: block; font-size: 13px; font-weight: 500; opacity: .85; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Snake <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Längd</span><b id="langd">3</b></div>
+    <div><span>Tid kvar</span><b id="tid">2:00</b></div>
+    <div><span id="forsokEtikett">Försök</span><b id="forsok">1 av 3</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="bana" id="bana" role="application" aria-label="Spelplan. Svep eller använd piltangenterna för att styra ormen.">
+    <canvas id="duk"></canvas>
+  </div>
+
+  <div class="knappar nasta" id="nastaKnappar" hidden>
+    <button class="knapp" id="spelaIgen" type="button"></button>
+    <button class="knapp gul" id="nojd" type="button"></button>
+  </div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2>Dagens orm</h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <div class="regler kort">
+    <h2>Så spelar du</h2>
+    <ol>
+      <li>Svep på spelplanen för att svänga (eller använd piltangenterna). Du kan hålla fingret kvar och svepa vidare åt nya håll.</li>
+      <li>Ät julgranskulorna. Ormen blir en bit längre och lite snabbare för varje kula.</li>
+      <li>Kör du in i kanten eller i dig själv är försöket slut. Annars tar det slut efter 2 minuter.</li>
+      <li>Du har 3 försök och det längsta räknas. Alla får kulorna på samma ställen i samma ordning. Vid lika vinner den som var snabbast till sin längd.</li>
+      <li>Guld från längd 40, silver från 28, brons från 18.</li>
+    </ol>
+    <p class="liten">Klockan startar när du sveper första gången. Laddar du om sidan mitt i ett försök räknas försöket som slut.</p>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp ljus" id="igen" type="button">Öva (räknas inte)</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens orm</a></p>
+</main>
+
+<script src="../../js/gemensam.js"></script>
+<script src="../../js/luckor.js"></script>
+<script src="../../js/resultat.js"></script>
+<script>
+(function () {
+  var STORLEK = 15;
+  var SPELTID = 2 * 60 * 1000;
+  var FORSOK = 3;
+  var START_LANGD = 3;
+  var GULD = 40, SILVER = 28, BRONS = 18;
+  // Millisekunder per steg: börjar på 160 och blir 2,5 ms snabbare per kula, ner till 70.
+  function stegTid(langd) { return Math.max(70, 160 - 2.5 * (langd - START_LANGD)); }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 10;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-snake';
+
+  function medalj(l) { return l >= GULD ? 'guld' : l >= SILVER ? 'silver' : l >= BRONS ? 'brons' : ''; }
+  function tiondelar(ms) { return Math.round(ms / 100); }
+  function tidText(ms) {
+    var t = tiondelar(ms);
+    return Math.floor(t / 600) + ':' + ('0' + Math.floor(t / 10) % 60).slice(-2) + ',' + (t % 10);
+  }
+  // Längre är bättre, vid lika den som kom dit först.
+  function battre(a, b) { return !b || a.langd > b.langd || (a.langd === b.langd && a.tid < b.tid); }
+
+  // ===== Tillstånd =====
+  // Dagens försök sparas i telefonen. Ett försök som pågår när sidan laddas om räknas som slut.
+  var sparNyckel = 'snake:' + dag;
+  var s;          // { fro, forsok: [{ langd, tid, orsak }], basta, pagar: { langd, tid } | null, slut, skickad }
+  var ovning = false;
+  var ovningForsok = [], ovningBasta = null;
+
+  function nyttTillstand() { return { fro: dagensFro, forsok: [], basta: null, pagar: null, slut: false, skickad: false }; }
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  // Pågående runda (sparas inte, bara längd och tid i s.pagar).
+  var runda = null;   // { orm: [[x, y]] huvud först, riktning, ko: [], mat, slump, ata, tid, ackumulerat, igang, slut }
+  var RIKTNINGAR = { upp: [0, -1], ner: [0, 1], vanster: [-1, 0], hoger: [1, 0] };
+  var MOTSATT = { upp: 'ner', ner: 'upp', vanster: 'hoger', hoger: 'vanster' };
+
+  function nyRunda(fro) {
+    var y = Math.floor(STORLEK / 2);
+    runda = {
+      orm: [[4, y], [3, y], [2, y]],
+      riktning: 'hoger',
+      ko: [],
+      slump: Advent.skapaSlump(fro),
+      ata: 0,
+      tid: 0,
+      ackumulerat: 0,
+      igang: false,
+      slut: null,
+      tidVidSista: 0
+    };
+    runda.mat = nastaMat();
+  }
+
+  function upptagen(x, y) {
+    return runda.orm.some(function (d) { return d[0] === x && d[1] === y; });
+  }
+
+  // Kulorna kommer i samma ordning för alla: nästa slumpade ruta som ormen inte ligger på.
+  function nastaMat() {
+    if (runda.orm.length >= STORLEK * STORLEK) return null;
+    for (;;) {
+      var x = Math.floor(runda.slump() * STORLEK), y = Math.floor(runda.slump() * STORLEK);
+      if (!upptagen(x, y)) return [x, y];
+    }
+  }
+
+  function langd() { return runda ? runda.orm.length : START_LANGD; }
+
+  function steg() {
+    if (runda.ko.length) runda.riktning = runda.ko.shift();
+    var d = RIKTNINGAR[runda.riktning], huvud = runda.orm[0];
+    var nx = huvud[0] + d[0], ny = huvud[1] + d[1];
+    var ater = runda.mat && nx === runda.mat[0] && ny === runda.mat[1];
+    if (nx < 0 || ny < 0 || nx >= STORLEK || ny >= STORLEK) return krock('kant');
+    // Svansen flyttar sig samma steg, så den rutan är ledig om ormen inte äter.
+    var kropp = ater ? runda.orm : runda.orm.slice(0, -1);
+    for (var i = 0; i < kropp.length; i++) if (kropp[i][0] === nx && kropp[i][1] === ny) return krock('sig');
+    runda.orm.unshift([nx, ny]);
+    if (ater) {
+      runda.ata++;
+      runda.tidVidSista = runda.tid;
+      runda.mat = nastaMat();
+      if (!ovning) { s.pagar = { langd: langd(), tid: runda.tidVidSista }; sparaDagens(); }
+      if (!runda.mat) return krock('full');
+    } else {
+      runda.orm.pop();
+    }
+  }
+
+  function krock(orsak) {
+    runda.slut = orsak;
+    runda.krockPa = orsak === 'kant' || orsak === 'sig';
+    rundanSlut();
+  }
+
+  // ===== Spelloopen =====
+  // Varje runda har sin egen loop. En gammal loop som fortfarande har en bildruta på gång slutar direkt.
+  var forraTid = null, loopNr = 0;
+  function loop(nr, nu) {
+    if (nr !== loopNr || !runda || !runda.igang || runda.slut) return;
+    if (forraTid == null) forraTid = nu;
+    // Högst 100 ms per bildruta, så att en paus (annan flik) inte blir ett hopp.
+    var dt = Math.min(100, nu - forraTid);
+    forraTid = nu;
+    runda.tid += dt;
+    if (runda.tid >= SPELTID) {
+      runda.tid = SPELTID;
+      runda.slut = 'tid';
+      rundanSlut();
+      return;
+    }
+    runda.ackumulerat += dt;
+    var t = stegTid(langd());
+    while (runda.ackumulerat >= t && !runda.slut) {
+      runda.ackumulerat -= t;
+      steg();
+      t = stegTid(langd());
+    }
+    ritaOm();
+    ritaMatare();
+    if (!runda.slut) requestAnimationFrame(function (t) { loop(nr, t); });
+  }
+
+  function starta() {
+    runda.igang = true;
+    forraTid = null;
+    var nr = ++loopNr;
+    if (!ovning) { s.pagar = { langd: langd(), tid: 0 }; sparaDagens(); }
+    requestAnimationFrame(function (t) { loop(nr, t); });
+    standardTips();
+  }
+
+  // Går man till en annan flik stannar bildrutorna, och då står klockan också still.
+
+  function rundanSlut() {
+    var res = { langd: langd(), tid: runda.tidVidSista, orsak: runda.slut };
+    if (ovning) {
+      ovningForsok.push(res);
+      if (battre(res, ovningBasta)) ovningBasta = res;
+    } else {
+      s.pagar = null;
+      s.forsok.push(res);
+      if (battre(res, s.basta)) s.basta = res;
+      if (s.forsok.length >= FORSOK) s.slut = true;
+      sparaDagens();
+    }
+    ritaOm();
+    ritaLager();
+    ritaMatare();
+    standardTips();
+    if (!ovning && s.slut) avsluta();
+  }
+
+  function avsluta() {
+    s.slut = true;
+    s.pagar = null;
+    sparaDagens();
+    ritaMatare();
+    ritaLager();
+    standardTips();
+    ritaSlut();
+    forsokSkicka();
+  }
+
+  // ===== Styrning =====
+  function svang(r) {
+    if (!runda || runda.slut) return;
+    if (!ovning && s.slut) return;
+    var sista = runda.ko.length ? runda.ko[runda.ko.length - 1] : runda.riktning;
+    if (r === sista || r === MOTSATT[sista]) {
+      if (!runda.igang && r === 'hoger') starta();
+      return;
+    }
+    if (runda.ko.length < 2) runda.ko.push(r);
+    if (!runda.igang) starta();
+  }
+
+  var TANGENTER = {
+    ArrowLeft: 'vanster', ArrowRight: 'hoger', ArrowUp: 'upp', ArrowDown: 'ner',
+    a: 'vanster', d: 'hoger', w: 'upp', s: 'ner'
+  };
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    var r = TANGENTER[e.key];
+    if (!r) return;
+    e.preventDefault();
+    svang(r);
+  });
+
+  // Svep: svängen görs så fort fingret har rört sig 18 px. Sedan räknas nästa svep från där fingret är,
+  // så att man kan styra vidare utan att lyfta.
+  var bana = $('bana');
+  var nere = null;
+  bana.addEventListener('pointerdown', function (e) {
+    nere = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    try { bana.setPointerCapture(e.pointerId); } catch (fel) { /* ignorera */ }
+  });
+  bana.addEventListener('pointermove', function (e) {
+    if (!nere || e.pointerId !== nere.id) return;
+    var dx = e.clientX - nere.x, dy = e.clientY - nere.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+    nere.x = e.clientX;
+    nere.y = e.clientY;
+    if (Math.abs(dx) > Math.abs(dy)) svang(dx > 0 ? 'hoger' : 'vanster');
+    else svang(dy > 0 ? 'ner' : 'upp');
+  });
+  function slapp() { nere = null; }
+  bana.addEventListener('pointerup', slapp);
+  bana.addEventListener('pointercancel', slapp);
+  // Hindrar att sidan scrollar eller zoomar när man sveper (äldre Safari bryr sig inte om touch-action).
+  bana.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+  // ===== Ritning =====
+  var duk = $('duk'), ctx = duk.getContext('2d');
+  var bredd = 0;
+
+  function anpassaStorlek() {
+    var b = bana.clientWidth, pr = window.devicePixelRatio || 1;
+    if (b === bredd && duk.width === Math.round(b * pr)) return;
+    bredd = b;
+    duk.width = duk.height = Math.round(b * pr);
+    ctx.setTransform(pr, 0, 0, pr, 0, 0);
+    ritaOm();
+  }
+
+  function rundRekt(x, y, b, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + b, y, x + b, y + h, r);
+    ctx.arcTo(x + b, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + b, y, r);
+    ctx.closePath();
+  }
+
+  function ritaKula(x, y, ruta) {
+    var cx = (x + 0.5) * ruta, cy = (y + 0.55) * ruta, R = ruta * 0.36;
+    ctx.save();
+    ctx.shadowColor = 'rgba(242,122,122,.6)';
+    ctx.shadowBlur = ruta * 0.4;
+    var g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
+    g.addColorStop(0, '#F27A7A');
+    g.addColorStop(0.55, '#C8323A');
+    g.addColorStop(1, '#7E1A24');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#FFD66B';
+    ctx.fillRect(cx - R * 0.3, cy - R - R * 0.28, R * 0.6, R * 0.32);
+    ctx.fillStyle = 'rgba(255,255,255,.4)';
+    ctx.beginPath();
+    ctx.ellipse(cx - R * 0.38, cy - R * 0.4, R * 0.22, R * 0.12, -0.7, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  function ritaOm() {
+    if (!bredd || !runda) return;
+    var ruta = bredd / STORLEK;
+    ctx.clearRect(0, 0, bredd, bredd);
+    // Rutmönster, svagt.
+    ctx.fillStyle = 'rgba(255,255,255,.035)';
+    for (var y = 0; y < STORLEK; y++) {
+      for (var x = (y % 2); x < STORLEK; x += 2) ctx.fillRect(x * ruta, y * ruta, ruta, ruta);
+    }
+    if (runda.mat) ritaKula(runda.mat[0], runda.mat[1], ruta);
+
+    // Ormen: granfärgade bitar som blir ljusare mot svansen, huvudet mörkast med gul kant.
+    var n = runda.orm.length, glapp = ruta * 0.08;
+    for (var i = n - 1; i >= 0; i--) {
+      var d = runda.orm[i];
+      var t = n > 1 ? i / (n - 1) : 0;
+      var ljus = 42 + 20 * t;
+      ctx.fillStyle = i === 0 ? '#3E8A5E' : 'hsl(144, 38%, ' + ljus + '%)';
+      rundRekt(d[0] * ruta + glapp, d[1] * ruta + glapp, ruta - 2 * glapp, ruta - 2 * glapp, ruta * 0.28);
+      ctx.fill();
+      // Fyll glappet mot nästa bit så att ormen hänger ihop.
+      if (i > 0) {
+        var f = runda.orm[i - 1];
+        var mx = Math.min(d[0], f[0]), my = Math.min(d[1], f[1]);
+        if (d[0] !== f[0]) ctx.fillRect(mx * ruta + ruta - glapp * 2, my * ruta + glapp * 2, glapp * 4, ruta - glapp * 4);
+        else ctx.fillRect(mx * ruta + glapp * 2, my * ruta + ruta - glapp * 2, ruta - glapp * 4, glapp * 4);
+      }
+    }
+    var h = runda.orm[0];
+    ctx.strokeStyle = runda.krockPa ? '#FF8A7A' : '#FFD66B';
+    ctx.lineWidth = Math.max(2, ruta * 0.1);
+    rundRekt(h[0] * ruta + glapp, h[1] * ruta + glapp, ruta - 2 * glapp, ruta - 2 * glapp, ruta * 0.28);
+    ctx.stroke();
+  }
+
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  var SLUTRUBRIK = { kant: 'Krock i kanten!', sig: 'Du åt dig själv!', tid: 'Tiden är slut!', full: 'Hela planen full!', avbrutet: 'Försöket avbröts' };
+
+  function ritaLager() {
+    var lager = bana.querySelector('.lager');
+    if (lager) lager.remove();
+    if (!runda) return;
+    var visa = null;
+    if (runda.slut) visa = { rubrik: SLUTRUBRIK[runda.slut], text: 'Längd ' + langd() };
+    else if (!ovning && s.slut && s.basta) visa = { rubrik: 'Klart för i dag', text: 'Bästa längd ' + s.basta.langd };
+    if (!visa) return;
+    lager = el('div', 'lager');
+    lager.appendChild(el('b', null, visa.rubrik));
+    lager.appendChild(el('span', null, visa.text));
+    bana.appendChild(lager);
+  }
+
+  function ritaMatare() {
+    $('langd').textContent = String(runda ? langd() : START_LANGD);
+    var kvar = runda ? SPELTID - runda.tid : SPELTID;
+    $('tid').textContent = Advent.formateraTid(Math.ceil(kvar / 1000));
+    var igang = runda && runda.igang && !runda.slut;
+    var varning = igang && kvar <= 30000 && kvar > 10000, kritisk = igang && kvar <= 10000;
+    bana.classList.toggle('varning', varning);
+    bana.classList.toggle('kritisk', kritisk);
+    $('tid').style.color = kritisk ? '#FF8A7A' : varning ? '#FFD66B' : '';
+    if (ovning) {
+      $('forsokEtikett').textContent = 'Bästa';
+      $('forsok').textContent = ovningBasta ? String(ovningBasta.langd) : '–';
+    } else {
+      $('forsokEtikett').textContent = 'Försök';
+      $('forsok').textContent = s.slut ? 'Klar' : Math.min(s.forsok.length + (runda && runda.slut ? 0 : 1), FORSOK) + ' av ' + FORSOK;
+    }
+    // Efter ett försök: knappar för nästa försök eller att nöja sig.
+    var nasta = !!(runda && runda.slut) && (ovning || !s.slut);
+    $('nastaKnappar').hidden = !nasta;
+    knapptext($('spelaIgen'), 'Spela igen', ovning ? '' : 'försök ' + (s.forsok.length + 1) + ' av ' + FORSOK);
+    $('nojd').hidden = ovning;
+    knapptext($('nojd'), 'Skicka ' + (s.basta ? s.basta.langd : ''), 'och nöj dig');
+    if (varning || kritisk) tips((kritisk ? 'Bara ' : 'Snart slut, ') + Math.ceil(kvar / 1000) + ' sekunder kvar!', kritisk ? 'kritisk' : 'varning');
+    else if (igang && $('tips').className !== 'tips') standardTips();
+  }
+
+  function knapptext(knapp, text, under) {
+    knapp.textContent = text;
+    if (under) knapp.appendChild(el('small', null, under));
+  }
+
+  function tips(text, klass) {
+    $('tips').textContent = text;
+    $('tips').className = 'tips' + (klass ? ' ' + klass : '');
+  }
+
+  function standardTips() {
+    if (!runda) return tips('');
+    if (runda.igang && !runda.slut) return tips('');
+    if (runda.slut) {
+      if (ovning) return tips(ovningBasta ? 'Bästa hittills: längd ' + ovningBasta.langd + '.' : '');
+      if (s.slut) return tips('');
+      return tips('Bästa hittills: längd ' + s.basta.langd + '. Det längsta av ' + FORSOK + ' försök räknas.');
+    }
+    if (!ovning && s.slut) return tips('');
+    tips('Svep för att börja. Klockan startar då.');
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = ovning || !s.slut || !s.basta;
+    if (ovning || !s.slut || !s.basta) return;
+    var m = medalj(s.basta.langd);
+    $('slutPoang').textContent = 'Längd ' + s.basta.langd;
+    $('slutText').textContent = (s.basta.langd > START_LANGD ? 'Sista kulan efter ' + tidText(s.basta.tid) + '. ' : '') +
+      (m ? { guld: 'Guld!', silver: 'Silver!', brons: 'Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  $('spelaIgen').addEventListener('click', function () {
+    if (!ovning && s.slut) return;
+    nyRunda(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : s.fro);
+    ritaOm();
+    ritaLager();
+    ritaMatare();
+    standardTips();
+  });
+
+  $('nojd').addEventListener('click', function () {
+    if (ovning || s.slut || !s.forsok.length) return;
+    avsluta();
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Dagens bästa skickas när försöken är slut. Är man inte inloggad skickas den när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut || !dagens.basta) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var b = dagens.basta;
+    // Längden avgör, vid lika vinner den som åt sista kulan tidigast (tiondelar, högst 1 200).
+    var varde = b.langd * 10000 + (9999 - tiondelar(b.tid));
+    var text = b.langd > START_LANGD ? 'längd ' + b.langd + ' · ' + tidText(b.tid) : 'längd ' + b.langd;
+    R.skicka({ dag: dag, spel: 'snake', status: 'klar', varde: varde, medalj: medalj(b.langd), text: text })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa dagens eller övning =====
+  var dagensS = Advent.lasa(sparNyckel, null);
+  if (!dagensS || dagensS.fro !== dagensFro) dagensS = nyttTillstand();
+  // Ett försök som pågick när sidan stängdes räknas med den längd ormen hade då.
+  if (dagensS.pagar) {
+    var avbrutet = { langd: dagensS.pagar.langd, tid: dagensS.pagar.tid, orsak: 'avbrutet' };
+    dagensS.pagar = null;
+    dagensS.forsok.push(avbrutet);
+    if (battre(avbrutet, dagensS.basta)) dagensS.basta = avbrutet;
+    if (dagensS.forsok.length >= FORSOK) dagensS.slut = true;
+    Advent.spara(sparNyckel, dagensS);
+  }
+
+  function visa(arOvning) {
+    // Byter man till övning mitt i dagens försök räknas försöket som slut.
+    if (runda && runda.igang && !runda.slut) {
+      runda.slut = 'avbrutet';
+      rundanSlut();
+    }
+    ovning = arOvning;
+    s = dagensS;
+    $('under').textContent = ovning ? 'Övning, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('igen').hidden = ovning;
+    $('skickat').textContent = '';
+    nyRunda(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : s.fro);
+    ritaOm();
+    ritaLager();
+    ritaMatare();
+    standardTips();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  window.addEventListener('resize', anpassaStorlek);
+  visa(false);
+  anpassaStorlek();
+})();
+</script>
+</body>
+</html>
