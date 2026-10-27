@@ -27,6 +27,11 @@
   --snore: #8A6A55;
   --glod: #FFD66B;
 
+  /* Medaljer. */
+  --guld: #F2C230;
+  --silver: #C9CED3;
+  --brons: #D49A6A;
+
   --rubrik-typsnitt: Fraunces, Georgia, serif;
   --text-typsnitt: "Work Sans", system-ui, sans-serif;
 }
