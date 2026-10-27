@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TimeGuessr</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 16px; color: var(--accent); font-size: 14px; }
+
+  .jord { text-align: center; font-size: 72px; line-height: 1; margin: 8px 0 4px; }
+  .intro { margin: 0; text-align: center; line-height: 1.4; }
+
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .regler b { font-weight: 600; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+
+  .skicka { display: grid; gap: 10px; margin-bottom: 16px; }
+  .skicka h2 { margin: 0; font-size: 18px; }
+  .skicka label { font-weight: 600; }
+  .skicka textarea { font: inherit; font-size: 14px; color: var(--text); border: 2px solid var(--kant); border-radius: 14px; padding: 10px; background: var(--kort); resize: vertical; min-height: 110px; }
+  .skicka .last { margin: 0; font-size: 14px; color: var(--dampad); }
+  .skicka .last b { color: var(--text); }
+  .skicka .fel { margin: 0; font-size: 14px; color: var(--fel, #A23B2A); }
+  .skicka .fel:empty, .skicka .last:empty { display: none; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>TimeGuessr</h1>
+  <p class="under" id="under"></p>
+
+  <div class="kort">
+    <div class="jord" aria-hidden="true">🕰️</div>
+    <p class="intro">Fem bilder från historien. Gissa när och var varje bild togs. Flest poäng vinner.</p>
+  </div>
+
+  <div class="knappar">
+    <a class="knapp" id="spela" href="https://timeguessr.com/" target="_blank" rel="noopener">Spela</a>
+  </div>
+
+  <div class="skicka kort" id="skicka" hidden>
+    <h2>Ditt resultat</h2>
+    <label for="inklistrat">Klistra in texten från Share</label>
+    <textarea id="inklistrat" placeholder="TimeGuessr #1245 — 34,267/50,000&#10;&#10;1️⃣ 🏆6 639 · 📅 16y · 🌍 23.4km&#10;…"></textarea>
+    <p class="last" id="last"></p>
+    <p class="fel" id="skickafel"></p>
+    <button class="knapp" id="skickaknapp" type="button" disabled>Skicka till familjen</button>
+    <button class="knapp diskret" id="gavupp" type="button">Jag ger upp, visa resultaten</button>
+    <p class="liten">Bara ditt första resultat räknas.</p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Tryck <b>Spela</b> och välj <b>Daily</b>. Dagens fem bilder är samma för alla (inget konto behövs).</li>
+      <li>För varje bild gissar du årtal och sätter en nål på kartan. Ju närmare, desto fler poäng, högst 10 000 per bild.</li>
+      <li>När spelet är slut trycker du <b>Share</b>, kommer tillbaka hit och klistrar in texten.</li>
+    </ol>
+    <p class="liten">Flest poäng av 50 000 vinner, lika ger delad plats.<br>Medaljer: guld från 40 000, silver från 32 000, brons från 25 000.<br>TimeGuessr byter bilder vid midnatt brittisk tid (klockan 01 hos oss).</p>
+  </details>
+
+  <div class="knappar">
+    <a class="knapp diskret" href="https://timeguessr.com/" target="_blank" rel="noopener">Öva</a>
+  </div>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=7"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 19;
+  Advent.markeraOppnad(dag);
+  $('under').textContent = 'Lucka ' + dag;
+
+  function medalj(poang) {
+    if (poang >= 40000) return 'guld';
+    if (poang >= 32000) return 'silver';
+    if (poang >= 25000) return 'brons';
+    return '';
+  }
+
+  // TimeGuessrs dagliga spel är numrerade. Nr 1245 var 27 okt 2026 enligt Behnoshs delningstext.
+  // Spelet byter vid midnatt brittisk tid, så datumet räknas i Europe/London.
+  function dagensNummer() {
+    var d = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date()).split('-');
+    var idag = Date.UTC(+d[0], +d[1] - 1, +d[2]);
+    return 1245 + Math.round((idag - Date.UTC(2026, 9, 27)) / 86400000);
+  }
+
+  // Plockar ut poängen ur TimeGuessrs delningstext:
+  // "TimeGuessr #1245 — 34,267/50,000\n\n1️⃣ 🏆6 639 · 📅 16y · 🌍 23.4km\n…"
+  // Tusentalsavgränsaren kan vara komma, punkt eller mellanslag. Från iPhone kan texten komma URL-kodad.
+  function lasDelning(text) {
+    if (/%[0-9A-F]{2}/i.test(text)) {
+      try { text = decodeURIComponent(text.replace(/\+/g, ' ')); } catch (e) { /* inte URL-kodad ändå */ }
+    }
+    var rad = text.match(/TimeGuessr\s*#\s*(\d+)[^\d\n]*(\d[\d.,\s  ]*?)\s*\/\s*50[.,\s  ]?000/i);
+    if (!rad) return { fel: 'Det här ser inte ut att vara dagens TimeGuessr. Spela via knappen Spela och klistra in texten från Share.' };
+    var nr = +rad[1], idag = dagensNummer();
+    if (nr !== idag) return { fel: 'Texten är från TimeGuessr nr ' + nr + ', men dagens är nr ' + idag + '. Spela dagens TimeGuessr först.' };
+    var p = +rad[2].replace(/\D/g, '');
+    if (!(p >= 0 && p <= 50000)) return { fel: 'Poängen gick inte att läsa. Klistra in hela texten från Share.' };
+    return { poang: p, text: p.toLocaleString('sv-SE') + ' poäng' };
+  }
+
+  var lastResultat = null;
+  Advent.Resultat.tavla($('tavla'), dag, {
+    vidStatus: function (d) { $('skicka').hidden = !d || d.harSpelat; }
+  });
+
+  $('inklistrat').addEventListener('input', function () {
+    var t = $('inklistrat').value.trim();
+    $('skickafel').textContent = '';
+    $('last').textContent = '';
+    lastResultat = null;
+    if (t) {
+      var r = lasDelning(t);
+      if (r.fel) $('skickafel').textContent = r.fel;
+      else {
+        lastResultat = r;
+        $('last').textContent = 'Vi läste: ';
+        $('last').appendChild(document.createElement('b')).textContent = r.text;
+      }
+    }
+    $('skickaknapp').disabled = !lastResultat;
+  });
+
+  function skicka(resultat) {
+    $('skickaknapp').disabled = true;
+    $('gavupp').disabled = true;
+    $('skickafel').textContent = '';
+    Advent.Resultat.skicka(resultat).then(function () {
+      $('tavla').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, function (fel) {
+      $('skickafel').textContent = fel.message;
+      $('skickaknapp').disabled = !lastResultat;
+      $('gavupp').disabled = false;
+    });
+  }
+  $('skickaknapp').addEventListener('click', function () {
+    if (!lastResultat) return;
+    // Högst vinner (lagreArBattre: false i luckor.js).
+    skicka({
+      dag: dag, spel: 'timeguessr', status: 'klar',
+      medalj: medalj(lastResultat.poang),
+      varde: lastResultat.poang,
+      text: lastResultat.text
+    });
+  });
+  $('gavupp').addEventListener('click', function () {
+    if (!confirm('Ge upp? Då kan du inte skicka något resultat för den här luckan.')) return;
+    skicka({ dag: dag, spel: 'timeguessr', status: 'gav upp', medalj: '', text: '' });
+  });
+})();
+</script>
+</body>
+</html>
