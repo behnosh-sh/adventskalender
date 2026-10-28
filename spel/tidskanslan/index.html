@@ -134,14 +134,14 @@
   // är ungefär så många rutor som "rutor" säger: första banan hinner man lugnt, andra blir lite stressig
   // och tredje en utmaning att hinna på 15 sekunder.
   var BANOR = [
-    { b: 7, h: 9, mal: 15, rutor: 18 },
-    { b: 8, h: 11, mal: 15, rutor: 28 },
-    { b: 9, h: 13, mal: 15, rutor: 38 }
+    { b: 9, h: 12, mal: 15, rutor: 36 },
+    { b: 10, h: 14, mal: 15, rutor: 46 },
+    { b: 11, h: 16, mal: 15, rutor: 56 }
   ];
   // Klockan syns så här länge i början av varje bana, sedan får man räkna själv.
   var SYNLIG_MS = 3000;
   // Medaljgränser: sammanlagt fel för alla tre banorna, i sekunder (gissade, justeras efter provspel).
-  var GRANSER = { guld: 0.6, silver: 1.2, brons: 2.0 };
+  var GRANSER = { guld: 1.0, silver: 2.0, brons: 3.5 };
 
   var $ = function (id) { return document.getElementById(id); };
   var dag = Advent.hamtaDag() || 20;
