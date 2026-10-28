@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tomtens kassaskåp</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=7">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+  .tips { margin: 0 0 12px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+  .tips.fel { color: #FF8A7A; font-weight: 600; }
+  .tips.ratt { color: var(--accent); font-weight: 600; }
+
+  /* Själva skåpet: mörk metall med nitar, tre lampor överst. */
+  .skap {
+    position: relative;
+    margin: 0 auto 16px;
+    padding: 18px 16px 20px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, #3A4A63, #222E42 70%);
+    border: 3px solid #56657E;
+    box-shadow: 0 6px 0 rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.12);
+  }
+  .skap::before, .skap::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #8B98AE;
+  }
+  .skap::before { left: 10px; }
+  .skap::after { right: 10px; }
+
+  .lampor { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 16px; }
+  .lampa { text-align: center; font-size: 14px; color: var(--himmel-dampad); }
+  .lampa i {
+    display: block;
+    width: 18px; height: 18px;
+    margin: 0 auto 4px;
+    border-radius: 50%;
+    background: #5A2A2E;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.3);
+  }
+  .lampa.nu { color: var(--himmel-text); font-weight: 600; }
+  .lampa.nu i { background: #E0B23A; box-shadow: 0 0 10px #FFD66B; }
+  .lampa.oppen i { background: #57C27E; box-shadow: 0 0 10px #8FD3A8; }
+
+  .panel {
+    padding: 16px 12px;
+    border-radius: 16px;
+    background: #182235;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,.45);
+    text-align: center;
+  }
+  .panel h2 { margin: 0 0 4px; }
+  .panel .liten { margin: 0 0 14px; font-size: 14px; color: var(--himmel-dampad); }
+
+  /* Sifferlåset: fyra hjul med pil upp och pil ner. */
+  .hjulen { display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; }
+  .hjul { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .hjul span { font-size: 14px; color: var(--himmel-dampad); }
+  .hjul b {
+    display: block;
+    width: 56px;
+    padding: 10px 0;
+    border-radius: 12px;
+    background: linear-gradient(#EDE6D8, #C8BEA9);
+    color: #2B2B2B;
+    font: 600 34px var(--text-typsnitt);
+    font-variant-numeric: tabular-nums;
+    box-shadow: inset 0 3px 4px rgba(0,0,0,.25);
+  }
+  .pil {
+    width: 56px;
+    padding: 6px 0;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255,255,255,.1);
+    color: var(--himmel-text);
+    font-size: 18px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .pil:active { background: rgba(255,255,255,.2); }
+  .hjulen.last .pil { opacity: .35; pointer-events: none; }
+
+  /* Nyckelhålen och handtaget: ett textfält per lås. */
+  .nyckelhal { display: grid; gap: 12px; margin-bottom: 4px; text-align: left; }
+  .hal { min-width: 0; }
+  .hal input, .hal .knapp { box-sizing: border-box; }
+  .hal label { display: block; margin-bottom: 4px; font-weight: 600; }
+  .hal .rad { display: flex; gap: 8px; }
+  .hal input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 2px solid rgba(255,255,255,.18);
+    border-radius: 12px;
+    background: rgba(255,255,255,.06);
+    color: var(--himmel-text);
+    font: 16px var(--text-typsnitt);
+  }
+  .hal input:focus { outline: none; border-color: var(--glod); }
+  .hal .knapp { flex: none; width: auto; margin: 0; padding-left: 18px; padding-right: 18px; }
+  .hal.oppen input { border-color: #57C27E; color: var(--accent); }
+  .hal .klar { color: var(--accent); font-weight: 600; }
+
+  /* Det öppnade skåpet. */
+  .dorr-oppen { animation: oppna .9s ease-out; }
+  @keyframes oppna {
+    0% { transform: perspective(700px) rotateY(0); }
+    40% { transform: perspective(700px) rotateY(-12deg); }
+    100% { transform: perspective(700px) rotateY(0); }
+  }
+  .ar { text-align: left; }
+  .ar h2 { margin: 18px 0 8px; }
+  .ar h2:first-child { margin-top: 0; }
+  .liga { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .liga th, .liga td { padding: 7px 4px; border-top: 1px solid rgba(255,255,255,.14); text-align: center; }
+  .liga th { font-weight: 600; font-size: 14px; color: var(--himmel-dampad); border-top: 0; }
+  .liga td:first-child, .liga th:first-child { text-align: left; }
+  .liga tr.forst td { font-weight: 600; }
+  .fakta { margin: 0; padding-left: 20px; }
+  .fakta li { margin: 6px 0; }
+  .dagar { list-style: none; margin: 0; padding: 0; }
+  .dagar li { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.14); }
+  .dagar li:first-child { border-top: 0; }
+  .dagar .nr { flex: none; width: 26px; color: var(--himmel-dampad); font-variant-numeric: tabular-nums; }
+  .dagar .spel { flex: 1; min-width: 0; }
+  .dagar .vinnare { flex: none; text-align: right; font-weight: 600; }
+
+  .testruta { margin-bottom: 16px; padding: 12px 14px; border: 2px dashed var(--glod); border-radius: 14px; font-size: 14px; }
+  .testruta p { margin: 4px 0; }
+  .testruta b { color: var(--glod); }
+  .knappar { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0; }
+  .regler ol { margin: 0; padding-left: 20px; }
+  .regler li { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Tomtens kassaskåp <span class="ovning" id="testmarke" hidden>Testläge</span></h1>
+  <p class="under" id="under">Julafton. Tre lås, fyra tomtenissar.</p>
+
+  <div class="testruta" id="testruta" hidden>
+    <p>Här provar du skåpet med <b>exempelsvar</b>. De riktiga pusslen syns inte.</p>
+    <p>Sifferlåset: <b id="testKod"></b></p>
+    <p>Nyckelhålen: <b id="testOrd"></b></p>
+    <p>Handtaget: <b id="testHandtag"></b></p>
+  </div>
+
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="skap" id="skap">
+    <div class="lampor" id="lampor">
+      <div class="lampa"><i></i>Sifferlåset</div>
+      <div class="lampa"><i></i>Nyckelhålen</div>
+      <div class="lampa"><i></i>Handtaget</div>
+    </div>
+
+    <!-- Lås 1 -->
+    <div class="panel" id="las1" hidden>
+      <h2>Sifferlåset</h2>
+      <p class="liten">Var och en klarar sitt mästarprov och får en siffra och en ledtråd. Lägg ihop ledtrådarna och vrid fram koden.</p>
+      <div class="hjulen" id="hjulen"></div>
+      <button class="knapp" id="provaKod" type="button">Öppna sifferlåset</button>
+    </div>
+
+    <!-- Lås 2 -->
+    <div class="panel" id="las2" hidden>
+      <h2>Nyckelhålen</h2>
+      <p class="liten">Två och två. Varje lag löser sitt pussel och får ett nyckelord. Skriv in båda.</p>
+      <div class="nyckelhal" id="nyckelhal"></div>
+    </div>
+
+    <!-- Lås 3 -->
+    <div class="panel" id="las3" hidden>
+      <h2>Handtaget</h2>
+      <p class="liten">Alla tillsammans. Lägg telefonerna bredvid varandra så att stjärnkartan blir hel och läs av det sista ordet.</p>
+      <div class="nyckelhal" id="handtag"></div>
+    </div>
+
+    <!-- Öppet -->
+    <div class="panel ar" id="oppet" hidden></div>
+  </div>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="borjaOm" type="button">Börja om med skåpet</button>
+    <button class="knapp diskret" id="vaxla" type="button"></button>
+  </div>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar ni</h2></summary>
+    <ol>
+      <li>Visa den här sidan på en skärm som alla ser, till exempel en dator eller en telefon mitt på bordet. Skåpet kommer ihåg hur långt ni kommit.</li>
+      <li><b>Sifferlåset, ensam.</b> En i taget gör sitt mästarprov på sin egen telefon medan de andra hejar. Klarar man det får man en siffra och en ledtråd om var den ska stå. Lägg ihop ledtrådarna och vrid fram koden. Fel kod låser hjulen i 10 sekunder.</li>
+      <li><b>Nyckelhålen, två och två.</b> Sidan lottar två lag. Varje lag löser ett pussel där den ena har det som den andra behöver, och man får bara prata. Varje pussel ger ett nyckelord.</li>
+      <li><b>Handtaget, tillsammans.</b> Alla fyra telefoner visar var sin bit av en stjärnkarta. Lägg dem rätt så syns det sista ordet.</li>
+      <li>Sedan öppnas skåpet.</li>
+    </ol>
+  </details>
+</main>
+
+<script src="../../js/gemensam.js?v=5"></script>
+<script src="../../js/luckor.js?v=24"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 24;
+  Advent.markeraOppnad(dag);
+
+  var LAS_TID = 10;   // sekunder som hjulen är låsta efter fel kod
+
+  // Svaren jämförs som hashar, så att de riktiga svaren inte står i klartext här.
+  // Exempelsvaren i testläget får synas. De riktiga fylls i när pusslen är byggda (null = inte klart än).
+  var SALT = 'kassaskap-2026:';
+  function hash(svar) { return Advent.hashStrang(SALT + svar); }
+  var LAGEN = {
+    test: {
+      kod: [3, 8, 1, 6],
+      ord: ['GLITTER', 'PEPPARKAKA'],
+      handtag: 'STJÄRNFALL'
+    },
+    riktig: {
+      kod: null,       // hash av koden som sträng, t.ex. hash('3816')
+      ord: null,       // [hash(ord 1), hash(ord 2)]
+      handtag: null    // hash(sista ordet)
+    }
+  };
+  var ORD_NAMN = ['Julgransdekoratören', 'Hemliga brevet'];
+
+  var test = Advent.lasa('kassaskap-testlage', false);
+  function nyckel() { return 'kassaskap:' + (test ? 'test' : dag); }
+  function nyttTillstand() { return { las: 0, hjul: [0, 0, 0, 0], ord: [false, false], lastTill: 0 }; }
+  var s = Advent.lasa(nyckel(), null) || nyttTillstand();
+  function spara() { Advent.spara(nyckel(), s); }
+
+  // Stavning ska inte spela roll: versaler, mellanslag och skiljetecken räknas inte.
+  function stada(t) {
+    return String(t).toUpperCase().replace(/[^A-ZÅÄÖÉÜ0-9]/g, '');
+  }
+  function stammer(svar, facit) {
+    if (facit == null) return null;
+    return test ? stada(svar) === stada(facit) : hash(stada(svar)) === facit;
+  }
+  function klarAttSpela() {
+    var f = LAGEN[test ? 'test' : 'riktig'];
+    return f.kod !== null && f.ord !== null && f.handtag !== null;
+  }
+
+  function tips(text, klass) {
+    var t = $('tips');
+    t.textContent = text;
+    t.className = 'tips' + (klass ? ' ' + klass : '');
+  }
+
+  // ===== Ritning =====
+  function ritaLampor() {
+    var lampor = $('lampor').children;
+    for (var i = 0; i < 3; i++) {
+      lampor[i].className = 'lampa' + (i < s.las ? ' oppen' : i === s.las ? ' nu' : '');
+    }
+  }
+
+  function ritaHjul() {
+    var ruta = $('hjulen');
+    ruta.textContent = '';
+    s.hjul.forEach(function (v, i) {
+      var h = document.createElement('div');
+      h.className = 'hjul';
+      var upp = document.createElement('button');
+      upp.type = 'button';
+      upp.className = 'pil';
+      upp.textContent = '▲';
+      upp.setAttribute('aria-label', 'Hjul ' + (i + 1) + ' upp');
+      var siffra = document.createElement('b');
+      siffra.textContent = v;
+      siffra.setAttribute('aria-live', 'polite');
+      var ner = document.createElement('button');
+      ner.type = 'button';
+      ner.className = 'pil';
+      ner.textContent = '▼';
+      ner.setAttribute('aria-label', 'Hjul ' + (i + 1) + ' ner');
+      var etikett = document.createElement('span');
+      etikett.textContent = 'Hjul ' + (i + 1);
+      upp.addEventListener('click', function () { vrid(i, 1); });
+      ner.addEventListener('click', function () { vrid(i, -1); });
+      h.appendChild(etikett);
+      h.appendChild(upp);
+      h.appendChild(siffra);
+      h.appendChild(ner);
+      ruta.appendChild(h);
+    });
+  }
+
+  function vrid(i, steg) {
+    if (lastKvar() > 0) return;
+    s.hjul[i] = (s.hjul[i] + steg + 10) % 10;
+    spara();
+    ritaHjul();
+  }
+
+  function lastKvar() { return Math.max(0, Math.ceil((s.lastTill - Date.now()) / 1000)); }
+
+  var nedrakning = null;
+  function visaLas() {
+    clearInterval(nedrakning);
+    var kvar = lastKvar();
+    var last = kvar > 0;
+    $('hjulen').classList.toggle('last', last);
+    $('provaKod').disabled = last;
+    if (!last) return;
+    tips('Fel kod. Hjulen är låsta i ' + kvar + ' sekunder.', 'fel');
+    nedrakning = setInterval(function () {
+      var k = lastKvar();
+      if (k > 0) { tips('Fel kod. Hjulen är låsta i ' + k + ' sekunder.', 'fel'); return; }
+      clearInterval(nedrakning);
+      $('hjulen').classList.remove('last');
+      $('provaKod').disabled = false;
+      tips('Hjulen går att vrida igen.');
+    }, 250);
+  }
+
+  function provaKod() {
+    if (lastKvar() > 0) return;
+    var f = LAGEN[test ? 'test' : 'riktig'];
+    var ok = test ? s.hjul.join('') === f.kod.join('') : hash(s.hjul.join('')) === f.kod;
+    if (ok) {
+      s.las = 1;
+      spara();
+      rita();
+      tips('Klick! Sifferlåset är öppet. Nu två och två.', 'ratt');
+    } else {
+      s.lastTill = Date.now() + LAS_TID * 1000;
+      spara();
+      visaLas();
+    }
+  }
+
+  // Ett textfält med knapp. klar = redan öppnat.
+  function hal(namn, klar, prova) {
+    var ruta = document.createElement('div');
+    ruta.className = 'hal' + (klar ? ' oppen' : '');
+    var id = 'hal-' + Math.random().toString(36).slice(2, 8);
+    var etikett = document.createElement('label');
+    etikett.htmlFor = id;
+    etikett.textContent = namn;
+    ruta.appendChild(etikett);
+    if (klar) {
+      var p = document.createElement('p');
+      p.className = 'klar';
+      p.style.margin = '0';
+      p.textContent = '✓ Upplåst';
+      ruta.appendChild(p);
+      return ruta;
+    }
+    var form = document.createElement('form');
+    form.className = 'rad';
+    var inmatning = document.createElement('input');
+    inmatning.id = id;
+    inmatning.autocomplete = 'off';
+    inmatning.autocapitalize = 'characters';
+    inmatning.spellcheck = false;
+    inmatning.placeholder = 'Nyckelord';
+    var knapp = document.createElement('button');
+    knapp.type = 'submit';
+    knapp.className = 'knapp';
+    knapp.textContent = 'Prova';
+    form.appendChild(inmatning);
+    form.appendChild(knapp);
+    ruta.appendChild(form);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!inmatning.value.trim()) return;
+      prova(inmatning.value, inmatning);
+    });
+    return ruta;
+  }
+
+  function ritaNyckelhal() {
+    var f = LAGEN[test ? 'test' : 'riktig'];
+    var ruta = $('nyckelhal');
+    ruta.textContent = '';
+    ORD_NAMN.forEach(function (namn, i) {
+      ruta.appendChild(hal(namn, s.ord[i], function (svar, inmatning) {
+        if (stammer(svar, f.ord[i])) {
+          s.ord[i] = true;
+          if (s.ord[0] && s.ord[1]) {
+            s.las = 2;
+            spara();
+            rita();
+            tips('Klick! Båda nyckelhålen är öppna. Nu alla tillsammans.', 'ratt');
+            return;
+          }
+          spara();
+          ritaNyckelhal();
+          tips('Klick! Ett nyckelhål kvar.', 'ratt');
+        } else {
+          tips('Det ordet passar inte i ' + namn.toLowerCase() + 's nyckelhål.', 'fel');
+          inmatning.select();
+        }
+      }));
+    });
+  }
+
+  function ritaHandtag() {
+    var f = LAGEN[test ? 'test' : 'riktig'];
+    var ruta = $('handtag');
+    ruta.textContent = '';
+    ruta.appendChild(hal('Det sista ordet', false, function (svar, inmatning) {
+      if (stammer(svar, f.handtag)) {
+        s.las = 3;
+        spara();
+        $('skap').classList.add('dorr-oppen');
+        rita();
+        tips('Skåpet är öppet! God jul!', 'ratt');
+      } else {
+        tips('Handtaget sitter fast. Det var inte rätt ord.', 'fel');
+        inmatning.select();
+      }
+    }));
+  }
+
+  // ===== Årets kalender =====
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ritaOppet() {
+    var ruta = $('oppet');
+    ruta.textContent = '';
+    ruta.appendChild(el('h2', null, 'Årets kalender'));
+    var R = Advent.Resultat;
+    if (!R.arInkopplad() || !R.kod()) {
+      ruta.appendChild(el('p', 'liten', 'Skriv in din personliga kod på någon lucka i den här telefonen eller datorn, så visas årets kalender här.'));
+      return;
+    }
+    var vantar = el('p', 'liten', 'Hämtar årets resultat…');
+    ruta.appendChild(vantar);
+    R.alla().then(function (svar) { vantar.remove(); ritaAret(ruta, svar); }, function (fel) {
+      vantar.textContent = fel.message;
+    });
+  }
+
+  function ritaAret(ruta, svar) {
+    var R = Advent.Resultat;
+    var spelare = svar.spelare || [];
+    var per = {};
+    spelare.forEach(function (n) { per[n] = { guld: 0, silver: 0, brons: 0, vinster: 0, gavUpp: 0, spelat: 0 }; });
+    var vinnare = [];   // { dag, titel, namn: [..], text }
+    var delade = 0;
+
+    for (var d = 1; d <= 23; d++) {
+      var dd = svar.dagar && svar.dagar[d];
+      if (!dd || !dd.harSpelat || !dd.rader || !dd.rader.length) continue;
+      dd.rader.forEach(function (r) {
+        var p = per[r.spelare];
+        if (!p) return;
+        p.spelat++;
+        if (r.status !== 'klar') p.gavUpp++;
+        else if (p[r.medalj] != null) p[r.medalj]++;
+      });
+      var ordnade = R.ordna(d, dd, spelare).filter(function (r) { return r.plats === 1; });
+      if (!ordnade.length) continue;
+      if (ordnade.length > 1) delade++;
+      ordnade.forEach(function (r) { if (per[r.spelare]) per[r.spelare].vinster++; });
+      vinnare.push({
+        dag: d,
+        titel: (window.LUCKOR[d] && window.LUCKOR[d].titel) || 'Lucka ' + d,
+        namn: ordnade.map(function (r) { return r.spelare; }),
+        text: ordnade[0].text
+      });
+    }
+
+    if (!vinnare.length) {
+      ruta.appendChild(el('p', 'liten', 'Inga resultat ännu. Spela några luckor först!'));
+      return;
+    }
+
+    // Medaljligan, flest guld först.
+    var namn = spelare.slice().sort(function (a, b) {
+      var x = per[a], y = per[b];
+      return y.guld - x.guld || y.silver - x.silver || y.brons - x.brons || y.vinster - x.vinster;
+    });
+    var tabell = el('table', 'liga');
+    var huvud = el('tr');
+    ['', '🥇', '🥈', '🥉', 'Vinster'].forEach(function (t) { huvud.appendChild(el('th', null, t)); });
+    tabell.appendChild(huvud);
+    namn.forEach(function (n, i) {
+      var p = per[n];
+      var rad = el('tr', i === 0 ? 'forst' : null);
+      [n, p.guld, p.silver, p.brons, p.vinster].forEach(function (t) { rad.appendChild(el('td', null, String(t))); });
+      tabell.appendChild(rad);
+    });
+    ruta.appendChild(tabell);
+
+    // Några kul saker.
+    ruta.appendChild(el('h2', null, 'Visste ni att…'));
+    var fakta = el('ul', 'fakta');
+    function mest(falt) {
+      var max = Math.max.apply(null, spelare.map(function (n) { return per[n][falt]; }));
+      return { max: max, namn: spelare.filter(function (n) { return per[n][falt] === max; }) };
+    }
+    function lista(n) { return n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + ' och ' + n[n.length - 1]; }
+    var v = mest('vinster');
+    if (v.max > 0) fakta.appendChild(el('li', null, lista(v.namn) + ' vann flest dagar, ' + v.max + ' stycken.'));
+    var g = mest('guld');
+    if (g.max > 0) fakta.appendChild(el('li', null, lista(g.namn) + ' tog flest guld: ' + g.max + '.'));
+    var u = mest('gavUpp');
+    if (u.max > 0) fakta.appendChild(el('li', null, lista(u.namn) + ' gav upp flest gånger: ' + u.max + '. Det kräver också mod.'));
+    if (delade > 0) fakta.appendChild(el('li', null, delade === 1 ? 'En dag slutade med delad seger.' : delade + ' dagar slutade med delad seger.'));
+    var alla = spelare.filter(function (n) { return per[n].spelat === vinnare.length; });
+    if (alla.length && alla.length < spelare.length) fakta.appendChild(el('li', null, lista(alla) + ' spelade varenda lucka.'));
+    else if (alla.length === spelare.length) fakta.appendChild(el('li', null, 'Alla spelade varenda lucka. Snyggt!'));
+    ruta.appendChild(fakta);
+
+    // Vem som vann varje dag.
+    ruta.appendChild(el('h2', null, 'Dag för dag'));
+    var dagar = el('ul', 'dagar');
+    vinnare.forEach(function (w) {
+      var li = el('li');
+      li.appendChild(el('span', 'nr', String(w.dag)));
+      li.appendChild(el('span', 'spel', w.titel));
+      li.appendChild(el('span', 'vinnare', w.namn.join(' & ')));
+      dagar.appendChild(li);
+    });
+    ruta.appendChild(dagar);
+  }
+
+  // ===== Hela sidan =====
+  function rita() {
+    ritaLampor();
+    $('las1').hidden = s.las !== 0;
+    $('las2').hidden = s.las !== 1;
+    $('las3').hidden = s.las !== 2;
+    $('oppet').hidden = s.las !== 3;
+    $('testmarke').hidden = !test;
+    $('testruta').hidden = !test;
+    $('vaxla').textContent = test ? 'Lämna testläget' : 'Testläge (exempelsvar)';
+    if (test) {
+      $('testKod').textContent = LAGEN.test.kod.join(' ');
+      $('testOrd').textContent = LAGEN.test.ord.join(' och ');
+      $('testHandtag').textContent = LAGEN.test.handtag;
+    }
+    if (s.las === 0) { ritaHjul(); visaLas(); }
+    if (s.las === 1) ritaNyckelhal();
+    if (s.las === 2) ritaHandtag();
+    if (s.las === 3) ritaOppet();
+  }
+
+  function start() {
+    s = Advent.lasa(nyckel(), null) || nyttTillstand();
+    rita();
+    if (!klarAttSpela()) {
+      tips('De riktiga pusslen är inte klara än. Prova testläget.');
+      $('las1').hidden = $('las2').hidden = $('las3').hidden = $('oppet').hidden = true;
+      return;
+    }
+    if (s.las === 0 && lastKvar() === 0) tips('Första låset: sifferlåset.');
+    if (s.las === 1) tips('Andra låset: två nyckelhål.');
+    if (s.las === 2) tips('Sista låset: handtaget.');
+    if (s.las === 3) tips('Skåpet är öppet! God jul!', 'ratt');
+  }
+
+  $('provaKod').addEventListener('click', provaKod);
+  $('vaxla').addEventListener('click', function () {
+    test = !test;
+    Advent.spara('kassaskap-testlage', test);
+    $('skap').classList.remove('dorr-oppen');
+    start();
+  });
+  $('borjaOm').addEventListener('click', function () {
+    Advent.fraga({
+      rubrik: 'Börja om med skåpet?',
+      text: test ? 'Alla lås i testläget stängs igen.' : 'Alla lås stängs igen och ni får öppna dem från början.',
+      ja: 'Börja om',
+      nej: 'Avbryt'
+    }).then(function (ok) {
+      if (!ok) return;
+      s = nyttTillstand();
+      spara();
+      $('skap').classList.remove('dorr-oppen');
+      start();
+    });
+  });
+
+  start();
+})();
+</script>
+</body>
+</html>
