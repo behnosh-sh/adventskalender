@@ -16,14 +16,14 @@ window.LUCKOR = {
   12: { titel: 'Labyrinten', sokvag: 'spel/labyrint/' },
   13: { titel: 'Nerdle', sokvag: 'spel/nerdle/' },
   14: { titel: 'Femtonspel', sokvag: 'spel/femton/' },
-  15: { titel: 'Flygande tomten', sokvag: 'spel/flygande-tomten/', lagreArBattre: false },
   16: { titel: 'Kodkryss', sokvag: 'spel/kodkryss/' },
   17: { titel: 'Memory', sokvag: 'spel/memory/' },
   18: { titel: 'Minisudoku', sokvag: 'spel/sudoku/' },
   19: { titel: 'TimeGuessr', sokvag: 'spel/timeguessr/', lagreArBattre: false },
   20: { titel: 'Tidskänslan', sokvag: 'spel/tidskanslan/' },
   21: { titel: 'Wordle', sokvag: 'spel/wordle/' },
-  22: { titel: 'Simon säger', sokvag: 'spel/simon/', lagreArBattre: false }
+  22: { titel: 'Simon säger', sokvag: 'spel/simon/', lagreArBattre: false },
+  23: { titel: 'Flygande tomten', sokvag: 'spel/flygande-tomten/', lagreArBattre: false }
 };
 
 // Under bygget är alla luckor öppna. Sätt till false när datumlåset ska gälla.
