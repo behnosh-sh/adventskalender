@@ -58,6 +58,8 @@
   .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
   .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
   .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .visa-svar { margin: 0 0 10px; text-align: center; }
+  .visa-svar:has(> [hidden]) { display: none; }
 </style>
 </head>
 <body>
@@ -93,6 +95,7 @@
     <button class="knapp diskret zooma" id="hoppaOver" type="button">Hoppa över</button>
   </div>
 
+  <p class="visa-svar"><button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button></p>
   <div class="slut kort" id="slut" hidden>
     <h2 id="slutRubrik"></h2>
     <p class="poang" id="slutPoang"></p>
@@ -117,7 +120,6 @@
 
   <div class="knappar">
     <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
-    <button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button>
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bilder</a></p>
