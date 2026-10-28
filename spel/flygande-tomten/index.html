@@ -595,7 +595,15 @@
     var info = $('skickat');
     if (!dagens || !dagens.slut || !dagens.basta) return;
     if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
-    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    // Finns det redan en rad på tavlan räknas den som dagens. Markeras som skickad, så att spelet
+    // nollställs om raden tas bort ur arket (annars skickades den här omgången in direkt i stället).
+    if (tavlaStatus && tavlaStatus.harSpelat) {
+      dagens.skickad = true;
+      Advent.spara(sparNyckel, dagens);
+      s.skickad = true;
+      if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.';
+      return;
+    }
     if (!R.arInkopplad()) return;
     if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
     if (skickar || !kanSkicka()) return;
