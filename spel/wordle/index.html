@@ -48,6 +48,8 @@
   .bricka.ratt { background: var(--gron); color: #fff; box-shadow: none; }
   .bricka.finns { background: var(--glod); color: var(--text); box-shadow: none; }
   .bricka.saknas { background: rgba(255,255,255,.14); color: var(--himmel-text); box-shadow: none; }
+  .rad.aktiv .bricka { cursor: pointer; }
+  .bricka.markor { box-shadow: inset 0 0 0 3px var(--glod); }
   .bricka.vand { animation: vand .45s ease-out both; }
   @keyframes vand { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
   @keyframes skaka { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
@@ -85,6 +87,7 @@
   .tangent.finns { background: var(--glod); color: var(--text); }
   .tangent.saknas { background: rgba(255,255,255,.06); color: var(--himmel-dampad); }
   .tangent.bred { flex: 1.8 1 0; max-width: 72px; font-size: 16px; }
+  .tangent.gissa { background: var(--gron); color: #fff; }
 
   .slut { margin-bottom: 16px; text-align: center; }
   .slut h2 { margin: 0 0 4px; font-size: 18px; }
@@ -130,7 +133,7 @@
     <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Gissa dagens ord på fem bokstäver. Du har sex försök. Å, Ä och Ö är egna bokstäver.</li>
-      <li>Varje gissning måste vara ett riktigt svenskt ord.</li>
+      <li>Varje gissning måste vara ett riktigt svenskt ord. Tryck på en ruta i raden för att ändra just den bokstaven.</li>
       <li>Efter varje gissning får brickorna färg:
         <span class="exempel"><span class="bricka ratt">J</span></span> rätt bokstav på rätt plats,
         <span class="exempel"><span class="bricka finns">U</span></span> bokstaven finns men på en annan plats,
@@ -198,7 +201,12 @@
   var sparNyckel = 'wordle:' + dag;
   var s;          // { fro, ord, gissningar: [], tidKlar, start, slut: null | 'klar' | 'miss' | 'gavupp', skickad }
   var ovning = false;
-  var skrivet = '';        // raden man håller på att skriva (sparas inte)
+  var skrivet = tomRad();  // raden man håller på att skriva, en bokstav per ruta (sparas inte)
+  var markor = 0;          // rutan som nästa bokstav hamnar i (LANGD = efter sista)
+
+  function tomRad() { return ['', '', '', '', '']; }
+  function nollstall() { skrivet = tomRad(); markor = 0; }
+  function skrivetOrd() { return skrivet.join(''); }
   var nyRad = -1;          // raden som just ska vändas med animation
 
   function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
@@ -238,9 +246,15 @@
     for (var i = 0; i < MAX; i++) {
       var rad = el('div', 'rad');
       var g = s.gissningar[i], farg = g && bedom(g, s.ord);
-      var text = g || (i === s.gissningar.length && !s.slut ? skrivet : '');
+      var aktiv = i === s.gissningar.length && !s.slut;
+      var text = g || (aktiv ? skrivet : '');
+      if (aktiv) rad.classList.add('aktiv');
       for (var j = 0; j < LANGD; j++) {
         var b = el('div', 'bricka', text[j] || '');
+        if (aktiv) {
+          b.dataset.pos = j;
+          if (j === markor) b.classList.add('markor');
+        }
         if (farg) {
           b.classList.add(farg[j]);
           if (i === nyRad) { b.classList.add('vand'); b.style.animationDelay = (j * 0.12) + 's'; }
@@ -263,13 +277,14 @@
       });
     });
     t.textContent = '';
-    ['qwertyuiopå', 'asdfghjklöä', '>zxcvbnm<'].forEach(function (rad) {
+    ['qwertyuiopå', 'asdfghjklöä', '<zxcvbnm>'].forEach(function (rad) {
       var r = el('div', 'tangentrad');
       rad.split('').forEach(function (b) {
         var k = el('button', 'tangent', b === '>' ? 'Gissa' : b === '<' ? 'Sudda' : b.toUpperCase());
         k.type = 'button';
         k.dataset.b = b;
         if (b === '>' || b === '<') k.classList.add('bred');
+        if (b === '>') k.classList.add('gissa');
         else if (status[b]) k.classList.add(status[b]);
         r.appendChild(k);
       });
@@ -293,7 +308,7 @@
     ritaMatare();
     $('tangentbord').hidden = !!s.slut;
     $('geUpp').hidden = ovning || !!s.slut;
-    tips(s.slut ? '' : !s.gissningar.length && !skrivet ? 'Skriv ett ord på fem bokstäver och tryck Gissa.' : '');
+    tips(s.slut ? '' : !s.gissningar.length && !skrivetOrd() ? 'Skriv ett ord på fem bokstäver och tryck Gissa.' : '');
     ritaSlut();
   }
 
@@ -330,7 +345,7 @@
     if (s.start) { s.tidKlar += Date.now() - s.start; s.start = null; }
     stoppaKlockan();
     s.slut = orsak;
-    skrivet = '';
+    nollstall();
     sparaDagens();
     rita();
     if (!ovning) forsokSkicka();
@@ -339,16 +354,32 @@
   // ===== Skriva och gissa =====
   function spelbart() { return s && !s.slut; }
 
+  // Bokstaven hamnar i markörens ruta. Sedan flyttar markören till nästa tomma ruta (framåt, annars
+  // från början), eller efter sista rutan om raden är full.
   function skriv(b) {
-    if (!spelbart() || skrivet.length >= LANGD) return;
+    if (!spelbart() || markor >= LANGD) return;
     if (!s.start) { s.start = Date.now(); startaKlockan(); sparaDagens(); }
-    skrivet += b;
+    skrivet[markor] = b;
+    var nasta = LANGD;
+    for (var k = 1; k <= LANGD; k++) {
+      var j = (markor + k) % LANGD;
+      if (!skrivet[j]) { nasta = j; break; }
+    }
+    markor = nasta;
     rita();
   }
 
+  // Suddar bokstaven i markörens ruta, eller rutan före om den är tom.
   function sudda() {
-    if (!spelbart() || !skrivet) return;
-    skrivet = skrivet.slice(0, -1);
+    if (!spelbart()) return;
+    if (markor < LANGD && skrivet[markor]) skrivet[markor] = '';
+    else if (markor > 0) { markor--; skrivet[markor] = ''; }
+    rita();
+  }
+
+  function flytta(pos) {
+    if (!spelbart()) return;
+    markor = Math.max(0, Math.min(LANGD - 1, pos));
     rita();
   }
 
@@ -362,17 +393,23 @@
 
   function gissa() {
     if (!spelbart()) return;
-    if (skrivet.length < LANGD) { tips('Ordet ska ha fem bokstäver.', true); skaka(); return; }
-    if (!GODKANDA[skrivet]) { tips(skrivet.toUpperCase() + ' finns inte i ordlistan.', true); skaka(); return; }
-    s.gissningar.push(skrivet);
+    var ord = skrivetOrd();
+    if (ord.length < LANGD) { tips('Ordet ska ha fem bokstäver.', true); skaka(); return; }
+    if (!GODKANDA[ord]) { tips(ord.toUpperCase() + ' finns inte i ordlistan.', true); skaka(); return; }
+    s.gissningar.push(ord);
     nyRad = s.gissningar.length - 1;
-    var traff = skrivet === s.ord;
-    skrivet = '';
+    var traff = ord === s.ord;
+    nollstall();
     if (traff) { avsluta('klar'); return; }
     if (s.gissningar.length >= MAX) { avsluta('miss'); return; }
     sparaDagens();
     rita();
   }
+
+  $('rutnat').addEventListener('click', function (e) {
+    var b = e.target.closest('.bricka');
+    if (b && b.dataset.pos != null) flytta(+b.dataset.pos);
+  });
 
   $('tangentbord').addEventListener('click', function (e) {
     var k = e.target.closest('.tangent');
@@ -387,7 +424,9 @@
     if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
     if (/^[a-zåäö]$/i.test(e.key)) { e.preventDefault(); skriv(e.key.toLowerCase()); return; }
     if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); sudda(); return; }
-    if (e.key === 'Enter') { e.preventDefault(); gissa(); }
+    if (e.key === 'Enter') { e.preventDefault(); gissa(); return; }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); flytta(Math.min(markor, LANGD) - 1); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); flytta(markor + 1); }
   });
 
   // ===== Resultattavlan =====
@@ -428,7 +467,7 @@
     stoppaKlockan();
     var forra = s && s.ord;
     ovning = arOvning;
-    skrivet = '';
+    nollstall();
     $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
     $('ovningsmarke').hidden = !ovning;
     $('tillDagens').hidden = !ovning;
