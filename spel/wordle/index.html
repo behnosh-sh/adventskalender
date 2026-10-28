@@ -102,6 +102,8 @@
   .exempel span { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font-weight: 600; font-size: 14px; }
   .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
   .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .visa-svar { margin: 0 0 10px; text-align: center; }
+  .visa-svar:has(> [hidden]) { display: none; }
 </style>
 </head>
 <body>
@@ -118,6 +120,7 @@
 
   <div class="rutnat" id="rutnat" aria-label="Dina gissningar"></div>
 
+  <p class="visa-svar"><button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button></p>
   <div class="tangentbord" id="tangentbord"></div>
 
   <div class="slut kort" id="slut" hidden>
@@ -146,7 +149,6 @@
 
   <div class="knappar">
     <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
-    <button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button>
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens ord</a></p>
