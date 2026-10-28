@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memory</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+
+  /* Brädet: 4 kolumner × 6 rader. Smalare på låga skärmar så att hela brädet syns. */
+  .brade {
+    container-type: inline-size;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2cqw;
+    width: min(100%, 400px, calc((100svh - 200px) * 4 / 6));
+    margin: 0 auto 16px;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .kortet {
+    position: relative;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    perspective: 600px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kortet .inre {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transition: transform .28s ease-out;
+  }
+  .kortet.uppe .inre, .kortet.par .inre { transform: rotateY(180deg); }
+  .kortet .baksida, .kortet .framsida {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  /* Baksidan: mörkgrön med ett litet snöstjärnemönster. */
+  .kortet .baksida {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,.22) 0 9%, transparent 10%),
+      radial-gradient(circle at 25% 25%, rgba(255,255,255,.12) 0 5%, transparent 6%),
+      radial-gradient(circle at 75% 75%, rgba(255,255,255,.12) 0 5%, transparent 6%),
+      #2F4A3A;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.14), 0 3px 0 rgba(0,0,0,.25);
+  }
+  .kortet .framsida {
+    transform: rotateY(180deg);
+    background: #FBF4EA;
+    box-shadow: 0 3px 0 rgba(0,0,0,.25);
+    font-size: 13cqw;
+    line-height: 1;
+  }
+  .kortet.par .framsida { background: #D9F0E0; box-shadow: inset 0 0 0 3px var(--accent); }
+  .kortet.miss .framsida { box-shadow: inset 0 0 0 3px #E8A0A0; }
+  .kortet:focus-visible { outline: 3px solid var(--glod); outline-offset: 2px; border-radius: 12px; }
+
+  .slutlager {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(20,35,63,.72);
+    color: var(--himmel-text);
+    animation: tona .4s ease-out;
+  }
+  .slutlager b { font: 600 9cqw var(--text-typsnitt); }
+  @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .kortet .inre { transition: none; }
+    .slutlager { animation: none; }
+  }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 14px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Memory <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Drag</span><b id="drag">0</b></div>
+    <div><span>Par</span><b id="par">0/12</b></div>
+    <div><span>Tid</span><b id="tid">0:00</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="brade" id="brade" aria-label="Spelbräde med 24 kort"></div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutRubrik"></h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Vänd två kort. Är de lika får du behålla dem uppvända, annars vänds de tillbaka.</li>
+      <li>Ett drag är två vända kort. Hitta alla 12 paren på så få drag som möjligt.</li>
+      <li>Alla får samma kort på samma platser. Färst drag vinner, vid lika vinner kortast tid. Klockan startar vid första kortet.</li>
+      <li>Guld på högst 18 drag, silver på högst 22, brons på högst 28.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
+  </details>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bräde</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=11"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  var MOTIV = ['🎄', '⭐', '🎁', '🔔', '🕯️', '🦌', '⛄', '🍪', '🧦', '❄️', '🎅', '🍬'];
+  var PAR = MOTIV.length;
+  var GULD = 18, SILVER = 22, BRONS = 28;   // drag
+  var VISA_MISS = 900;   // ms som två olika kort visas innan de vänds tillbaka
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 17;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-memory';
+
+  function medalj(drag) { return drag <= GULD ? 'guld' : drag <= SILVER ? 'silver' : drag <= BRONS ? 'brons' : ''; }
+  function tidText(ms) { return Advent.formateraTid(Math.floor(ms / 1000)); }
+
+  // ===== Spelets tillstånd =====
+  // s.kort[plats] = motivnummer (0–11). s.hittade[plats] = true när paret är taget.
+  // Uppvända kort som inte är par sparas inte: laddar man om vänds de tillbaka.
+  var sparNyckel = 'memory:' + dag;
+  var s;          // { fro, kort, hittade, drag, start, tid, slut: null | 'klar' | 'gavupp', skickad }
+  var ovning = false;
+  var uppe = [];  // platser som är uppvända just nu (högst två)
+  var missTimer = null;
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function blanda(fro) {
+    var slump = Advent.skapaSlump(fro);
+    var k = [];
+    for (var i = 0; i < PAR; i++) k.push(i, i);
+    for (var j = k.length - 1; j > 0; j--) {
+      var r = Math.floor(slump() * (j + 1));
+      var t = k[j]; k[j] = k[r]; k[r] = t;
+    }
+    return k;
+  }
+
+  function nyttTillstand(fro) {
+    s = { fro: fro, kort: blanda(fro), hittade: [], drag: 0, start: null, tid: null, slut: null, skickad: false };
+  }
+
+  function antalPar() { return s.hittade.filter(Boolean).length / 2; }
+
+  function forflutet() {
+    if (s.tid != null) return s.tid;
+    return s.start ? Date.now() - s.start : 0;
+  }
+
+  // ===== Ritning =====
+  var brade = $('brade');
+  var knappar = [];
+
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function byggBradet() {
+    brade.textContent = '';
+    knappar = [];
+    s.kort.forEach(function (motiv, i) {
+      var b = el('button', 'kortet');
+      b.type = 'button';
+      b.dataset.plats = i;
+      var inre = el('span', 'inre');
+      inre.appendChild(el('span', 'baksida'));
+      inre.appendChild(el('span', 'framsida', MOTIV[motiv]));
+      b.appendChild(inre);
+      knappar[i] = b;
+      brade.appendChild(b);
+    });
+  }
+
+  function ritaBradet() {
+    knappar.forEach(function (b, i) {
+      var arUppe = uppe.indexOf(i) >= 0;
+      var visas = s.hittade[i] || arUppe || s.slut === 'gavupp';
+      b.classList.toggle('par', !!s.hittade[i]);
+      b.classList.toggle('uppe', visas && !s.hittade[i]);
+      b.classList.toggle('miss', uppe.length === 2 && arUppe);
+      b.setAttribute('aria-label', visas ? MOTIV[s.kort[i]] : 'Kort ' + (i + 1));
+    });
+    var gammalt = brade.querySelector('.slutlager');
+    if (gammalt) gammalt.remove();
+    if (s.slut === 'gavupp') {
+      var lager = el('div', 'slutlager');
+      lager.appendChild(el('b', null, 'Du gav upp'));
+      brade.appendChild(lager);
+    }
+    ritaMatare();
+  }
+
+  function ritaMatare() {
+    $('tid').textContent = tidText(forflutet());
+    $('drag').textContent = s.drag;
+    $('par').textContent = antalPar() + '/' + PAR;
+    $('tips').textContent = s.slut || s.start ? '' : 'Tryck på ett kort. Klockan startar då.';
+    $('geUpp').hidden = ovning || !!s.slut;
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = !s.slut;
+    if (!s.slut) return;
+    if (s.slut === 'gavupp') {
+      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutPoang').textContent = '';
+      $('slutText').textContent = 'Testa gärna att öva, med andra platser.';
+      return;
+    }
+    var m = medalj(s.drag);
+    $('slutRubrik').textContent = 'Alla par hittade!';
+    $('slutPoang').textContent = s.drag + ' drag';
+    $('slutText').textContent = tidText(s.tid) + '. ' +
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() { stoppaKlockan(); klocka = setInterval(ritaMatare, 250); }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  function avsluta(orsak) {
+    if (s.slut) return;
+    s.slut = orsak;
+    s.tid = forflutet();
+    stoppaKlockan();
+    vandTillbaka();
+    sparaDagens();
+    ritaBradet();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  // ===== Vända kort =====
+  function vandTillbaka() {
+    if (missTimer) { clearTimeout(missTimer); missTimer = null; }
+    uppe = [];
+  }
+
+  function tryck(p) {
+    if (!s || s.slut || s.hittade[p] || uppe.indexOf(p) >= 0) return;
+    // Två olika kort visas fortfarande: ett nytt tryck vänder tillbaka dem direkt.
+    if (uppe.length === 2) vandTillbaka();
+    if (!s.start) { s.start = Date.now(); startaKlockan(); }
+    uppe.push(p);
+    if (uppe.length === 2) {
+      s.drag++;
+      var a = uppe[0], b = uppe[1];
+      if (s.kort[a] === s.kort[b]) {
+        s.hittade[a] = s.hittade[b] = true;
+        uppe = [];
+      } else {
+        missTimer = setTimeout(function () { vandTillbaka(); ritaBradet(); }, VISA_MISS);
+      }
+      sparaDagens();
+    }
+    ritaBradet();
+    if (antalPar() === PAR) avsluta('klar');
+  }
+
+  brade.addEventListener('click', function (e) {
+    var t = e.target.closest('.kortet');
+    if (t) tryck(+t.dataset.plats);
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var data = dagens.slut === 'gavupp'
+      ? { dag: dag, spel: 'memory', status: 'gav upp', medalj: '', text: '' }
+      // Färst drag avgör, vid lika kortast tid i tiondelar (alltid under 100 000).
+      : { dag: dag, spel: 'memory', status: 'klar', varde: dagens.drag * 100000 + Math.min(Math.floor(dagens.tid / 100), 99999),
+          medalj: medalj(dagens.drag), text: dagens.drag + ' drag · ' + tidText(dagens.tid) };
+    R.skicka(data)
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa en omgång =====
+  function visa(arOvning) {
+    stoppaKlockan();
+    vandTillbaka();
+    ovning = arOvning;
+    $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    var sparat = !ovning && Advent.lasa(sparNyckel, null);
+    if (sparat && sparat.fro === dagensFro) s = sparat;
+    else nyttTillstand(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : dagensFro);
+    byggBradet();
+    ritaBradet();
+    if (s.start && !s.slut) startaKlockan();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('geUpp').addEventListener('click', function () {
+    if (!confirm('Vill du ge upp? Då räknas inte dagens försök.')) return;
+    avsluta('gavupp');
+    $('tavla').scrollIntoView({ behavior: 'smooth' });
+  });
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  visa(false);
+})();
+</script>
+</body>
+</html>
