@@ -111,10 +111,10 @@
       <li>Dra fingret åt vänster eller höger var som helst på backen så följer kälken med. På dator går det med piltangenterna.</li>
       <li>Varje snöflinga ger 1 poäng.</li>
       <li>Kör över en snövall så hoppar kälken. Stjärnorna svävar i luften efter vallarna och ger 5 poäng, men går bara att ta när man hoppar. I luften flyger man över stenar och granar.</li>
-      <li>Kör du på en sten eller gran får du minus 3 poäng, blinkar en stund och åker vidare. Poängen kan bli minus.</li>
+      <li>Kör du på en sten eller gran får du minus 3 poäng och tappar fart. Medan kälken blinkar kan du inte fånga något. Poängen kan bli minus.</li>
       <li>Åkturen tar 60 sekunder och det går fortare och fortare.</li>
       <li>Du har 3 försök och det bästa räknas. Alla får samma backe.</li>
-      <li>Guld från 130 poäng, silver från 90, brons från 50.</li>
+      <li>Guld från 110 poäng, silver från 75, brons från 40.</li>
     </ol>
     <p class="liten">Lämnar du sidan står kälken still tills du drar igen. Laddar du om mitt i ett försök räknas försöket som slut.</p>
   </details>
@@ -139,16 +139,17 @@
   var SPELTID = 60;
   var HOPPTID = 1.0;              // sekunder i luften efter en snövall
   var BLINK = 1;                  // sekunder man inte kan krocka efter en krock
-  var TANGENTFART = 300;          // sidled med piltangenterna, enheter per sekund
+  var SIDFART = 230;              // kälken glider högst så här fort i sidled, enheter per sekund
+  var BROMS = 0.35, BROMSTID = 1.5;   // efter en krock: farten ner till 35 % och tillbaka på 1,5 s
   var FORSOK = 3;
   var FLINGA = 1, STJARNA = 5, KROCK = -3;
-  var GULD = 130, SILVER = 90, BRONS = 50;
+  var GULD = 110, SILVER = 75, BRONS = 40;
 
-  // Farten ökar jämnt från 150 till 300 enheter per sekund. Hur långt man åkt beror bara på tiden,
-  // så backen kommer lika fort för alla.
-  function fart(t) { return 150 + 2.5 * t; }
-  function vag(t) { return 150 * t + 1.25 * t * t; }
-  function tidVid(p) { return (-150 + Math.sqrt(22500 + 5 * p)) / 2.5; }
+  // Farten ökar jämnt från 210 till 350 enheter per sekund. Krockar bromsar, så den som krockar
+  // hinner kortare bit av backen. vag och tidVid gäller en åktur utan krockar.
+  function fart(t) { return 210 + 2.4 * t; }
+  function vag(t) { return 210 * t + 1.2 * t * t; }
+  function tidVid(p) { return (-210 + Math.sqrt(44100 + 4.8 * p)) / 2.4; }
 
   var $ = function (id) { return document.getElementById(id); };
   var dag = Advent.hamtaDag() || 1;
@@ -237,7 +238,8 @@
   function nyRunda(fro) {
     if (backeFro !== fro) { backe = byggBacke(fro); backeFro = fro; }
     runda = {
-      x: B / 2, t: 0, poang: 0,
+      x: B / 2, mal: B / 2, t: 0, d: 0, poang: 0,
+      broms: 0,          // tid kvar av inbromsningen efter en krock
       hopp: -1,          // tid kvar i luften, -1 = på marken
       blink: 0,
       tagna: {},         // nycklar för flingor, stjärnor och hinder man redan tagit eller krockat med
@@ -263,7 +265,12 @@
 
   function steg() {
     runda.t += STEG;
-    var d = vag(runda.t);
+    if (runda.broms > 0) runda.broms = Math.max(0, runda.broms - STEG);
+    runda.d += fart(runda.t) * (1 - (1 - BROMS) * runda.broms / BROMSTID) * STEG;
+    var d = runda.d;
+    // Kälken glider mot fingret, men bara så fort den hinner.
+    var steg_ = SIDFART * STEG;
+    runda.x += Math.max(-steg_, Math.min(steg_, runda.mal - runda.x));
     if (runda.blink > 0) runda.blink -= STEG;
     if (runda.hopp >= 0) { runda.hopp -= STEG; if (runda.hopp < 0) runda.hopp = -1; }
     var z = hojd(), x = runda.x, i, o;
@@ -278,10 +285,10 @@
     for (i = 0; i < backe.flingor.length; i++) {
       o = backe.flingor[i];
       if (o.p - d > 30) break;
-      if (runda.tagna['f' + i] || d - o.p > 30) continue;
+      if (runda.tagna['f' + i] || d - o.p > 30 || runda.blink > 0) continue;
       if (Math.hypot(o.x - x, o.p - d) < TRAFF + 11) { runda.tagna['f' + i] = 1; runda.flingor++; poang(FLINGA, o.x, KALKE_Y - 20, '#2F63A8'); }
     }
-    if (z > 0.3) {
+    if (z > 0.3 && runda.blink <= 0) {
       for (i = 0; i < backe.stjarnor.length; i++) {
         o = backe.stjarnor[i];
         if (runda.tagna['s' + i] || Math.abs(o.p - d) > 30) continue;
@@ -295,6 +302,7 @@
         if (Math.hypot(o.x - x, o.p - d) < TRAFF + 11) {
           runda.tagna['h' + i] = 1;
           runda.blink = BLINK;
+          runda.broms = BROMSTID;
           runda.krockar++;
           poang(KROCK, x, KALKE_Y - 20, '#C0392B');
           break;
@@ -323,7 +331,7 @@
     var aker = runda.igang && !runda.vantar && !runda.slut;
     if (aker) {
       var riktning = (tangenter.h ? 1 : 0) - (tangenter.v ? 1 : 0);
-      if (riktning) flyttaTill(runda.x + riktning * TANGENTFART * dt);
+      if (riktning) flyttaTill(runda.x + riktning * 40);
       runda.ackumulerat += dt;
       while (runda.ackumulerat >= STEG && !runda.slut) {
         runda.ackumulerat -= STEG;
@@ -345,7 +353,7 @@
     requestAnimationFrame(function (t) { loop(nr, t); });
   }
 
-  function flyttaTill(x) { runda.x = Math.max(KANT, Math.min(B - KANT, x)); }
+  function flyttaTill(x) { runda.mal = Math.max(KANT, Math.min(B - KANT, x)); }
 
   // Första draget (eller pilen) startar åkturen, och efter en paus fortsätter den.
   function borja() {
@@ -423,7 +431,7 @@
     var dx = (e.clientX - drag.x) / skala;
     drag.x = e.clientX;
     if (runda.vantar) borja();
-    flyttaTill(runda.x + dx);
+    flyttaTill(runda.mal + dx);
   });
   function slapp(e) { if (drag && e.pointerId === drag.id) drag = null; }
   bana.addEventListener('pointerup', slapp);
@@ -572,7 +580,7 @@
 
   function ritaOm() {
     if (!bredd || !runda) return;
-    var d = vag(runda.t);
+    var d = runda.d;
     function skarmY(p) { return KALKE_Y - (p - d); }
     var g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#E6EEF8');
