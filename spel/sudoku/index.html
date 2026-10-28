@@ -13,7 +13,7 @@
   .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
   .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
 
-  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
   .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
   .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
   .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
@@ -125,7 +125,6 @@
   <p class="under" id="under"></p>
 
   <div class="matare">
-    <div><span>Pussel</span><b id="pusselNr">1 av 3</b></div>
     <div><span>Tid</span><b id="tid">0:00</b></div>
     <div><span>Ledtrådar</span><b id="ledtradar">0</b></div>
   </div>
@@ -163,9 +162,9 @@
       <li>Tryck på en tom cell och välj siffra på knappsatsen. På dator går det bra med siffertangenterna och piltangenterna.</li>
       <li>Med Anteckna på skriver du små minnessiffror i cellen i stället. De försvinner av sig själva när siffran skrivs in bredvid.</li>
       <li>Krockar (samma siffra två gånger i en rad, kolumn eller ruta) blir röda. Om en siffra är fel på annat sätt får du inte veta.</li>
-      <li>Tre pussel i rad: lätt, medel och svår. Klockan startar när du trycker på Starta och står still mellan pusslen. Alla går att lösa utan att gissa.</li>
+      <li>Klockan startar när du trycker på Starta. Pusslet går att lösa utan att gissa.</li>
       <li>Fastnar du kan du ta en ledtråd. Den fyller i en rätt siffra men kostar 30 sekunder.</li>
-      <li>Lägst sammanlagd tid vinner. Guld under 4 minuter, silver under 6, brons under 9.</li>
+      <li>Lägst tid vinner. Guld under 3 minuter, silver under 5, brons under 8.</li>
     </ol>
     <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
   </details>
@@ -174,7 +173,7 @@
     <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
-  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens sudokun</a></p>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens sudoku</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=2"></script>
@@ -330,9 +329,10 @@
     return bast;
   }
 
-  var GULD = 240, SILVER = 360, BRONS = 540;   // sekunder, alla tre pusslen och ledtrådarna
+  var GULD = 180, SILVER = 300, BRONS = 480;   // sekunder, ledtrådarna inräknade
+  var ANTAL = 1;                               // pussel i rad
+  var SVARIGHET = 1;                           // medel (12 givna) för alla pussel
   var STRAFF = 30000;                          // ms per ledtråd
-  var NIVAER = ['Lätt', 'Medel', 'Svår'];
 
   var $ = function (id) { return document.getElementById(id); };
   var dag = Advent.hamtaDag() || 18;
@@ -354,7 +354,7 @@
   function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
 
   function hamtaPussel(nr) {
-    if (!pussel[nr]) pussel[nr] = skapaPussel(Advent.skapaSlump(s.fro + '-' + nr), nr);
+    if (!pussel[nr]) pussel[nr] = skapaPussel(Advent.skapaSlump(s.fro + '-' + nr), SVARIGHET);
     return pussel[nr];
   }
   function p() { return hamtaPussel(s.nr); }
@@ -424,10 +424,10 @@
     if (!s.slut && !s.startad) {
       var lager = el('div', 'lager');
       if (s.nr > 0) {
-        lager.appendChild(el('p', null, NIVAER[s.nr - 1] + ' klart!'));
+        lager.appendChild(el('p', null, 'Pussel ' + s.nr + ' klart!'));
         lager.appendChild(el('b', null, tidText(s.tider[s.nr - 1])));
       }
-      lager.appendChild(el('p', null, 'Pussel ' + (s.nr + 1) + ' av 3 · ' + NIVAER[s.nr]));
+      if (ANTAL > 1) lager.appendChild(el('p', null, 'Pussel ' + (s.nr + 1) + ' av ' + ANTAL));
       var knapp = el('button', 'knapp', s.nr ? 'Nästa pussel' : 'Starta');
       knapp.type = 'button';
       knapp.addEventListener('click', starta);
@@ -456,7 +456,6 @@
   function ritaMatare() {
     $('tid').textContent = tidText(totalTid());
     $('ledtradar').textContent = s.ledtradar;
-    $('pusselNr').textContent = Math.min(s.nr + 1, 3) + ' av 3';
   }
 
   function rita() {
@@ -480,13 +479,13 @@
     if (s.slut === 'gavupp') {
       $('slutRubrik').textContent = 'Du gav upp';
       $('slutPoang').textContent = '';
-      $('slutText').textContent = 'Facit står i rutnätet. Testa gärna att öva med andra pussel.';
+      $('slutText').textContent = 'Facit står i rutnätet. Testa gärna att öva med ett annat pussel.';
       return;
     }
     var tot = totalTid(), m = medalj(tot / 1000);
-    $('slutRubrik').textContent = 'Alla tre lösta!';
+    $('slutRubrik').textContent = 'Sudokut är löst!';
     $('slutPoang').textContent = tidText(tot);
-    $('slutText').textContent = s.tider.map(function (t, n) { return NIVAER[n] + ' ' + tidText(t); }).join(' · ') + '. ' +
+    $('slutText').textContent =
       (s.ledtradar ? 'Med ' + ledtradText(s.ledtradar) + ' (+' + s.ledtradar * 30 + ' s). ' : 'Utan ledtrådar. ') +
       (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
   }
@@ -512,7 +511,7 @@
     s.startad = false;
     vald = null;
     stoppaKlockan();
-    if (s.tider.length >= 3) {
+    if (s.tider.length >= ANTAL) {
       s.slut = 'klar';
       sparaDagens();
       rita();
@@ -671,7 +670,7 @@
     var sparat = !ovning && Advent.lasa(sparNyckel, null);
     if (sparat && sparat.fro === dagensFro) s = sparat;
     else s = nyttTillstand(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : dagensFro);
-    if (s.nr > 2) s.nr = 2;
+    if (s.nr > ANTAL - 1) s.nr = ANTAL - 1;
     rita();
     if (s.start && !s.slut) startaKlockan();
     if (!ovning) forsokSkicka();
