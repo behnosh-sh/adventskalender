@@ -114,7 +114,7 @@
       <li>Kör du på en sten eller gran får du minus 3 poäng och tappar fart. Medan kälken blinkar kan du inte fånga något. Poängen kan bli minus.</li>
       <li>Åkturen tar 60 sekunder och det går fortare och fortare.</li>
       <li>Du har 3 försök och det bästa räknas. Alla får samma backe.</li>
-      <li>Guld från 110 poäng, silver från 75, brons från 40.</li>
+      <li>Guld från 80 poäng, silver från 55, brons från 30.</li>
     </ol>
     <p class="liten">Lämnar du sidan står kälken still tills du drar igen. Laddar du om mitt i ett försök räknas försöket som slut.</p>
   </details>
@@ -139,17 +139,19 @@
   var SPELTID = 60;
   var HOPPTID = 1.0;              // sekunder i luften efter en snövall
   var BLINK = 1;                  // sekunder man inte kan krocka efter en krock
-  var SIDFART = 230;              // kälken glider högst så här fort i sidled, enheter per sekund
+  var SIDFART = 170;              // kälken glider högst så här fort i sidled, enheter per sekund
+  var SIDACC = 550;               // och tar sig upp i den farten (eller bromsar) så här trögt
+  var DRAGFAKTOR = 0.7;           // fingret flyttar målet lite kortare än fingret rör sig
   var BROMS = 0.35, BROMSTID = 1.5;   // efter en krock: farten ner till 35 % och tillbaka på 1,5 s
   var FORSOK = 3;
   var FLINGA = 1, STJARNA = 5, KROCK = -3;
-  var GULD = 110, SILVER = 75, BRONS = 40;
+  var GULD = 80, SILVER = 55, BRONS = 30;
 
-  // Farten ökar jämnt från 210 till 350 enheter per sekund. Krockar bromsar, så den som krockar
+  // Farten ökar jämnt från 260 till 476 enheter per sekund. Krockar bromsar, så den som krockar
   // hinner kortare bit av backen. vag och tidVid gäller en åktur utan krockar.
-  function fart(t) { return 210 + 2.4 * t; }
-  function vag(t) { return 210 * t + 1.2 * t * t; }
-  function tidVid(p) { return (-210 + Math.sqrt(44100 + 4.8 * p)) / 2.4; }
+  function fart(t) { return 260 + 3.6 * t; }
+  function vag(t) { return 260 * t + 1.8 * t * t; }
+  function tidVid(p) { return (-260 + Math.sqrt(67600 + 7.2 * p)) / 3.6; }
 
   var $ = function (id) { return document.getElementById(id); };
   var dag = Advent.hamtaDag() || 1;
@@ -174,6 +176,8 @@
     // Snövallarna kommer med jämna mellanrum, de andra bitarna slumpas emellan.
     var nastaVall = 1300, p = 380;
     while (p < slut) {
+      // Avstånden växer med farten, så att det blir ungefär lika lång tid mellan sakerna hela vägen.
+      var k = fart(tidVid(p)) / 210;
       var langd;
       if (p >= nastaVall) {
         // Snövall. Stjärnorna ligger i en rad där kälken är som högst, och oftast en sten under.
@@ -184,37 +188,37 @@
         // Lite vid sidan av, så att man inte bara kan köra rakt utan att hoppa.
         hinder(vx < B / 2 ? vx + 70 : vx - 70, p + luft * 0.35);
         langd = luft + 40;
-        nastaVall += 2100;
+        nastaVall += 1500 * k;
       } else {
         var val = r();
         if (val < 0.45) {
           // En slingrande rad snöflingor.
           var x0 = mellan(70, B - 70), amp = mellan(30, 70), fas = r() * 6;
-          for (var i = 0; i < 5; i++) flinga(x0 + Math.sin(fas + i * 0.7) * amp, p + i * 44);
-          langd = 4 * 44;
+          for (var i = 0; i < 5; i++) flinga(x0 + Math.sin(fas + i * 0.7) * amp, p + i * 44 * k);
+          langd = 4 * 44 * k;
         } else if (val < 0.75) {
           // Två rader hinder med en lucka var, och flingor i luckorna.
           for (var rad = 0; rad < 2; rad++) {
-            var lucka = mellan(70, B - 70), pr = p + rad * 150;
+            var lucka = mellan(70, B - 70), pr = p + rad * 150 * k;
             for (var hx = 40 + r() * 30; hx < B - 20; hx += mellan(70, 100)) {
               if (Math.abs(hx - lucka) > 55) hinder(hx, pr + mellan(-12, 12));
             }
             flinga(lucka, pr);
-            flinga(lucka, pr - 40);
+            flinga(lucka, pr - 40 * k);
           }
-          langd = 150;
+          langd = 150 * k;
         } else {
           // Slalom: hinder växelvis vänster och höger, flingor på andra sidan.
           var sida = r() < 0.5 ? 1 : -1;
           for (var j = 0; j < 4; j++) {
-            hinder(B / 2 + sida * mellan(20, 50), p + j * 115);
-            flinga(B / 2 - sida * mellan(70, 110), p + j * 115);
+            hinder(B / 2 + sida * mellan(20, 50), p + j * 115 * k);
+            flinga(B / 2 - sida * mellan(70, 110), p + j * 115 * k);
             sida = -sida;
           }
-          langd = 3 * 115;
+          langd = 3 * 115 * k;
         }
       }
-      p += langd + mellan(70, 120);
+      p += langd + mellan(70, 120) * k;
     }
     // Sorterade längs backen, så att man kan sluta leta när man kommit förbi.
     ['flingor', 'stjarnor', 'hinder', 'vallar'].forEach(function (n) { b[n].sort(function (a, c) { return a.p - c.p; }); });
@@ -238,7 +242,7 @@
   function nyRunda(fro) {
     if (backeFro !== fro) { backe = byggBacke(fro); backeFro = fro; }
     runda = {
-      x: B / 2, mal: B / 2, t: 0, d: 0, poang: 0,
+      x: B / 2, mal: B / 2, vx: 0, t: 0, d: 0, poang: 0,
       broms: 0,          // tid kvar av inbromsningen efter en krock
       hopp: -1,          // tid kvar i luften, -1 = på marken
       blink: 0,
@@ -268,9 +272,11 @@
     if (runda.broms > 0) runda.broms = Math.max(0, runda.broms - STEG);
     runda.d += fart(runda.t) * (1 - (1 - BROMS) * runda.broms / BROMSTID) * STEG;
     var d = runda.d;
-    // Kälken glider mot fingret, men bara så fort den hinner.
-    var steg_ = SIDFART * STEG;
-    runda.x += Math.max(-steg_, Math.min(steg_, runda.mal - runda.x));
+    // Kälken glider mot fingret, men är trög: den tar tid att komma upp i fart och att stanna.
+    var vill = Math.max(-SIDFART, Math.min(SIDFART, (runda.mal - runda.x) * 5)), acc = SIDACC * STEG;
+    runda.vx += Math.max(-acc, Math.min(acc, vill - runda.vx));
+    runda.x += runda.vx * STEG;
+    if (runda.x < KANT || runda.x > B - KANT) { runda.x = Math.max(KANT, Math.min(B - KANT, runda.x)); runda.vx = 0; }
     if (runda.blink > 0) runda.blink -= STEG;
     if (runda.hopp >= 0) { runda.hopp -= STEG; if (runda.hopp < 0) runda.hopp = -1; }
     var z = hojd(), x = runda.x, i, o;
@@ -431,7 +437,7 @@
     var dx = (e.clientX - drag.x) / skala;
     drag.x = e.clientX;
     if (runda.vantar) borja();
-    flyttaTill(runda.mal + dx);
+    flyttaTill(runda.mal + dx * DRAGFAKTOR);
   });
   function slapp(e) { if (drag && e.pointerId === drag.id) drag = null; }
   bana.addEventListener('pointerup', slapp);
@@ -547,6 +553,7 @@
     if (runda.blink > 0 && Math.floor(runda.blink * 10) % 2 === 0) return;
     ctx.save();
     ctx.translate(x, y - 10 * z);
+    ctx.rotate(runda.vx / SIDFART * 0.3);   // lutar åt det håll den glider
     ctx.scale(st, st);
     // Medar med uppböjd spets.
     ctx.strokeStyle = '#3A2A1E';
