@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memory</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+  .tips.varning { color: var(--glod); }
+
+  /* Brädet: 4 kolumner × 5 rader. Smalare på låga skärmar så att hela brädet syns. */
+  .brade {
+    container-type: inline-size;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.4cqw;
+    width: min(100%, 400px, calc((100svh - 210px) * 4 / 5));
+    margin: 0 auto 16px;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .kortet {
+    position: relative;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    cursor: pointer;
+    perspective: 600px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kortet .inre {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transition: transform .28s ease-out;
+  }
+  .kortet.uppe .inre { transform: rotateY(180deg); }
+  .kortet .baksida, .kortet .framsida {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .kortet .baksida {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,.22) 0 9%, transparent 10%),
+      radial-gradient(circle at 25% 25%, rgba(255,255,255,.12) 0 5%, transparent 6%),
+      radial-gradient(circle at 75% 75%, rgba(255,255,255,.12) 0 5%, transparent 6%),
+      #2F4A3A;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.14), 0 3px 0 rgba(0,0,0,.25);
+  }
+  .kortet .framsida {
+    transform: rotateY(180deg);
+    background: #FBF4EA;
+    box-shadow: 0 3px 0 rgba(0,0,0,.25);
+    font-size: 12cqw;
+    line-height: 1;
+  }
+  .kortet.grinch .framsida { flex-direction: column; gap: 1cqw; background: #6E9A2C; color: #fff; }
+  .kortet.grinch .framsida small { font: 600 3.4cqw var(--text-typsnitt); }
+  .kortet.par .framsida { background: #D9F0E0; box-shadow: inset 0 0 0 3px var(--accent); }
+  .kortet.miss .framsida { box-shadow: inset 0 0 0 3px #E8A0A0; }
+  .kortet.borta { opacity: .35; cursor: default; }
+  .kortet.flyttas { z-index: 2; }
+  .kortet.flyttas .baksida { box-shadow: 0 0 0 3px var(--glod), 0 0 16px var(--glod); }
+  .kortet:focus-visible { outline: 3px solid var(--glod); outline-offset: 2px; }
+
+  /* Tomteverkstaden: en kort uppgift som täcker brädet vart tredje drag. */
+  .avbrott {
+    position: absolute;
+    inset: -1cqw;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3cqw;
+    padding: 4cqw;
+    border-radius: 16px;
+    background: #1D3157;
+    box-shadow: 0 0 0 2px var(--glod);
+    text-align: center;
+    animation: tona .2s ease-out;
+  }
+  .avbrott h2 { margin: 0; font-size: 18px; }
+  .avbrott p { margin: 0; }
+  .avbrott .uppgift { font-size: 18px; font-weight: 600; }
+  .avbrott .falt { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2cqw; width: 100%; }
+  .avbrott .falt button, .avbrott .falt span {
+    display: flex; align-items: center; justify-content: center;
+    aspect-ratio: 1; border: 0; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.1); font-size: 10cqw; line-height: 1; color: inherit;
+  }
+  .avbrott .falt button { cursor: pointer; }
+  .avbrott .falt button.tagen { background: rgba(143,211,168,.35); }
+  .avbrott .falt button.fel { animation: skaka .3s; background: rgba(232,160,160,.4); }
+  .avbrott .svar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3cqw; width: 100%; }
+  .avbrott .svar .knapp { padding-left: 0; padding-right: 0; font-variant-numeric: tabular-nums; }
+  .avbrott .straff { min-height: 1.4em; font-size: 14px; color: #F2A7A7; }
+  @keyframes skaka { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  .slutlager {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(20,35,63,.72);
+    color: var(--himmel-text);
+    animation: tona .4s ease-out;
+  }
+  .slutlager b { font: 600 9cqw var(--text-typsnitt); }
+  @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .kortet .inre { transition: none; }
+    .slutlager, .avbrott { animation: none; }
+  }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 14px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Memory <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Drag</span><b id="drag">0</b></div>
+    <div><span>Par</span><b id="par">0/9</b></div>
+    <div><span>Tid</span><b id="tid">0:00</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="brade" id="brade" aria-label="Spelbräde med 20 kort"></div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutRubrik"></h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Vänd två kort. Är de lika får du behålla dem, annars vänds de tillbaka. Två vända kort är ett drag. Hitta alla 9 paren.</li>
+      <li>Två av korten är Grinchen. Vänder du upp honom byter fyra dolda kort plats med varandra. Håll koll på var de tar vägen! Det räknas som ett drag.</li>
+      <li>Vart tredje drag kommer ett avbrott från Tomteverkstaden: en snabb uppgift som måste lösas innan du får spela vidare. Varje fel ger ett extra drag.</li>
+      <li>Alla får samma kort på samma platser och samma uppgifter. Färst drag vinner, vid lika vinner kortast tid. Klockan startar vid första kortet och går även under avbrotten.</li>
+      <li>Guld på högst 18 drag, silver på högst 23, brons på högst 30.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
+  </details>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bräde</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=13"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  var MOTIV = ['🎄', '⭐', '🎁', '🔔', '🕯️', '🦌', '⛄', '🍪', '🧦'];
+  var MOTIV_NAMN = ['gran', 'stjärna', 'paket', 'klocka', 'ljus', 'ren', 'snögubbe', 'kaka', 'strumpa'];
+  var PAR = MOTIV.length;
+  var GRINCH = PAR;      // kortvärdet för Grinchen
+  var ANTAL = PAR * 2 + 2;
+  var BYTEN = 4;         // så många dolda kort byter plats när Grinchen vänds
+  var AVBROTT_VART = 3;  // drag mellan avbrotten
+  var GULD = 18, SILVER = 23, BRONS = 30;   // drag inklusive straff
+  var VISA_MISS = 900;   // ms som två olika kort visas innan de vänds tillbaka
+  var FLYTT_MS = 650;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 17;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-memory';
+
+  function medalj(drag) { return drag <= GULD ? 'guld' : drag <= SILVER ? 'silver' : drag <= BRONS ? 'brons' : ''; }
+  function tidText(ms) { return Advent.formateraTid(Math.floor(ms / 1000)); }
+
+  function blanda(arr, slump) {
+    for (var j = arr.length - 1; j > 0; j--) {
+      var r = Math.floor(slump() * (j + 1));
+      var t = arr[j]; arr[j] = arr[r]; arr[r] = t;
+    }
+    return arr;
+  }
+
+  // ===== Spelets tillstånd =====
+  // s.kort[plats] = motivnummer 0–8, eller GRINCH. s.tagna[plats] = true för hittade par och vända Grinchar.
+  // s.drag räknar straffdragen också. s.grinchNr och s.avbrottNr väljer slumpen för nästa Grinch och avbrott,
+  // så att alla får samma byten och samma uppgifter. Ett avbrott som inte är löst visas igen efter omladdning.
+  var sparNyckel = 'memory:' + dag;
+  var s;
+  var ovning = false;
+  var uppe = [];        // platser som är uppvända just nu och inte tagna
+  var missTimer = null;
+  var upptagen = false; // Grinchen flyttar kort eller ett avbrott är på väg
+  var avbrottAktivt = false;
+  var grinchVisas = null; // Grinchen syns tydligt medan korten flyttar, sedan bleknar han
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function nyttTillstand(fro) {
+    var k = [];
+    for (var i = 0; i < PAR; i++) k.push(i, i);
+    k.push(GRINCH, GRINCH);
+    s = { fro: fro, kort: blanda(k, Advent.skapaSlump(fro)), tagna: [], drag: 0, straff: 0,
+          grinchNr: 0, avbrottNr: 0, start: null, tid: null, slut: null, skickad: false };
+  }
+
+  function antalPar() {
+    var n = 0;
+    for (var i = 0; i < ANTAL; i++) if (s.tagna[i] && s.kort[i] !== GRINCH) n++;
+    return n / 2;
+  }
+
+  function forflutet() {
+    if (s.tid != null) return s.tid;
+    return s.start ? Date.now() - s.start : 0;
+  }
+
+  // ===== Ritning =====
+  var brade = $('brade');
+  var knappar = [];   // plats -> element
+
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function nyttKort(varde) {
+    var b = el('button', 'kortet');
+    b.type = 'button';
+    var inre = el('span', 'inre');
+    inre.appendChild(el('span', 'baksida'));
+    var fram = el('span', 'framsida');
+    if (varde === GRINCH) {
+      b.classList.add('grinch');
+      fram.appendChild(el('span', null, '😈'));
+      fram.appendChild(el('small', null, 'Grinchen'));
+    } else {
+      fram.textContent = MOTIV[varde];
+    }
+    inre.appendChild(fram);
+    b.appendChild(inre);
+    return b;
+  }
+
+  function byggBradet() {
+    brade.textContent = '';
+    knappar = s.kort.map(function (v, i) {
+      var b = nyttKort(v);
+      b.dataset.plats = i;
+      brade.appendChild(b);
+      return b;
+    });
+  }
+
+  function ritaBradet() {
+    knappar.forEach(function (b, i) {
+      var v = s.kort[i];
+      var tagen = !!s.tagna[i];
+      var arUppe = uppe.indexOf(i) >= 0;
+      var visas = tagen || arUppe || s.slut === 'gavupp';
+      b.classList.toggle('uppe', visas);
+      b.classList.toggle('par', tagen && v !== GRINCH);
+      b.classList.toggle('borta', tagen && v === GRINCH && i !== grinchVisas);
+      b.classList.toggle('miss', uppe.length === 2 && arUppe);
+      b.setAttribute('aria-label', visas ? (v === GRINCH ? 'Grinchen' : MOTIV_NAMN[v]) : 'Kort ' + (i + 1));
+    });
+    var gammalt = brade.querySelector('.slutlager');
+    if (gammalt) gammalt.remove();
+    if (s.slut === 'gavupp') {
+      var lager = el('div', 'slutlager');
+      lager.appendChild(el('b', null, 'Du gav upp'));
+      brade.appendChild(lager);
+    }
+    ritaMatare();
+  }
+
+  var tipsText = '', tipsVarning = false;
+  function visaTips(text, varning) { tipsText = text; tipsVarning = !!varning; ritaMatare(); }
+
+  function ritaMatare() {
+    $('tid').textContent = tidText(forflutet());
+    $('drag').textContent = s.drag;
+    $('par').textContent = antalPar() + '/' + PAR;
+    var tips = $('tips');
+    tips.textContent = s.slut ? '' : !s.start ? 'Tryck på ett kort. Klockan startar då.' : tipsText;
+    tips.classList.toggle('varning', tipsVarning && !s.slut);
+    $('geUpp').hidden = ovning || !!s.slut;
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = !s.slut;
+    if (!s.slut) return;
+    if (s.slut === 'gavupp') {
+      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutPoang').textContent = '';
+      $('slutText').textContent = 'Testa gärna att öva, med andra platser.';
+      return;
+    }
+    var m = medalj(s.drag);
+    $('slutRubrik').textContent = 'Alla par hittade!';
+    $('slutPoang').textContent = s.drag + ' drag';
+    $('slutText').textContent = tidText(s.tid) + (s.straff ? ', varav ' + s.straff + ' straff' : '') + '. ' +
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() { stoppaKlockan(); klocka = setInterval(ritaMatare, 250); }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  function avsluta(orsak) {
+    if (s.slut) return;
+    s.slut = orsak;
+    s.tid = forflutet();
+    stoppaKlockan();
+    vandTillbaka();
+    stangAvbrott();
+    sparaDagens();
+    ritaBradet();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  // ===== Vända kort =====
+  function vandTillbaka() {
+    if (missTimer) { clearTimeout(missTimer); missTimer = null; }
+    uppe = [];
+  }
+
+  // Straffdragen räknas inte när vi ser efter om det är dags för ett avbrott.
+  function avbrottDags() { return s.drag - s.straff >= (s.avbrottNr + 1) * AVBROTT_VART; }
+
+  // Körs när ett drag är helt klart. Vart tredje drag kommer ett avbrott.
+  function dragKlart(vanta) {
+    if (antalPar() === PAR) { avsluta('klar'); return; }
+    if (avbrottDags()) {
+      upptagen = true;
+      setTimeout(function () {
+        if (s.slut) return;
+        vandTillbaka();
+        ritaBradet();
+        visaAvbrott();
+      }, vanta);
+    }
+  }
+
+  function tryck(p) {
+    if (!s || s.slut || upptagen || avbrottAktivt || s.tagna[p] || uppe.indexOf(p) >= 0) return;
+    // Två olika kort visas fortfarande: ett nytt tryck vänder tillbaka dem direkt.
+    if (uppe.length === 2) vandTillbaka();
+    if (!s.start) { s.start = Date.now(); startaKlockan(); }
+    visaTips('');
+
+    if (s.kort[p] === GRINCH) {
+      // Grinchen avslutar draget. Ett kort som redan var uppvänt vänds tillbaka.
+      s.drag++;
+      s.tagna[p] = true;
+      grinchVisas = p;
+      uppe = [];
+      sparaDagens();
+      ritaBradet();
+      grinchen();
+      return;
+    }
+
+    uppe.push(p);
+    if (uppe.length === 2) {
+      s.drag++;
+      var a = uppe[0], b = uppe[1];
+      var lika = s.kort[a] === s.kort[b];
+      if (lika) {
+        s.tagna[a] = s.tagna[b] = true;
+        uppe = [];
+      } else {
+        missTimer = setTimeout(function () { vandTillbaka(); ritaBradet(); }, VISA_MISS);
+      }
+      sparaDagens();
+      ritaBradet();
+      dragKlart(lika ? 450 : VISA_MISS);
+      return;
+    }
+    ritaBradet();
+  }
+
+  // Grinchen byter plats på fyra dolda kort i en ring (A→B→C→D→A). Korten glider till sina nya platser.
+  function grinchen() {
+    upptagen = true;
+    visaTips('Grinchen! Håll koll på korten som byter plats.', true);
+    var slump = Advent.skapaSlump(s.fro + '-grinch-' + s.grinchNr);
+    s.grinchNr++;
+    var dolda = [];
+    for (var i = 0; i < ANTAL; i++) if (!s.tagna[i] && s.kort[i] !== GRINCH) dolda.push(i);
+    var ring = blanda(dolda, slump).slice(0, BYTEN);
+    var varden = ring.map(function (p) { return s.kort[p]; });
+    ring.forEach(function (p, j) { s.kort[ring[(j + 1) % ring.length]] = varden[j]; });
+    sparaDagens();
+
+    setTimeout(function () {
+      if (s.slut) return;
+      var fore = ring.map(function (p) { return knappar[p].getBoundingClientRect(); });
+      var gamla = ring.map(function (p) { return knappar[p]; });
+      // Element j hamnar på plats ring[j + 1].
+      gamla.forEach(function (e, j) {
+        var ny = ring[(j + 1) % ring.length];
+        knappar[ny] = e;
+        e.dataset.plats = ny;
+      });
+      knappar.forEach(function (e) { brade.appendChild(e); });
+      gamla.forEach(function (e, j) {
+        var efter = e.getBoundingClientRect();
+        e.classList.add('flyttas');
+        e.style.transition = 'none';
+        e.style.transform = 'translate(' + (fore[j].left - efter.left) + 'px,' + (fore[j].top - efter.top) + 'px)';
+      });
+      void brade.offsetWidth;
+      gamla.forEach(function (e) {
+        e.style.transition = 'transform ' + FLYTT_MS + 'ms ease-in-out';
+        e.style.transform = '';
+      });
+      setTimeout(function () {
+        gamla.forEach(function (e) { e.classList.remove('flyttas'); e.style.transition = ''; });
+        upptagen = false;
+        grinchVisas = null;
+        visaTips('');
+        ritaBradet();
+        dragKlart(200);
+      }, FLYTT_MS + 350);
+    }, 600);
+  }
+
+  brade.addEventListener('click', function (e) {
+    var t = e.target.closest('.kortet');
+    if (t) tryck(+t.dataset.plats);
+  });
+
+  // ===== Tomteverkstaden (avbrott) =====
+  var avbrottEl = null;
+
+  function stangAvbrott() {
+    if (avbrottEl) avbrottEl.remove();
+    avbrottEl = null;
+    avbrottAktivt = false;
+  }
+
+  function avbrottKlart() {
+    stangAvbrott();
+    s.avbrottNr++;
+    upptagen = false;
+    sparaDagens();
+    ritaBradet();
+  }
+
+  function straff(rad) {
+    s.straff++;
+    s.drag++;
+    sparaDagens();
+    ritaMatare();
+    rad.textContent = '+1 drag';
+  }
+
+  function visaAvbrott() {
+    stangAvbrott();
+    upptagen = false;
+    avbrottAktivt = true;
+    var slump = Advent.skapaSlump(s.fro + '-avbrott-' + s.avbrottNr);
+    var typ = s.avbrottNr % 3;   // turas om, så att alla tre sorterna kommer
+    avbrottEl = el('div', 'avbrott');
+    avbrottEl.appendChild(el('h2', null, 'Tomteverkstaden!'));
+    var uppgift = el('p', 'uppgift');
+    avbrottEl.appendChild(uppgift);
+    var rad = el('p', 'straff');
+
+    if (typ === 0 || typ === 1) {
+      // 12 emoji av kortens motiv. Typ 0: tryck på alla av ett slag. Typ 1: räkna dem.
+      var mal = Math.floor(slump() * PAR);
+      var antal = typ === 0 ? 3 + Math.floor(slump() * 2) : 2 + Math.floor(slump() * 5);
+      var falt = [];
+      for (var i = 0; i < 12; i++) {
+        var annan = Math.floor(slump() * (PAR - 1));
+        falt.push(i < antal ? mal : annan >= mal ? annan + 1 : annan);
+      }
+      blanda(falt, slump);
+      var rutor = el('div', 'falt');
+      if (typ === 0) {
+        uppgift.textContent = 'Tryck på alla ' + MOTIV[mal];
+        var kvar = antal;
+        falt.forEach(function (v) {
+          var b = el('button', null, MOTIV[v]);
+          b.type = 'button';
+          b.addEventListener('click', function () {
+            if (b.classList.contains('tagen')) return;
+            if (v === mal) {
+              b.classList.add('tagen');
+              if (--kvar === 0) setTimeout(avbrottKlart, 250);
+            } else {
+              b.classList.remove('fel'); void b.offsetWidth; b.classList.add('fel');
+              straff(rad);
+            }
+          });
+          rutor.appendChild(b);
+        });
+        avbrottEl.appendChild(rutor);
+      } else {
+        uppgift.textContent = 'Hur många ' + MOTIV[mal] + '?';
+        falt.forEach(function (v) { rutor.appendChild(el('span', null, MOTIV[v])); });
+        avbrottEl.appendChild(rutor);
+        svarsknappar(antal, [antal - 1, antal + 1, antal + 2, antal - 2].filter(function (x) { return x >= 1; }), slump, rad);
+      }
+    } else {
+      var a = 3 + Math.floor(slump() * 10), b2 = 3 + Math.floor(slump() * 10);
+      uppgift.textContent = a + ' + ' + b2 + ' = ?';
+      svarsknappar(a + b2, [a + b2 - 1, a + b2 + 1, a + b2 + 2, a + b2 - 2, a + b2 + 10], slump, rad);
+    }
+    avbrottEl.appendChild(rad);
+    brade.appendChild(avbrottEl);
+  }
+
+  // Tre svarsknappar: rätt svar och två av de felaktiga. Fel svar ger straff och avslutar avbrottet.
+  function svarsknappar(ratt, fel, slump, rad) {
+    var val = [ratt].concat(blanda(fel, slump).slice(0, 2));
+    blanda(val, slump);
+    var svar = el('div', 'svar');
+    val.forEach(function (v) {
+      var b = el('button', 'knapp ljus', String(v));
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        if (svar.dataset.klar) return;
+        svar.dataset.klar = '1';
+        if (v === ratt) { avbrottKlart(); return; }
+        straff(rad);
+        rad.textContent = '+1 drag. Rätt svar: ' + ratt;
+        setTimeout(avbrottKlart, 1000);
+      });
+      svar.appendChild(b);
+    });
+    avbrottEl.appendChild(svar);
+  }
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var data = dagens.slut === 'gavupp'
+      ? { dag: dag, spel: 'memory', status: 'gav upp', medalj: '', text: '' }
+      // Färst drag avgör, vid lika kortast tid i tiondelar (alltid under 100 000).
+      : { dag: dag, spel: 'memory', status: 'klar', varde: dagens.drag * 100000 + Math.min(Math.floor(dagens.tid / 100), 99999),
+          medalj: medalj(dagens.drag), text: dagens.drag + ' drag · ' + tidText(dagens.tid) };
+    R.skicka(data)
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa en omgång =====
+  function visa(arOvning) {
+    stoppaKlockan();
+    vandTillbaka();
+    stangAvbrott();
+    upptagen = false;
+    grinchVisas = null;
+    tipsText = ''; tipsVarning = false;
+    ovning = arOvning;
+    $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    var sparat = !ovning && Advent.lasa(sparNyckel, null);
+    if (sparat && sparat.fro === dagensFro && sparat.grinchNr != null) s = sparat;
+    else nyttTillstand(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : dagensFro);
+    byggBradet();
+    ritaBradet();
+    if (s.start && !s.slut) startaKlockan();
+    if (s.start && !s.slut && avbrottDags()) visaAvbrott();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('geUpp').addEventListener('click', function () {
+    if (!confirm('Vill du ge upp? Då räknas inte dagens försök.')) return;
+    avsluta('gavupp');
+    $('tavla').scrollIntoView({ behavior: 'smooth' });
+  });
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  visa(false);
+})();
+</script>
+</body>
+</html>
