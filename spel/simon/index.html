@@ -142,6 +142,8 @@
   .knappar.nasta .knapp { padding: 10px 8px; line-height: 1.2; }
   .knappar.nasta small { display: block; font-size: 14px; font-weight: 400; opacity: .85; }
   .tavla { margin-bottom: 16px; }
+  .visa-svar { margin: 0 0 10px; text-align: center; }
+  .visa-svar:has(> [hidden]) { display: none; }
 </style>
 </head>
 <body>
@@ -164,6 +166,7 @@
     <button class="kula guld" type="button" data-nr="3" aria-label="Guld (4)"></button>
   </div>
 
+  <p class="visa-svar"><button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button></p>
   <div class="knappar nasta" id="nastaKnappar" hidden>
     <button class="knapp" id="spelaIgen" type="button"></button>
     <button class="knapp gul" id="nojd" type="button"></button>
@@ -198,7 +201,6 @@
 
   <div class="knappar">
     <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
-    <button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button>
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens Simon</a></p>
