@@ -143,6 +143,7 @@
   </div>
   <div class="verktyg" id="verktyg">
     <button class="knapp diskret" id="ledtrad" type="button">Ledtråd (+30 s)</button>
+    <button class="knapp diskret" id="rensaAllt" type="button">Rensa allt</button>
   </div>
 
   <div class="slut kort" id="slut" hidden>
@@ -163,6 +164,7 @@
       <li>Med Anteckna på skriver du små minnessiffror i cellen i stället. De försvinner av sig själva när siffran skrivs in bredvid.</li>
       <li>Krockar (samma siffra två gånger i en rad, kolumn eller ruta) blir röda. Om en siffra är fel på annat sätt får du inte veta.</li>
       <li>Klockan startar när du trycker på Starta. Pusslet går att lösa utan att gissa.</li>
+      <li>Har det blivit rörigt kan du trycka på Rensa allt. Då töms allt du har skrivit, men klockan går vidare.</li>
       <li>Fastnar du kan du ta en ledtråd. Den fyller i en rätt siffra men kostar 30 sekunder.</li>
       <li>Lägst tid vinner. Guld under 3 minuter, silver under 5, brons under 8.</li>
     </ol>
@@ -570,6 +572,18 @@
     if (lost()) pusselKlart();
   }
 
+  // Tömmer allt man själv har skrivit. Ledtrådar står kvar och klockan går vidare.
+  function rensaAllt() {
+    if (!spelbart() || !confirm('Vill du tömma alla dina siffror och anteckningar? Klockan fortsätter gå.')) return;
+    for (var i = 0; i < N * N; i++) {
+      if (s.last.indexOf(i) < 0) s.rutor[i] = 0;
+      s.anteck[i] = 0;
+    }
+    vald = null;
+    sparaDagens();
+    rita();
+  }
+
   function sudda() {
     if (!spelbart() || vald == null || arLast(vald)) return;
     s.rutor[vald] = 0;
@@ -608,6 +622,7 @@
   $('sudda').addEventListener('click', sudda);
   $('anteckna').addEventListener('click', function () { anteckna = !anteckna; ritaKnappsats(); });
   $('ledtrad').addEventListener('click', ledtrad);
+  $('rensaAllt').addEventListener('click', rensaAllt);
 
   var PILAR = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
   document.addEventListener('keydown', function (e) {
