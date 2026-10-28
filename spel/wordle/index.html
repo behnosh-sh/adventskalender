@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wordle</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+  .tips.varning { color: var(--glod); }
+
+  /* Rutnätet: 6 gissningar × 5 bokstäver. Smalare på låga skärmar så att tangentbordet får plats. */
+  .rutnat {
+    container-type: inline-size;
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 1.6cqw;
+    width: min(100%, 330px, calc((100svh - 370px) * 5 / 6));
+    min-width: 220px;
+    margin: 0 auto 12px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .rad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.6cqw; }
+  .rad.skaka { animation: skaka .35s; }
+  .bricka {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border-radius: 2.4cqw;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.22);
+    font: 600 11cqw/1 var(--text-typsnitt);
+    text-transform: uppercase;
+  }
+  .bricka.skriven { background: var(--kort); color: var(--text); box-shadow: none; }
+  .bricka.ratt { background: var(--gron); color: #fff; box-shadow: none; }
+  .bricka.finns { background: var(--glod); color: var(--text); box-shadow: none; }
+  .bricka.saknas { background: rgba(255,255,255,.14); color: var(--himmel-text); box-shadow: none; }
+  .bricka.vand { animation: vand .45s ease-out both; }
+  @keyframes vand { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+  @keyframes skaka { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .bricka.vand, .rad.skaka { animation: none; }
+  }
+
+  /* Eget tangentbord med ÅÄÖ, fast längst ner på skärmen. */
+  .tangentbord {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    gap: 6px;
+    margin: 0 -16px 10px;
+    padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+    background: var(--himmel);
+    touch-action: manipulation;
+  }
+  .tangentrad { display: flex; justify-content: center; gap: 4px; }
+  .tangent {
+    flex: 1 1 0;
+    max-width: 40px;
+    height: 50px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(255,255,255,.22);
+    color: var(--himmel-text);
+    font: 600 18px var(--text-typsnitt);
+    cursor: pointer;
+  }
+  .tangent:active { filter: brightness(1.25); }
+  .tangent.ratt { background: var(--gron); color: #fff; }
+  .tangent.finns { background: var(--glod); color: var(--text); }
+  .tangent.saknas { background: rgba(255,255,255,.06); color: var(--himmel-dampad); }
+  .tangent.bred { flex: 1.8 1 0; max-width: 72px; font-size: 16px; }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--himmel-dampad); font-size: 14px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .exempel { display: inline-flex; gap: 3px; vertical-align: middle; }
+  .exempel span { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font-weight: 600; font-size: 14px; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Wordle <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Gissning</span><b id="forsok">1 av 6</b></div>
+    <div><span>Tid</span><b id="tid">0:00</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="rutnat" id="rutnat" aria-label="Dina gissningar"></div>
+
+  <div class="tangentbord" id="tangentbord"></div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutRubrik"></h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Gissa dagens ord på fem bokstäver. Du har sex försök. Å, Ä och Ö är egna bokstäver.</li>
+      <li>Varje gissning måste vara ett riktigt svenskt ord.</li>
+      <li>Efter varje gissning får brickorna färg:
+        <span class="exempel"><span class="bricka ratt">J</span></span> rätt bokstav på rätt plats,
+        <span class="exempel"><span class="bricka finns">U</span></span> bokstaven finns men på en annan plats,
+        <span class="exempel"><span class="bricka saknas">L</span></span> bokstaven finns inte (fler gånger).</li>
+      <li>Färst gissningar vinner. Vid lika vinner den som var snabbast. Klockan startar vid första bokstaven.</li>
+      <li>Guld på 1–3 gissningar, silver på 4, brons på 5.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
+  </details>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens ord</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=16"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script src="ord.js?v=1"></script>
+<script>
+(function () {
+  var LANGD = 5, MAX = 6;
+  var GULD = 3, SILVER = 4, BRONS = 5;   // högsta antal gissningar för medaljen
+  var MISS = MAX + 1;                    // klarade inte ordet: räknas som 7 gissningar
+
+  // Övningsord i klartext. Det första är dagens ord före tävlingsdagen.
+  var OVNING = ['kaffe', 'musik', 'fågel', 'lejon', 'cykel', 'stuga', 'kyrka', 'jacka', 'penna', 'karta',
+                'tårta', 'glass', 'mjölk', 'frukt', 'banan', 'kanin', 'storm', 'björn', 'skatt'];
+
+  // Tävlingsorden, förvrängda så att ingen ser dem av misstag. Ett väljs med dagens frö.
+  var FORVRANGT =
+    'EnizDR74yZ/x/hsTMeprhkzcxzooQnuqwBPQdh7WF3t4fYPRdSSh01ZSZ/p+QO8NciFrwTSrnENgQLBEO+fSfSY20OH4MLd0X58p' +
+    '3NULrXNpcTEDG/Tmr3rc7444VD33Etf40eWj';
+  function avvrang(text) {
+    var bin = atob(text), slump = Advent.skapaSlump('wordle-forvrangning');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  var TAVLINGSDAGAR = [21];
+
+  var GODKANDA = {};
+  window.WORDLE_ORD.forEach(function (o) { GODKANDA[o] = true; });
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 21;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-wordle';
+
+  function harBorjat(d) { return new Date() >= new Date(2026, 11, d); }
+  function dagensOrd() {
+    if (TAVLINGSDAGAR.indexOf(dag) !== -1 && harBorjat(dag)) {
+      var pool = avvrang(FORVRANGT);
+      return pool[Math.floor(Advent.skapaSlump(dagensFro + '-val')() * pool.length)];
+    }
+    return OVNING[0];
+  }
+
+  function medalj(n) { return n <= GULD ? 'guld' : n <= SILVER ? 'silver' : n <= BRONS ? 'brons' : ''; }
+  function tidText(ms) { return Advent.formateraTid(Math.floor(ms / 1000)); }
+
+  // ===== Spelets tillstånd =====
+  var sparNyckel = 'wordle:' + dag;
+  var s;          // { fro, ord, gissningar: [], tidKlar, start, slut: null | 'klar' | 'miss' | 'gavupp', skickad }
+  var ovning = false;
+  var skrivet = '';        // raden man håller på att skriva (sparas inte)
+  var nyRad = -1;          // raden som just ska vändas med animation
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function nyttTillstand(fro, ord) {
+    s = { fro: fro, ord: ord, gissningar: [], tidKlar: 0, start: null, slut: null, skickad: false };
+  }
+
+  function forflutet() { return s.tidKlar + (s.start ? Date.now() - s.start : 0); }
+
+  // Wordles regler: först rätt plats, sedan "finns" bara så många gånger som bokstaven finns kvar i ordet.
+  function bedom(gissning, ord) {
+    var svar = [], kvar = {};
+    for (var i = 0; i < LANGD; i++) {
+      if (gissning[i] === ord[i]) svar[i] = 'ratt';
+      else kvar[ord[i]] = (kvar[ord[i]] || 0) + 1;
+    }
+    for (var j = 0; j < LANGD; j++) {
+      if (svar[j]) continue;
+      if (kvar[gissning[j]]) { svar[j] = 'finns'; kvar[gissning[j]]--; }
+      else svar[j] = 'saknas';
+    }
+    return svar;
+  }
+
+  // ===== Ritning =====
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ritaRutnat() {
+    var r = $('rutnat');
+    r.textContent = '';
+    for (var i = 0; i < MAX; i++) {
+      var rad = el('div', 'rad');
+      var g = s.gissningar[i], farg = g && bedom(g, s.ord);
+      var text = g || (i === s.gissningar.length && !s.slut ? skrivet : '');
+      for (var j = 0; j < LANGD; j++) {
+        var b = el('div', 'bricka', text[j] || '');
+        if (farg) {
+          b.classList.add(farg[j]);
+          if (i === nyRad) { b.classList.add('vand'); b.style.animationDelay = (j * 0.12) + 's'; }
+        } else if (text[j]) b.classList.add('skriven');
+        rad.appendChild(b);
+      }
+      if (g) rad.setAttribute('aria-label', g + ': ' + farg.map(function (f) {
+        return { ratt: 'rätt', finns: 'finns', saknas: 'saknas' }[f];
+      }).join(', '));
+      r.appendChild(rad);
+    }
+    nyRad = -1;
+  }
+
+  function ritaTangentbord() {
+    var t = $('tangentbord'), status = {}, rang = { saknas: 1, finns: 2, ratt: 3 };
+    s.gissningar.forEach(function (g) {
+      bedom(g, s.ord).forEach(function (f, i) {
+        if (!status[g[i]] || rang[f] > rang[status[g[i]]]) status[g[i]] = f;
+      });
+    });
+    t.textContent = '';
+    ['qwertyuiopå', 'asdfghjklöä', '>zxcvbnm<'].forEach(function (rad) {
+      var r = el('div', 'tangentrad');
+      rad.split('').forEach(function (b) {
+        var k = el('button', 'tangent', b === '>' ? 'Gissa' : b === '<' ? 'Sudda' : b.toUpperCase());
+        k.type = 'button';
+        k.dataset.b = b;
+        if (b === '>' || b === '<') k.classList.add('bred');
+        else if (status[b]) k.classList.add(status[b]);
+        r.appendChild(k);
+      });
+      t.appendChild(r);
+    });
+  }
+
+  function ritaMatare() {
+    $('tid').textContent = tidText(forflutet());
+    $('forsok').textContent = Math.min(s.gissningar.length + (s.slut ? 0 : 1), MAX) + ' av ' + MAX;
+  }
+
+  function tips(text, varning) {
+    $('tips').textContent = text;
+    $('tips').classList.toggle('varning', !!varning);
+  }
+
+  function rita() {
+    ritaRutnat();
+    ritaTangentbord();
+    ritaMatare();
+    $('tangentbord').hidden = !!s.slut;
+    $('geUpp').hidden = ovning || !!s.slut;
+    tips(s.slut ? '' : !s.gissningar.length && !skrivet ? 'Skriv ett ord på fem bokstäver och tryck Gissa.' : '');
+    ritaSlut();
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = !s.slut;
+    if (!s.slut) return;
+    var ORD = s.ord.toUpperCase();
+    if (s.slut === 'gavupp') {
+      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutPoang').textContent = ORD;
+      $('slutText').textContent = 'Det var dagens ord. Testa gärna att öva med ett annat.';
+      return;
+    }
+    if (s.slut === 'miss') {
+      $('slutRubrik').textContent = 'Inte den här gången';
+      $('slutPoang').textContent = ORD;
+      $('slutText').textContent = 'Det var ordet. Ingen medalj, men du klarade dig utan att ge upp.';
+      return;
+    }
+    var n = s.gissningar.length, m = medalj(n);
+    $('slutRubrik').textContent = ORD + '!';
+    $('slutPoang').textContent = n + '/' + MAX + ' · ' + tidText(s.tidKlar);
+    $('slutText').textContent = (n === 1 ? 'På första gissningen! ' : 'På ' + n + ' gissningar. ') +
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() { stoppaKlockan(); klocka = setInterval(ritaMatare, 250); }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  function avsluta(orsak) {
+    if (s.slut) return;
+    if (s.start) { s.tidKlar += Date.now() - s.start; s.start = null; }
+    stoppaKlockan();
+    s.slut = orsak;
+    skrivet = '';
+    sparaDagens();
+    rita();
+    if (!ovning) forsokSkicka();
+  }
+
+  // ===== Skriva och gissa =====
+  function spelbart() { return s && !s.slut; }
+
+  function skriv(b) {
+    if (!spelbart() || skrivet.length >= LANGD) return;
+    if (!s.start) { s.start = Date.now(); startaKlockan(); sparaDagens(); }
+    skrivet += b;
+    rita();
+  }
+
+  function sudda() {
+    if (!spelbart() || !skrivet) return;
+    skrivet = skrivet.slice(0, -1);
+    rita();
+  }
+
+  function skaka() {
+    var rad = $('rutnat').children[s.gissningar.length];
+    if (!rad) return;
+    rad.classList.remove('skaka');
+    void rad.offsetWidth;
+    rad.classList.add('skaka');
+  }
+
+  function gissa() {
+    if (!spelbart()) return;
+    if (skrivet.length < LANGD) { tips('Ordet ska ha fem bokstäver.', true); skaka(); return; }
+    if (!GODKANDA[skrivet]) { tips(skrivet.toUpperCase() + ' finns inte i ordlistan.', true); skaka(); return; }
+    s.gissningar.push(skrivet);
+    nyRad = s.gissningar.length - 1;
+    var traff = skrivet === s.ord;
+    skrivet = '';
+    if (traff) { avsluta('klar'); return; }
+    if (s.gissningar.length >= MAX) { avsluta('miss'); return; }
+    sparaDagens();
+    rita();
+  }
+
+  $('tangentbord').addEventListener('click', function (e) {
+    var k = e.target.closest('.tangent');
+    if (!k) return;
+    if (k.dataset.b === '>') gissa();
+    else if (k.dataset.b === '<') sudda();
+    else skriv(k.dataset.b);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !spelbart()) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (/^[a-zåäö]$/i.test(e.key)) { e.preventDefault(); skriv(e.key.toLowerCase()); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); sudda(); return; }
+    if (e.key === 'Enter') { e.preventDefault(); gissa(); }
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var n = dagens.slut === 'klar' ? dagens.gissningar.length : MISS;
+    var data = dagens.slut === 'gavupp'
+      ? { dag: dag, spel: 'wordle', status: 'gav upp', medalj: '', text: '' }
+      // Gissningar först, sedan tiden i tiondelar. Lägst vinner. Missat ord räknas som 7.
+      : { dag: dag, spel: 'wordle', status: 'klar', varde: n * 100000 + Math.min(99999, Math.floor(dagens.tidKlar / 100)),
+          medalj: medalj(n), text: (n === MISS ? 'X' : n) + '/' + MAX + ' · ' + tidText(dagens.tidKlar) };
+    R.skicka(data)
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa en omgång =====
+  function visa(arOvning) {
+    stoppaKlockan();
+    var forra = s && s.ord;
+    ovning = arOvning;
+    skrivet = '';
+    $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    var sparat = !ovning && Advent.lasa(sparNyckel, null);
+    if (sparat && sparat.fro === dagensFro) s = sparat;
+    else if (ovning) {
+      var val = OVNING.filter(function (o) { return o !== forra; });
+      nyttTillstand('ovning', val[Math.floor(Math.random() * val.length)]);
+    } else nyttTillstand(dagensFro, dagensOrd());
+    if (s.start && !s.slut) startaKlockan();
+    rita();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('geUpp').addEventListener('click', function () {
+    if (!confirm('Vill du ge upp? Då räknas inte dagens försök.')) return;
+    avsluta('gavupp');
+    $('tavla').scrollIntoView({ behavior: 'smooth' });
+  });
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  visa(false);
+})();
+</script>
+</body>
+</html>
