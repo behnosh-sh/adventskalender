@@ -47,14 +47,6 @@ h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
 .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
 .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
 .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
-.matare .varning b { color: var(--glod); }
-.matare .kritisk b { color: #FF8A7A; animation: puls 1s ease-in-out infinite; }
-/* Tidsstapeln krymper: grön, gul de sista 30 sekunderna, röd de sista 10. */
-.tidsstapel { height: 14px; margin: 0 0 10px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
-.tidsstapel div { height: 100%; width: 100%; border-radius: 999px; background: var(--gran-1); transition: width .1s linear, background-color .3s; }
-.tidsstapel.varning div { background: var(--glod); }
-.tidsstapel.kritisk div { background: #E0675A; }
-@keyframes puls { 50% { opacity: .55; } }
 .bana-ram {
   flex: 1; min-height: 0;
   overflow: auto;
@@ -157,10 +149,9 @@ h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
   <div class="spel" id="spel">
     <div class="matare">
       <div><span>Minor</span><b id="s-minor"></b></div>
-      <div id="s-tidruta"><span id="s-tidetikett">Tid kvar</span><b id="s-tid"></b></div>
+      <div><span>Tid</span><b id="s-tid"></b></div>
       <div><span>Bana</span><b id="s-bana"></b></div>
     </div>
-    <div class="tidsstapel" id="s-stapel" aria-hidden="true"><div id="s-fyllning"></div></div>
     <div class="bana-ram" id="ram"><div class="bana" id="bana"></div></div>
     <div class="kontroller">
       <button id="zoom-ut" aria-label="Zooma ut">−</button>
@@ -208,8 +199,6 @@ const SEK_PER_3BV = 1.1;   // ungefärligt tempo för guld på mobil
 const SEK_PER_MINA = 0.4;  // extra tid för att tänka/flagga
 const SILVER_FAKTOR = 1.3;
 const BRONS_FAKTOR = 1.7;
-const GRANS_FAKTOR = 2.4;  // tidsgräns jämfört med guld
-const MINSTA_GRANS = 300;  // men alltid minst 5 minuter, så att alla hinner
 
 // Dagens bana är alltid en lättare bana, så att hela familjen kan klara den.
 const DAGENS_PROFIL = { namn: "Lätt", b: [9, 10], h: [12, 14], d: [0.13, 0.14] };
@@ -388,7 +377,6 @@ function skapaBana(froText, profil) {
   senast.guld = guld;
   senast.silver = Math.round(guld * SILVER_FAKTOR);
   senast.brons = Math.round(guld * BRONS_FAKTOR);
-  senast.grans = Math.max(MINSTA_GRANS, Math.round(guld * GRANS_FAKTOR));
   return senast;
 }
 
@@ -480,7 +468,7 @@ function visaIntro() {
   $("app").classList.remove("spelar");
   visaUnder(false);
   $("i-storlek").textContent = `${dagens.W} × ${dagens.H} · ${dagens.antal} minor`;
-  $("i-grans").textContent = `${dagens.typ} · Tidsgräns ${dagens.grans} s`;
+  $("i-grans").textContent = `${dagens.typ} · Ingen tidsgräns`;
   $("i-medaljer").innerHTML = ["guld", "silver", "brons"].map(m =>
     `<span class="grans"><span class="medalj ${m}" aria-label="${MEDALJ_NAMN[m]}">${MEDALJ_EMOJI[m]}</span>${dagens[m]} s</span>`).join("");
   const b = lasBasta();
@@ -527,8 +515,6 @@ function startaSpel(bana, ovning) {
   $("spel").style.display = "flex";
   visaUnder(ovning);
   $("s-bana").textContent = `${bana.W}×${bana.H}`;
-  $("s-tidetikett").textContent = ovning ? "Tid" : "Tid kvar";
-  $("s-stapel").hidden = ovning;
   const el = $("bana");
   el.style.gridTemplateColumns = `repeat(${bana.W}, var(--cs))`;
   el.innerHTML = "";
@@ -558,25 +544,10 @@ function startaSpel(bana, ovning) {
   tick();
 }
 
-// Tid kvar som m:ss, uppåt till hel sekund.
-function klocka(sek) {
-  const s = Math.ceil(sek);
-  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-}
 function tid() { return spel.startTid ? (performance.now() - spel.startTid) / 1000 : 0; }
 function tick() {
   if (!spel || spel.slut) return;
-  const t = tid();
-  const g = spel.bana.grans;
-  const kvar = g - t;
-  $("s-tid").textContent = spel.ovning ? fmt(t) : klocka(Math.max(0, kvar));
-  const varning = !spel.ovning && kvar < 30, kritisk = !spel.ovning && kvar < 10;
-  for (const el of [$("s-tidruta"), $("s-stapel")]) {
-    el.classList.toggle("varning", varning && !kritisk);
-    el.classList.toggle("kritisk", kritisk);
-  }
-  $("s-fyllning").style.width = (100 * Math.max(0, kvar) / g) + "%";
-  if (!spel.ovning && t >= g) avsluta(false, "tid");
+  $("s-tid").textContent = fmt(tid());
 }
 function uppdateraMinor() { $("s-minor").textContent = spel.bana.antal - spel.flaggor; }
 
@@ -640,7 +611,7 @@ function avsluta(vann, orsak, smallCell) {
   if (spel.slut) return;
   spel.slut = true;
   clearInterval(timer);
-  const t = Math.min(tid(), spel.bana.grans);
+  const t = tid();
   const b = spel.bana;
   // Visa alla minor
   for (let i = 0; i < b.W * b.H; i++) {
@@ -698,11 +669,10 @@ function visaResultat(vann, orsak, t) {
     }
   } else {
     medaljEl.hidden = true;
-    $("r-rubrik").textContent = orsak === "tid" ? "Tiden är slut!" : "Pang!";
+    $("r-rubrik").textContent = "Pang!";
     const andel = Math.floor(100 * spel.oppnade / (b.W * b.H - b.antal));
     $("r-poang").textContent = andel + " %";
-    $("r-text").textContent = "av banan öppnad. " +
-      (orsak === "tid" ? `Tidsgränsen var ${b.grans} s.` : "Banan går alltid att lösa utan att gissa.");
+    $("r-text").textContent = "av banan öppnad. Banan går alltid att lösa utan att gissa.";
     if (!ovning) {
       const forra = lasBasta();
       if (forra != null) $("r-rekord").textContent = `Din bästa tid: ${fmt(forra)} s`;
