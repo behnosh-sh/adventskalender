@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flygande tomten</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=7">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 2.8em; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+
+  /* Himlen tomten flyger i: stående canvas, tryck var som helst på den. */
+  .bana {
+    container-type: inline-size;
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 16px;
+    aspect-ratio: 3 / 4;
+    border-radius: 20px;
+    background: #1C3156;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .bana canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .lager {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(20,35,63,.66);
+    color: var(--himmel-text);
+    text-align: center;
+    pointer-events: none;
+    animation: tona .35s ease-out;
+  }
+  .lager b { font: 600 9cqw var(--text-typsnitt); }
+  .lager span { font-size: 5cqw; font-weight: 600; }
+  @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .lager { animation: none; } }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--dampad); font-size: 14px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .knappar.nasta { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); margin-top: 0; }
+  .knappar.nasta .knapp { padding: 10px 8px; line-height: 1.2; }
+  .knappar.nasta small { display: block; font-size: 14px; font-weight: 400; opacity: .85; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Flygande tomten <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Skorstenar</span><b id="antal">0</b></div>
+    <div><span>Bästa</span><b id="basta">–</b></div>
+    <div><span id="forsokEtikett">Försök</span><b id="forsok">1 av 3</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="bana" id="bana" role="application" aria-label="Spelplan. Tryck, eller använd mellanslag, för att tomten ska lyfta.">
+    <canvas id="duk"></canvas>
+  </div>
+
+  <div class="knappar nasta" id="nastaKnappar" hidden>
+    <button class="knapp" id="spelaIgen" type="button"></button>
+    <button class="knapp gul" id="nojd" type="button"></button>
+  </div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2>Dagens flygtur</h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Tryck var som helst på himlen (eller mellanslag) så lyfter tomten en bit. Annars faller han.</li>
+      <li>Flyg genom luckorna mellan skorstenarna. Krockar du med en skorsten, himlens kant eller taken är försöket slut.</li>
+      <li>Var tionde skorsten går det lite fortare och luckorna blir lite trängre.</li>
+      <li>Du har 3 försök och det längsta räknas. Alla får samma skorstenar i samma ordning. Vid lika vinner den som flög längst förbi sin sista skorsten.</li>
+      <li>Guld från 30 skorstenar, silver från 15, brons från 5.</li>
+    </ol>
+    <p class="liten">Lämnar du sidan pausas tomten tills du trycker igen. Laddar du om mitt i ett försök räknas försöket som slut.</p>
+  </details>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens flygtur</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=5"></script>
+<script src="../../js/luckor.js?v=19"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  // Världen är 360 × 480 enheter oavsett skärm, så att banan blir lika svår överallt.
+  var B = 360, H = 480;
+  var MARK = 40;                  // snöiga tak längst ner
+  var TOMTE_X = 100, RADIE = 17;  // ritad storlek
+  var TRAFF = 13;                 // krockcirkeln är lite mindre än tomten, så att det känns rättvist
+  var TYNGD = 1500, LYFT = -430, MAX_FALL = 620;
+  var SKORSTEN_B = 58, AVSTAND = 210, FORSTA = 330;
+  var STEG = 1 / 120;             // fysiken räknas i fasta steg, så att den blir likadan i alla telefoner
+  var FORSOK = 3;
+  var GULD = 30, SILVER = 15, BRONS = 5;
+
+  // Var tionde skorsten: lite fortare och lite trängre.
+  function fart(n) { return Math.min(205, 140 + 9 * Math.floor(n / 10)); }
+  function lucka(n) { return Math.max(118, 152 - 7 * Math.floor(n / 10)); }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 1;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-flygande-tomten';
+
+  function medalj(n) { return n >= GULD ? 'guld' : n >= SILVER ? 'silver' : n >= BRONS ? 'brons' : ''; }
+  function skorstenText(n) { return n + (n === 1 ? ' skorsten' : ' skorstenar'); }
+  // Fler skorstenar är bättre, vid lika den som flög längst efter sin sista (0–999 tusendelar av vägen till nästa).
+  function varde(r) { return r.antal * 1000 + r.extra; }
+  function battre(a, b) { return !b || varde(a) > varde(b); }
+
+  // ===== Tillstånd =====
+  // Dagens försök sparas i telefonen. Ett försök som pågår när sidan laddas om räknas som slut.
+  var sparNyckel = 'flygande-tomten:' + dag;
+  var s;          // { fro, forsok: [{ antal, extra, orsak }], basta, pagar: { antal, extra } | null, slut, skickad }
+  var ovning = false;
+  var ovningBasta = null;
+
+  function nyttTillstand() { return { fro: dagensFro, forsok: [], basta: null, pagar: null, slut: false, skickad: false }; }
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  // Pågående runda. Skorstenarna skapas i tur och ordning ur fröet, samma i alla tre försöken.
+  var runda = null;   // { y, vy, vag, skorstenar: [{ x, mitt, n }], nasta, slump, forraMitt, antal, igang, vantar, slut, tid, ackumulerat }
+
+  function nyRunda(fro) {
+    runda = {
+      y: H * 0.42,
+      vy: 0,
+      vag: 0,
+      skorstenar: [],
+      nasta: 0,
+      slump: Advent.skapaSlump(fro),
+      forraMitt: (H - MARK) / 2,
+      antal: 0,
+      igang: false,
+      vantar: false,
+      slut: null,
+      tid: 0,
+      ackumulerat: 0
+    };
+    while (runda.skorstenar.length < 4) laggTillSkorsten();
+  }
+
+  // Luckans mitt slumpas, men högst 150 enheter från förra luckan så att det alltid går att hinna.
+  function laggTillSkorsten() {
+    var n = runda.nasta++;
+    var g = lucka(n), kant = 28;
+    var min = kant + g / 2, max = H - MARK - kant - g / 2;
+    var mitt = min + runda.slump() * (max - min);
+    mitt = Math.max(runda.forraMitt - 150, Math.min(runda.forraMitt + 150, mitt));
+    runda.forraMitt = mitt;
+    runda.skorstenar.push({ x: TOMTE_X + FORSTA + n * AVSTAND, mitt: mitt, lucka: g, n: n });
+  }
+
+  // Hur långt tomten kommit mot nästa skorsten, 0–999.
+  function extra() {
+    var nasta = TOMTE_X + FORSTA + runda.antal * AVSTAND + SKORSTEN_B;
+    var forra = runda.antal ? nasta - AVSTAND : TOMTE_X;
+    var x = TOMTE_X + runda.vag;
+    return Math.max(0, Math.min(999, Math.floor((x - forra) / (nasta - forra) * 1000)));
+  }
+
+  function resultat() { return { antal: runda.antal, extra: runda.igang ? extra() : 0 }; }
+
+  function cirkelMotRekt(cx, cy, r, x, y, b, h) {
+    var nx = Math.max(x, Math.min(cx, x + b)), ny = Math.max(y, Math.min(cy, y + h));
+    return (cx - nx) * (cx - nx) + (cy - ny) * (cy - ny) < r * r;
+  }
+
+  function steg() {
+    runda.vy = Math.min(MAX_FALL, runda.vy + TYNGD * STEG);
+    runda.y += runda.vy * STEG;
+    runda.vag += fart(runda.antal) * STEG;
+    if (runda.y - TRAFF < 0) return krock('himlen');
+    if (runda.y + TRAFF > H - MARK) return krock('taket');
+    var tx = TOMTE_X + runda.vag;
+    for (var i = 0; i < runda.skorstenar.length; i++) {
+      var k = runda.skorstenar[i];
+      if (k.x > tx + TRAFF || k.x + SKORSTEN_B < tx - TRAFF) continue;
+      var topp = k.mitt - k.lucka / 2, botten = k.mitt + k.lucka / 2;
+      if (cirkelMotRekt(tx, runda.y, TRAFF, k.x, -100, SKORSTEN_B, topp + 100) ||
+          cirkelMotRekt(tx, runda.y, TRAFF, k.x, botten, SKORSTEN_B, H)) return krock('skorsten');
+    }
+    // Passerad skorsten: räknas när tomten är förbi hela.
+    var forsta = runda.skorstenar.filter(function (k) { return k.n === runda.antal; })[0];
+    if (forsta && tx - TRAFF > forsta.x + SKORSTEN_B) {
+      runda.antal++;
+      if (!ovning) { s.pagar = { antal: runda.antal, extra: 0 }; sparaDagens(); }
+    }
+    // Skorstenar som åkt ut till vänster tas bort, nya läggs till till höger.
+    while (runda.skorstenar.length && runda.skorstenar[0].x + SKORSTEN_B < tx - TOMTE_X - 20 && runda.skorstenar[0].n < runda.antal) runda.skorstenar.shift();
+    while (runda.skorstenar[runda.skorstenar.length - 1].x < tx + B) laggTillSkorsten();
+  }
+
+  function krock(orsak) {
+    runda.slut = orsak;
+    rundanSlut();
+  }
+
+  // ===== Spelloopen =====
+  var forraTid = null, loopNr = 0;
+  function loop(nr, nu) {
+    if (nr !== loopNr || !runda || runda.slut) return;
+    if (forraTid == null) forraTid = nu;
+    // Högst 100 ms per bildruta, så att ett hack inte blir ett hopp.
+    var dt = Math.min(100, nu - forraTid) / 1000;
+    forraTid = nu;
+    runda.tid += dt;
+    if (runda.igang && !runda.vantar) {
+      runda.ackumulerat += dt;
+      while (runda.ackumulerat >= STEG && !runda.slut) {
+        runda.ackumulerat -= STEG;
+        steg();
+      }
+    }
+    ritaOm();
+    ritaMatare();
+    if (!runda.slut) requestAnimationFrame(function (t) { loop(nr, t); });
+  }
+
+  function startaLoop() {
+    forraTid = null;
+    var nr = ++loopNr;
+    requestAnimationFrame(function (t) { loop(nr, t); });
+  }
+
+  function lyft() {
+    if (!runda || runda.slut) return;
+    if (!ovning && s.slut) return;
+    if (!runda.igang) {
+      runda.igang = true;
+      if (!ovning) { s.pagar = { antal: 0, extra: 0 }; sparaDagens(); }
+    }
+    if (runda.vantar) { runda.vantar = false; runda.ackumulerat = 0; }
+    runda.vy = LYFT;
+    standardTips();
+  }
+
+  function rundanSlut() {
+    var res = resultat();
+    res.orsak = runda.slut;
+    if (ovning) {
+      if (battre(res, ovningBasta)) ovningBasta = res;
+    } else {
+      s.pagar = null;
+      s.forsok.push(res);
+      if (battre(res, s.basta)) s.basta = res;
+      if (s.forsok.length >= FORSOK) s.slut = true;
+      sparaDagens();
+    }
+    ritaOm();
+    ritaLager();
+    ritaMatare();
+    standardTips();
+    if (!ovning && s.slut) avsluta();
+  }
+
+  function avsluta() {
+    s.slut = true;
+    s.pagar = null;
+    sparaDagens();
+    ritaMatare();
+    ritaLager();
+    standardTips();
+    ritaSlut();
+    forsokSkicka();
+  }
+
+  // ===== Styrning =====
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+    if (/^(INPUT|TEXTAREA|SELECT|BUTTON|SUMMARY|A)$/.test(e.target.tagName)) return;
+    if (e.key !== ' ' && e.key !== 'ArrowUp' && e.key !== 'w') return;
+    e.preventDefault();
+    lyft();
+  });
+
+  var bana = $('bana');
+  bana.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    lyft();
+  });
+  // Hindrar att sidan scrollar eller zoomar när man trycker snabbt (äldre Safari bryr sig inte om touch-action).
+  bana.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
+  bana.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+  // Paus: lämnar man sidan står tomten still. Efter Fortsätt väntar han tills man trycker igen.
+  function flyger() { return !!(runda && runda.igang && !runda.slut); }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && flyger()) runda.vantar = true;
+  });
+  Advent.pausKlocka({
+    gar: flyger,
+    flytta: function () { runda.vantar = true; standardTips(); },
+    nyckel: function () { return null; }
+  });
+
+  // ===== Ritning =====
+  var duk = $('duk'), ctx = duk.getContext('2d');
+  var bredd = 0, skala = 1;
+
+  function anpassaStorlek() {
+    var b = bana.clientWidth, pr = window.devicePixelRatio || 1;
+    if (b === bredd && duk.width === Math.round(b * pr)) return;
+    bredd = b;
+    skala = b / B;
+    duk.width = Math.round(b * pr);
+    duk.height = Math.round(b * H / B * pr);
+    ctx.setTransform(pr * skala, 0, 0, pr * skala, 0, 0);
+    tomteBild = null;
+    ritaOm();
+  }
+
+  // Tomten ritas en gång till en egen liten canvas och klistras sedan in varje bildruta.
+  var tomteBild = null;
+  function hamtaTomte() {
+    if (tomteBild) return tomteBild;
+    var pr = (window.devicePixelRatio || 1) * skala, st = Math.ceil(RADIE * 2.6 * pr);
+    var c = document.createElement('canvas');
+    c.width = c.height = st;
+    var g = c.getContext('2d');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = Math.round(RADIE * 2.2 * pr) + 'px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    g.fillText('🎅', st / 2, st / 2 + st * 0.04);
+    tomteBild = { c: c, st: st / pr };
+    return tomteBild;
+  }
+
+  // Stjärnor på fasta platser, samma varje gång.
+  var STJARNOR = (function () {
+    var r = Advent.skapaSlump('stjarnor'), a = [];
+    for (var i = 0; i < 40; i++) a.push([r() * B * 1.5, r() * (H - MARK - 60), 0.6 + r() * 1.1, 0.3 + r() * 0.5]);
+    return a;
+  })();
+
+  function rundRekt(x, y, b, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + b, y, x + b, y + h, r);
+    ctx.arcTo(x + b, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + b, y, r);
+    ctx.closePath();
+  }
+
+  // En skorsten i tegel. Mynningen (med snö) vänder sig mot luckan.
+  function ritaSkorsten(x, y, h, uppat) {
+    ctx.fillStyle = '#9B4636';
+    ctx.fillRect(x, y, SKORSTEN_B, h);
+    ctx.strokeStyle = 'rgba(0,0,0,.18)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var ry = 0, rad = 0; ry < h; ry += 14, rad++) {
+      var yy = uppat ? y + ry : y + h - ry;
+      ctx.moveTo(x, yy); ctx.lineTo(x + SKORSTEN_B, yy);
+      for (var rx = (rad % 2) * 14; rx < SKORSTEN_B; rx += 28) {
+        ctx.moveTo(x + rx, yy); ctx.lineTo(x + rx, yy + (uppat ? 14 : -14));
+      }
+    }
+    ctx.stroke();
+    // Krage och snö vid mynningen.
+    var ky = uppat ? y : y + h - 14;
+    ctx.fillStyle = '#7E3628';
+    ctx.fillRect(x - 5, ky, SKORSTEN_B + 10, 14);
+    ctx.fillStyle = '#F4F8FF';
+    rundRekt(x - 6, uppat ? ky - 6 : ky + 12, SKORSTEN_B + 12, 8, 4);
+    ctx.fill();
+  }
+
+  function ritaOm() {
+    if (!bredd || !runda) return;
+    var tx = TOMTE_X + runda.vag, vy = tx - TOMTE_X;   // vy = hur långt världen har rullat
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#14233F');
+    g.addColorStop(1, '#25406B');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, B, H);
+
+    // Stjärnor och måne rör sig långsamt.
+    for (var i = 0; i < STJARNOR.length; i++) {
+      var st = STJARNOR[i], sx = ((st[0] - vy * 0.1) % (B * 1.5) + B * 1.5) % (B * 1.5);
+      ctx.fillStyle = 'rgba(255,255,255,' + st[3] + ')';
+      ctx.beginPath();
+      ctx.arc(sx, st[1], st[2], 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#FFF3C4';
+    ctx.beginPath();
+    ctx.arc(290, 70, 22, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = g;   // himlens egen färg skär bort en bit så att det blir en skära
+    ctx.beginPath();
+    ctx.arc(281, 63, 20, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Skorstenarna.
+    for (var j = 0; j < runda.skorstenar.length; j++) {
+      var k = runda.skorstenar[j], kx = k.x - vy;
+      if (kx > B + 10 || kx + SKORSTEN_B < -10) continue;
+      var topp = k.mitt - k.lucka / 2, botten = k.mitt + k.lucka / 2;
+      ritaSkorsten(kx, 0, topp, false);
+      ritaSkorsten(kx, botten, H - MARK - botten + 4, true);
+    }
+
+    // Tak med snö längst ner, rullar med världen.
+    ctx.fillStyle = '#0E1A30';
+    ctx.fillRect(0, H - MARK, B, MARK);
+    ctx.fillStyle = '#F4F8FF';
+    var forskj = -(vy % 40);
+    ctx.beginPath();
+    ctx.moveTo(0, H - MARK + 6);
+    for (var mx = forskj; mx <= B + 40; mx += 40) ctx.quadraticCurveTo(mx + 20, H - MARK - 4, mx + 40, H - MARK + 6);
+    ctx.lineTo(B, H - MARK + 10);
+    ctx.lineTo(0, H - MARK + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,214,107,.75)';
+    for (var fx = -((vy * 1) % 90); fx < B; fx += 90) ctx.fillRect(fx + 30, H - MARK + 18, 10, 10);
+
+    // Tomten: lutar uppåt när han lyfter och nedåt när han faller. Innan start guppar han lite.
+    var y = runda.y;
+    if (!runda.igang) y += Math.sin(runda.tid * 4) * 5;
+    var vinkel = runda.igang ? Math.max(-0.45, Math.min(1.1, runda.vy / 620)) : 0;
+    var bild = hamtaTomte();
+    ctx.save();
+    ctx.translate(TOMTE_X, y);
+    ctx.rotate(vinkel);
+    ctx.drawImage(bild.c, -bild.st / 2, -bild.st / 2, bild.st, bild.st);
+    ctx.restore();
+  }
+
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  var SLUTRUBRIK = { skorsten: 'Pang i skorstenen!', taket: 'Landade på taket!', himlen: 'Flög för högt!', avbrutet: 'Försöket avbröts' };
+
+  function ritaLager() {
+    var lager = bana.querySelector('.lager');
+    if (lager) lager.remove();
+    if (!runda) return;
+    var visa = null;
+    if (runda.slut) visa = { rubrik: SLUTRUBRIK[runda.slut], text: skorstenText(runda.antal) };
+    else if (!ovning && s.slut && s.basta) visa = { rubrik: 'Klart för i dag', text: 'Bästa: ' + skorstenText(s.basta.antal) };
+    if (!visa) return;
+    lager = el('div', 'lager');
+    lager.appendChild(el('b', null, visa.rubrik));
+    lager.appendChild(el('span', null, visa.text));
+    bana.appendChild(lager);
+  }
+
+  function ritaMatare() {
+    $('antal').textContent = String(runda ? runda.antal : 0);
+    var b = ovning ? ovningBasta : s.basta;
+    $('basta').textContent = b ? String(b.antal) : '–';
+    if (ovning) {
+      $('forsokEtikett').textContent = 'Läge';
+      $('forsok').textContent = 'Övning';
+    } else {
+      $('forsokEtikett').textContent = 'Försök';
+      $('forsok').textContent = s.slut ? 'Klar' : Math.min(s.forsok.length + (runda && runda.slut ? 0 : 1), FORSOK) + ' av ' + FORSOK;
+    }
+    var nasta = !!(runda && runda.slut) && (ovning || !s.slut);
+    $('nastaKnappar').hidden = !nasta;
+    knapptext($('spelaIgen'), 'Flyg igen', ovning ? '' : 'försök ' + (s.forsok.length + 1) + ' av ' + FORSOK);
+    $('nojd').hidden = ovning;
+    knapptext($('nojd'), 'Skicka ' + (s.basta ? s.basta.antal : ''), 'och nöj dig');
+  }
+
+  function knapptext(knapp, text, under) {
+    knapp.textContent = text;
+    if (under) knapp.appendChild(el('small', null, under));
+  }
+
+  function tips(text) { $('tips').textContent = text; }
+
+  function standardTips() {
+    if (!runda) return tips('');
+    if (runda.vantar && !runda.slut) return tips('Tryck för att flyga vidare.');
+    if (runda.igang && !runda.slut) return tips('');
+    if (runda.slut) {
+      if (ovning) return tips(ovningBasta ? 'Bästa hittills: ' + skorstenText(ovningBasta.antal) + '.' : '');
+      if (s.slut) return tips('');
+      return tips('Bästa hittills: ' + skorstenText(s.basta.antal) + '. Det längsta av ' + FORSOK + ' försök räknas.');
+    }
+    if (!ovning && s.slut) return tips('');
+    tips('Tryck på himlen för att börja.');
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = ovning || !s.slut || !s.basta;
+    if (ovning || !s.slut || !s.basta) return;
+    var m = medalj(s.basta.antal);
+    $('slutPoang').textContent = skorstenText(s.basta.antal);
+    $('slutText').textContent = m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.';
+  }
+
+  function nastaFro() { return 'ovning-' + Math.floor(Math.random() * 4294967296); }
+
+  function nyFlygtur() {
+    nyRunda(ovning ? nastaFro() : s.fro);
+    ritaLager();
+    ritaMatare();
+    standardTips();
+    startaLoop();
+  }
+
+  $('spelaIgen').addEventListener('click', function () {
+    if (!ovning && s.slut) return;
+    nyFlygtur();
+  });
+
+  $('nojd').addEventListener('click', function () {
+    if (ovning || s.slut || !s.forsok.length) return;
+    Advent.fraga({ rubrik: 'Nöja dig med ' + s.basta.antal + '?', text: 'Då skickas ditt bästa försök och du kan inte flyga mer i dag.', ja: 'Skicka', nej: 'Flyg igen' })
+      .then(function (ok) { if (ok && !s.slut) avsluta(); });
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  // Dagens bästa skickas när försöken är slut. Är man inte inloggad skickas den när koden är inskriven.
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut || !dagens.basta) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var b = dagens.basta;
+    R.skicka({ dag: dag, spel: 'flygande-tomten', status: 'klar', varde: varde(b), medalj: medalj(b.antal), text: skorstenText(b.antal) })
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa dagens eller övning =====
+  var dagensS = Advent.lasa(sparNyckel, null);
+  if (!dagensS || dagensS.fro !== dagensFro) dagensS = nyttTillstand();
+  // Ett försök som pågick när sidan stängdes räknas med de skorstenar tomten hunnit förbi.
+  if (dagensS.pagar) {
+    var avbrutet = { antal: dagensS.pagar.antal, extra: 0, orsak: 'avbrutet' };
+    dagensS.pagar = null;
+    dagensS.forsok.push(avbrutet);
+    if (battre(avbrutet, dagensS.basta)) dagensS.basta = avbrutet;
+    if (dagensS.forsok.length >= FORSOK) dagensS.slut = true;
+    Advent.spara(sparNyckel, dagensS);
+  }
+
+  function visa(arOvning) {
+    // Byter man till övning mitt i dagens försök räknas försöket som slut.
+    if (flyger()) {
+      runda.slut = 'avbrutet';
+      rundanSlut();
+    }
+    ovning = arOvning;
+    s = dagensS;
+    $('under').textContent = ovning ? 'Övning, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('igen').hidden = ovning;
+    $('skickat').textContent = '';
+    nyFlygtur();
+    ritaSlut();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  window.addEventListener('resize', anpassaStorlek);
+  visa(false);
+  anpassaStorlek();
+})();
+</script>
+</body>
+</html>
