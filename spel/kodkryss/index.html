@@ -159,7 +159,7 @@
       <li>Alla bokstäver A–Ö behöver inte vara med. Tabellen under rutnätet visar siffrorna som finns.</li>
       <li>Du får inte veta om en bokstav är fel. När allt stämmer är krysset löst.</li>
       <li>Fastnar du kan du ta en ledtråd. Den visar en rätt bokstav men kostar 30 sekunder.</li>
-      <li>Klockan startar när du trycker på Starta. Lägst tid vinner. Guld under 8 minuter, silver under 12, brons under 18.</li>
+      <li>Klockan startar när du trycker på Starta. Lägst tid vinner. Guld under 5 minuter, silver under 8, brons under 12.</li>
     </ol>
     <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
   </details>
@@ -177,7 +177,7 @@
 <script>
 (function () {
   var N = 11;
-  var GULD = 480, SILVER = 720, BRONS = 1080;  // sekunder, ledtrådar inräknade
+  var GULD = 300, SILVER = 480, BRONS = 720;   // sekunder, ledtrådar inräknade
   var STRAFF = 30000;                          // ms per ledtråd
 
   // Övningskryss i klartext ('.' = svart ruta). givna = bokstäver som är ifyllda från start.
