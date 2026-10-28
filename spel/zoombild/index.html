@@ -117,6 +117,7 @@
 
   <div class="knappar">
     <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button>
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bilder</a></p>
@@ -292,6 +293,7 @@
     $('spel').hidden = !spelar;
     $('koppling').hidden = !kopplar;
     $('geUpp').hidden = ovning || !!s.slut;
+    $('visaSvar').hidden = !ovning || !!s.slut;
     if (spelar) {
       $('bildNr').textContent = (s.bild + 1) + '/' + omg.bilder.length;
       $('stegNr').textContent = (s.steg + 1) + '/' + ZOOM.length;
@@ -327,9 +329,13 @@
     facit.textContent = '';
     if (!s.slut) return;
     if (s.slut === 'gavupp') {
-      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutRubrik').textContent = ovning ? 'Här är svaret' : 'Du gav upp';
       $('slutPoang').textContent = '';
-      $('slutText').textContent = 'Testa gärna att öva.';
+      $('slutText').textContent = ovning ? '' : 'Testa gärna att öva.';
+      if (ovning) {
+        omg.bilder.forEach(function (b, i) { facit.appendChild(el('div', null, 'Bild ' + (i + 1) + ': ' + b.svar)); });
+        facit.appendChild(el('div', null, 'Gemensamt: ' + omg.koppling[0]));
+      }
       return;
     }
     var p = totalt(), m = medalj(p);
@@ -496,6 +502,8 @@
         $('tavla').scrollIntoView({ behavior: 'smooth' });
       });
   });
+  // Bara i övningsläget: avslutar rundan och visar facit, inget skickas.
+  $('visaSvar').addEventListener('click', function () { avsluta('gavupp'); });
   $('igen').addEventListener('click', function () {
     visa(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });

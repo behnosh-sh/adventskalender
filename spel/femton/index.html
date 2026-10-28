@@ -142,6 +142,7 @@
 
   <div class="knappar">
     <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="visaSvar" type="button" hidden>Visa lösningen</button>
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens bräde</a></p>
@@ -249,8 +250,8 @@
     });
     var gammalt = brade.querySelectorAll('.helbild, .slutlager');
     for (var i = 0; i < gammalt.length; i++) gammalt[i].remove();
-    if (s.slut === 'klar') brade.appendChild(el('div', 'helbild'));
-    if (s.slut === 'gavupp') {
+    if (s.slut === 'klar' || (s.slut === 'gavupp' && ovning)) brade.appendChild(el('div', 'helbild'));
+    if (s.slut === 'gavupp' && !ovning) {
       var lager = el('div', 'slutlager');
       lager.appendChild(el('b', null, 'Du gav upp'));
       brade.appendChild(lager);
@@ -263,15 +264,16 @@
     $('drag').textContent = s.drag;
     $('tips').textContent = s.slut ? '' : s.start ? '' : 'Tryck på en bricka bredvid hålet. Klockan startar då.';
     $('geUpp').hidden = ovning || !!s.slut;
+    $('visaSvar').hidden = !ovning || !!s.slut;
   }
 
   function ritaSlut() {
     $('slut').hidden = !s.slut;
     if (!s.slut) return;
     if (s.slut === 'gavupp') {
-      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutRubrik').textContent = ovning ? 'Här är lösningen' : 'Du gav upp';
       $('slutPoang').textContent = '';
-      $('slutText').textContent = 'Testa gärna att öva, med en annan blandning.';
+      $('slutText').textContent = ovning ? 'Tryck på Öva för en ny blandning.' : 'Testa gärna att öva, med en annan blandning.';
       return;
     }
     var m = medalj(s.tid / 1000);
@@ -395,6 +397,8 @@
         $('tavla').scrollIntoView({ behavior: 'smooth' });
       });
   });
+  // Bara i övningsläget: avslutar rundan och visar facit, inget skickas.
+  $('visaSvar').addEventListener('click', function () { avsluta('gavupp'); });
   $('igen').addEventListener('click', function () {
     visa(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
