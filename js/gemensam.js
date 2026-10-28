@@ -146,6 +146,86 @@
     });
   }
 
+  // Pausar spelets klocka när sidan inte syns (annan flik, annan app, låst skärm, stängd sida).
+  // Under pausen täcker en ruta hela sidan så att man inte kan klura i smyg; klockan går
+  // igen först när man trycker Fortsätt. Spelet berättar hur klockan flyttas:
+  // Advent.pausKlocka({
+  //   gar: function () { return true när klockan går just nu },
+  //   flytta: function (ms) { flytta fram starttiden ms millisekunder och spara },
+  //   nyckel: function () { return sparnyckel för dagens spel, eller null i övningsläge }
+  // });
+  // Pausens starttid sparas i telefonen, så att klockan står still även om sidan stängs.
+  var paus = null;   // { o, start, bak }
+  function pausNyckel(o) { var n = o.nyckel && o.nyckel(); return n ? 'paus:' + n : null; }
+
+  function visaPaus() {
+    var bak = document.createElement('div');
+    bak.className = 'fragaruta-bakgrund paus-bakgrund';
+    var ruta = document.createElement('div');
+    ruta.className = 'fragaruta';
+    ruta.setAttribute('role', 'alertdialog');
+    ruta.setAttribute('aria-modal', 'true');
+    var h = document.createElement('h2');
+    h.textContent = 'Pausad';
+    var t = document.createElement('p');
+    t.textContent = 'Klockan står still medan du är borta. Den startar igen när du trycker Fortsätt.';
+    var knapp = document.createElement('button');
+    knapp.type = 'button';
+    knapp.className = 'knapp';
+    knapp.textContent = 'Fortsätt';
+    knapp.addEventListener('click', fortsattPaus);
+    ruta.appendChild(h);
+    ruta.appendChild(t);
+    ruta.appendChild(knapp);
+    bak.appendChild(ruta);
+    document.body.appendChild(bak);
+    knapp.focus();
+    return bak;
+  }
+
+  // Spelets tangenter ska inte reagera under pausen (Enter/mellanslag på Fortsätt går igenom).
+  document.addEventListener('keydown', function (e) {
+    if (!paus) return;
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.closest && e.target.closest('.paus-bakgrund')) return;
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+
+  function startaPaus(o, start) {
+    if (paus) return;
+    paus = { o: o, start: start, bak: visaPaus() };
+    var n = pausNyckel(o);
+    if (n) spara(n, start);
+  }
+
+  function fortsattPaus() {
+    if (!paus) return;
+    var p = paus;
+    paus = null;
+    p.bak.remove();
+    var n = pausNyckel(p.o);
+    if (n) { try { localStorage.removeItem(n); } catch (e) { /* ignorera */ } }
+    if (p.o.gar()) p.o.flytta(Math.max(0, Date.now() - p.start));
+  }
+
+  // Kan anropas igen (t.ex. när spelet laddat dagens läge), lyssnaren läggs bara till en gång.
+  var pausSpel = null;
+  function pausKlocka(o) {
+    var forsta = !pausSpel;
+    pausSpel = o;
+    // Pausad när sidan stängdes förra gången?
+    var n = pausNyckel(o), sparad = n && lasa(n, null);
+    if (sparad && o.gar()) startaPaus(o, Math.min(sparad, Date.now()));
+    else if (n && sparad) { try { localStorage.removeItem(n); } catch (e) { /* ignorera */ } }
+    if (forsta) document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden' && pausSpel.gar()) startaPaus(pausSpel, Date.now());
+    });
+  }
+
+  // Klockslaget spelets klocka står på: när pausen började medan pausrutan visas, annars nu.
+  // Spel med nedräkning räknar med den, så att tiden inte tar slut under pausen.
+  function klockaNu() { return paus ? paus.start : Date.now(); }
+
   window.Advent = {
     FRO_PREFIX: FRO_PREFIX,
     hamtaDag: hamtaDag,
@@ -159,6 +239,8 @@
     lasa: lasa,
     spara: spara,
     markeraOppnad: markeraOppnad,
-    fraga: fraga
+    fraga: fraga,
+    pausKlocka: pausKlocka,
+    klockaNu: klockaNu
   };
 })();
