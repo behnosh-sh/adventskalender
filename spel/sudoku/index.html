@@ -24,8 +24,8 @@
   .rutnat {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 3cqw;
-    padding: 2cqw;
+    gap: 4cqw;
+    padding: 2.4cqw;
     border-radius: 3cqw;
     background: rgba(255,255,255,.14);
     user-select: none;
@@ -46,10 +46,8 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  .cell.given { color: var(--text); cursor: default; }
+  .cell.given { background: #D5DFEC; color: var(--text); cursor: default; }
   .cell.last { background: var(--oppnad); color: var(--gron-mork); cursor: default; }
-  .cell.grupp { background: #E4ECF7; }
-  .cell.samma { background: #FFE9A6; }
   .cell.vald { background: var(--glod); box-shadow: inset 0 0 0 .8cqw #fff; }
   .cell.krock { color: var(--fel); }
   .cell.krock::after { content: ''; position: absolute; left: 25%; right: 25%; bottom: 10%; height: .8cqw; border-radius: 1cqw; background: var(--fel); }
@@ -160,7 +158,8 @@
   <details class="regler kort">
     <summary><h2>Så spelar du</h2></summary>
     <ol>
-      <li>Fyll i siffrorna 1–6 så att varje rad, varje kolumn och varje ruta med 2 × 3 celler har alla sex siffrorna en gång.</li>
+      <li>Rutnätet har 6 rader och 6 kolumner och är uppdelat i sex rutor med 2 rader × 3 celler. Fyll i siffrorna 1–6 så att varje rad, varje kolumn och varje ruta har alla sex siffrorna en gång.</li>
+      <li>De grå cellerna är givna från början och går inte att ändra. Dina egna siffror blir blå.</li>
       <li>Tryck på en tom cell och välj siffra på knappsatsen. På dator går det bra med siffertangenterna och piltangenterna.</li>
       <li>Med Anteckna på skriver du små minnessiffror i cellen i stället. De försvinner av sig själva när siffran skrivs in bredvid.</li>
       <li>Krockar (samma siffra två gånger i en rad, kolumn eller ruta) blir röda. Om en siffra är fel på annat sätt får du inte veta.</li>
@@ -396,7 +395,6 @@
     r.textContent = '';
     r.parentNode.querySelectorAll('.lager').forEach(function (x) { x.remove(); });
     r.classList.toggle('lost', s.slut === 'klar');
-    var vv = vald != null ? varde(vald) : 0;
     for (var b = 0; b < N; b++) {
       var boxEl = el('div', 'box');
       for (var k = 0; k < N; k++) {
@@ -409,8 +407,6 @@
         else if (s.last.indexOf(i) >= 0) c.classList.add('last');
         if (spelbart()) {
           if (i === vald) c.classList.add('vald');
-          else if (vv && v === vv) c.classList.add('samma');
-          else if (vald != null && GRANNAR[vald].indexOf(i) >= 0) c.classList.add('grupp');
           if (krockar(i)) c.classList.add('krock');
         }
         if (v) c.textContent = v;
