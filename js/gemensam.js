@@ -103,6 +103,49 @@
     if (lista.indexOf(dag) === -1) { lista.push(dag); spara('advent-oppnade', lista); }
   }
 
+  // Egen fråga-ruta i kalenderns stil i stället för confirm(). Ger ett Promise med true/false.
+  // Advent.fraga({ rubrik, text, ja, nej }).then(function (ok) { ... });
+  function fraga(o) {
+    return new Promise(function (svara) {
+      var bak = document.createElement('div');
+      bak.className = 'fraga-bakgrund';
+      var ruta = document.createElement('div');
+      ruta.className = 'fraga';
+      ruta.setAttribute('role', 'alertdialog');
+      ruta.setAttribute('aria-modal', 'true');
+      var h = document.createElement('h2');
+      h.textContent = o.rubrik;
+      ruta.appendChild(h);
+      if (o.text) { var t = document.createElement('p'); t.textContent = o.text; ruta.appendChild(t); }
+      var ja = document.createElement('button');
+      ja.type = 'button';
+      ja.className = 'knapp';
+      ja.textContent = o.ja || 'Ja';
+      var nej = document.createElement('button');
+      nej.type = 'button';
+      nej.className = 'knapp ljus';
+      nej.textContent = o.nej || 'Avbryt';
+      ruta.appendChild(ja);
+      ruta.appendChild(nej);
+      bak.appendChild(ruta);
+      function klar(svar) {
+        document.removeEventListener('keydown', tangent, true);
+        bak.remove();
+        svara(svar);
+      }
+      function tangent(e) {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); klar(false); }
+        else e.stopPropagation();   // spelets tangenter ska inte reagera medan rutan är öppen
+      }
+      ja.addEventListener('click', function () { klar(true); });
+      nej.addEventListener('click', function () { klar(false); });
+      bak.addEventListener('click', function (e) { if (e.target === bak) klar(false); });
+      document.addEventListener('keydown', tangent, true);
+      document.body.appendChild(bak);
+      nej.focus();
+    });
+  }
+
   window.Advent = {
     FRO_PREFIX: FRO_PREFIX,
     hamtaDag: hamtaDag,
@@ -115,6 +158,7 @@
     formateraTid: formateraTid,
     lasa: lasa,
     spara: spara,
-    markeraOppnad: markeraOppnad
+    markeraOppnad: markeraOppnad,
+    fraga: fraga
   };
 })();

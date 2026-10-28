@@ -222,3 +222,32 @@ details.regler[open] { padding-bottom: 14px; }
 .tavla-vem { margin: 12px 0 0; font-size: 14px; color: var(--himmel-dampad); text-align: center; }
 .lanklik { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 .tavla-lista.utan-medalj .medalj { display: none; }
+
+/* Egen fråga-ruta (Advent.fraga) i stället för webbläsarens confirm(). */
+.fraga-bakgrund {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10,18,34,.72);
+  animation: fraga-in .15s ease-out;
+}
+.fraga {
+  width: 100%;
+  max-width: 340px;
+  padding: 22px 20px 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 20px;
+  background: var(--himmel);
+  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+  color: var(--himmel-text);
+  text-align: center;
+}
+.fraga h2 { margin: 0 0 6px; }
+.fraga p { margin: 0 0 18px; color: var(--himmel-dampad); font-size: 14px; line-height: 1.45; }
+.fraga .knapp + .knapp { margin-top: 12px; }
+@keyframes fraga-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .fraga-bakgrund { animation: none; } }

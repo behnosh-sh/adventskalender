@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<link rel="stylesheet" href="../../css/gemensam.css?v=5">
 <style>
   h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
   .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
@@ -177,7 +177,7 @@
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens sudoku</a></p>
 </main>
 
-<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/gemensam.js?v=3"></script>
 <script src="../../js/luckor.js?v=16"></script>
 <script src="../../js/resultat.js?v=3"></script>
 <script>
@@ -573,7 +573,12 @@
 
   // Tömmer allt man själv har skrivit. Ledtrådar står kvar och klockan går vidare.
   function rensaAllt() {
-    if (!spelbart() || !confirm('Vill du tömma alla dina siffror och anteckningar? Klockan fortsätter gå.')) return;
+    if (!spelbart()) return;
+    Advent.fraga({ rubrik: 'Rensa allt?', text: 'Alla dina siffror och anteckningar töms. Klockan fortsätter gå.', ja: 'Rensa allt', nej: 'Avbryt' })
+      .then(function (ok) { if (ok && spelbart()) tomRutnatet(); });
+  }
+
+  function tomRutnatet() {
     for (var i = 0; i < N * N; i++) {
       if (s.last.indexOf(i) < 0) s.rutor[i] = 0;
       s.anteck[i] = 0;
@@ -691,9 +696,12 @@
   }
 
   $('geUpp').addEventListener('click', function () {
-    if (!confirm('Vill du ge upp? Då räknas inte dagens försök.')) return;
-    avsluta('gavupp');
-    $('tavla').scrollIntoView({ behavior: 'smooth' });
+    Advent.fraga({ rubrik: 'Vill du ge upp?', text: 'Då räknas inte dagens försök, och du får se facit.', ja: 'Ge upp', nej: 'Spela vidare' })
+      .then(function (ok) {
+        if (!ok) return;
+        avsluta('gavupp');
+        $('tavla').scrollIntoView({ behavior: 'smooth' });
+      });
   });
   $('igen').addEventListener('click', function () {
     visa(true);
