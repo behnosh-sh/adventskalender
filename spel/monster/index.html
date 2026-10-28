@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="../../css/gemensam.css?v=6">
+<link rel="stylesheet" href="../../css/gemensam.css?v=7">
 <style>
   :root {
     --ratt: #5FAF7E;
@@ -146,7 +146,7 @@
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens serier</a></p>
 </main>
 
-<script src="../../js/gemensam.js?v=4"></script>
+<script src="../../js/gemensam.js?v=5"></script>
 <script src="../../js/luckor.js?v=16"></script>
 <script src="../../js/resultat.js?v=3"></script>
 <script>
@@ -640,6 +640,12 @@
   });
 
   visa(dagensIdn, false);
+  // Klockan står still medan man är borta från sidan, och brädet döljs (js/gemensam.js).
+  Advent.pausKlocka({
+    gar: function () { return !!(s && s.fragaStart && !arKlart()); },
+    flytta: function (ms) { s.fragaStart += ms; sparaDagens(); },
+    nyckel: function () { return ovning ? null : sparNyckel; }
+  });
 })();
 </script>
 </body>

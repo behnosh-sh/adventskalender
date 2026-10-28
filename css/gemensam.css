@@ -251,3 +251,6 @@ details.regler[open] { padding-bottom: 14px; }
 .fragaruta .knapp + .knapp { margin-top: 12px; }
 @keyframes fragaruta-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .fragaruta-bakgrund { animation: none; } }
+
+/* Pausrutan (Advent.pausKlocka): täcker hela sidan så att brädet inte syns under pausen. */
+.paus-bakgrund { background: var(--himmel); }
