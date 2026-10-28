@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Julquiz</title>
+<title>Julsångsquiz</title>
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +12,7 @@
   :root {
     --ratt: #5FAF7E;
     --ratt-ljus: rgba(95,175,126,.28);
+    --halv: #E2B93B;
     --fel-ljus: rgba(255,180,166,.2);
   }
   h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
@@ -25,16 +26,30 @@
   .prickar { display: flex; flex-wrap: wrap; gap: 6px; }
   .prickar span { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--himmel-dampad); }
   .prickar span.nu { background: var(--himmel-text); box-shadow: none; }
-  .prickar span.ratt { background: var(--ratt); box-shadow: none; }
-  .prickar span.fel { background: var(--fel); box-shadow: none; }
+  .prickar span.p2 { background: var(--ratt); box-shadow: none; }
+  .prickar span.p1 { background: var(--halv); box-shadow: none; }
+  .prickar span.p0 { background: var(--fel); box-shadow: none; }
   .klocka { font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
   .klocka.paus { color: var(--himmel-dampad); }
 
   .fraga-kort { margin-bottom: 16px; animation: fram .3s ease-out; }
-  .fraga-kort .nr { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--dampad); }
-  .fraga-kort .q { margin: 0 0 14px; line-height: 1.4; font-weight: 600; }
+  .fraga-kort .nr { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--dampad); }
+  .ledtrad { margin: 0 0 16px; text-align: center; line-height: 1.4; }
+  .ledtrad.emoji { font-size: 40px; letter-spacing: 4px; line-height: 1.3; }
+  .ledtrad.krangel { font-weight: 600; font-style: italic; }
   @keyframes fram { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .fraga-kort { animation: none; } }
+
+  .gissa { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+  .gissa input {
+    min-width: 0; font: 400 16px var(--text-typsnitt); padding: 12px 12px;
+    border: 2px solid var(--kant); border-radius: 14px; background: var(--kort); color: var(--text);
+  }
+  .gissa input:focus { outline: none; border-color: var(--gron); }
+  .gissa .knapp { width: auto; padding: 13px 22px; }
+  .vet-inte { margin: 10px 0 0; text-align: center; }
+  .tips { margin: 0 0 10px; text-align: center; color: var(--dampad); font-size: 14px; }
+  .tips:empty { display: none; }
 
   .val { display: grid; gap: 10px; }
   .val button {
@@ -80,11 +95,11 @@
 <body>
 <main class="spalt">
   <a class="tillbaka" href="../../">← Kalendern</a>
-  <h1>Julquiz <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <h1>Julsångsquiz <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
   <p class="under" id="under"></p>
 
   <div class="start kort" id="start" hidden>
-    <p>Tio frågor om riktigt konstiga jultraditioner och julfakta från hela världen. Flest rätt vinner, och vid lika vinner den snabbaste.</p>
+    <p>Sju julsånger, skrivna med emoji eller på krångelsvenska. Skriv vilken sång det är. Kommer du inte på den får du välja bland fyra, men då blir det färre poäng.</p>
     <button class="knapp" id="startknapp" type="button">Starta</button>
   </div>
 
@@ -96,12 +111,26 @@
 
     <div class="fraga-kort kort" id="fragaKort">
       <p class="nr" id="fragaNr"></p>
-      <p class="q" id="fragaText"></p>
-      <div class="val" id="val"></div>
+      <p class="ledtrad" id="ledtrad"></p>
+
+      <div id="textFas">
+        <form class="gissa" id="gissaForm" autocomplete="off">
+          <input id="gissning" type="text" enterkeyhint="done" aria-label="Vilken julsång?" placeholder="Vilken julsång?">
+          <button class="knapp" type="submit">Gissa</button>
+        </form>
+        <p class="vet-inte"><button class="knapp diskret" id="vetInte" type="button">Jag vet inte, visa fyra förslag</button></p>
+      </div>
+
+      <div id="valFas" hidden>
+        <p class="tips" id="tips"></p>
+        <div class="val" id="val"></div>
+      </div>
+
       <p class="visa-svar"><button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button></p>
+
       <div class="forklaring" id="forklaring" hidden>
         <p class="omdome" id="omdome" aria-live="polite"></p>
-        <p class="fakta"><b>Visste du?</b><span id="fakta"></span></p>
+        <p class="fakta"><b id="faktaRubrik"></b><span id="fakta"></span></p>
         <button class="knapp" id="nasta" type="button"></button>
       </div>
     </div>
@@ -109,7 +138,7 @@
 
   <div class="slut kort" id="slut" hidden>
     <h2>Resultat</h2>
-    <p class="poang"><span id="antalRatt"></span> <small id="avRatt"></small></p>
+    <p class="poang"><span id="poang"></span> <small id="avPoang"></small></p>
     <p class="rutor" id="rutor"></p>
     <p id="sluttid"></p>
     <p id="sluttext"></p>
@@ -126,125 +155,68 @@
   <details class="regler kort">
     <summary><h2>Så spelar du</h2></summary>
     <ol>
-      <li>Du får tio frågor, en i taget, om konstiga jultraditioner och julfakta. Varje fråga har fyra svar och ett av dem är rätt.</li>
-      <li>Du har ett försök per fråga. Efter varje svar ser du det rätta svaret och lite mer om det. Klockan står still medan du läser.</li>
-      <li>Flest rätt vinner. Vid lika antal rätt vinner den som var snabbast. Guld för 8 rätt eller fler, silver för 6, brons för 4.</li>
+      <li>Du får sju julsånger, en i taget. Varje sång är skriven med emoji eller som en krånglig myndighetstext.</li>
+      <li>Skriv vilken sång det är. Rätt på första gissningen ger 2 poäng. Stavning och stora bokstäver spelar ingen roll, och engelska sånger får heta både sitt engelska och sitt svenska namn.</li>
+      <li>Blir det fel, eller trycker du "Jag vet inte", får du välja bland fyra sånger. Rätt där ger 1 poäng.</li>
+      <li>Högst poäng vinner, och vid lika vinner den som var snabbast. Klockan står still medan du läser svaret. Guld för 12 poäng eller fler, silver för 9, brons för 6.</li>
     </ol>
-    <p class="liten">Bara ditt första försök på dagens frågor räknas.</p>
+    <p class="liten">Bara ditt första försök på dagens sånger räknas.</p>
   </details>
 
   <div class="knappar">
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
-  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens frågor</a></p>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens sånger</a></p>
 </main>
 
 <script src="../../js/gemensam.js?v=5"></script>
-<script src="../../js/luckor.js?v=19"></script>
+<script src="../../js/luckor.js?v=20"></script>
 <script src="../../js/resultat.js?v=3"></script>
 <script>
 (function () {
-  // Varje fråga är [fråga, alternativ, förklaring]. Första alternativet är det rätta.
+  // Varje fråga är [typ, ledtråd, godkända svar, fel alternativ, förklaring].
+  // typ är 'emoji' eller 'krangel'. Första godkända svaret är sångens namn som visas.
+  // Ett godkänt svar räcker om det finns i gissningen, så korta varianter som "Rudolf" går bra.
 
-  // Övningsfrågor som får visas. Används som övning och som dagens frågor innan tävlingen börjar.
+  // Exempel som får visas. Används som övning och som dagens frågor innan tävlingen börjar.
   var TESTSET = [
-    ['Hur tar sig många i Caracas i Venezuela till julmässan på morgonen?', ['På rullskridskor', 'Baklänges, för att lura djävulen', 'Med skorna på huvudet', 'På åsnor klädda som renar'], 'Det är så vanligt att gator i en del stadsdelar stängs för bilar på julmornarna, så att folk kan rulla till kyrkan i fred.'],
-    ['Vad gjorde spindlarna med en fattig familjs julgran enligt en ukrainsk legend?', ['Vävde nät som blev till silver i morgonsolen', 'Åt upp alla mjölmaskar i stugan', 'Gömde julklapparna i barren', 'Bar granen hem från skogen'], 'Familjen hade inte råd att pynta granen. På juldagsmorgonen var den täckt av spindelnät som glittrade som silver. Därför hänger många ukrainare spindlar av glas eller pärlor i granen.'],
-    ['Vad äter många familjer i Japan till jul?', ['Friterad kyckling från KFC', 'Sushi med marsipan', 'Pizza med kalkon', 'Ramen med pepparkakor'], 'En reklamkampanj 1974 med budskapet ”Kentucky till jul!” slog så hårt att många beställer sin julkyckling flera veckor i förväg.'],
-    ['Vad gör barn i Katalonien med en trästock vid jul?', ['Slår på den med pinnar tills den ”bajsar” godis', 'Bränner den och läser framtiden i röken', 'Klär ut den till tomte och sjunger för den', 'Gömmer den, och den som hittar den får hela julgröten'], 'Stocken heter Caga Tió. Den har ansikte och mössa, får ”mat” och en filt i flera veckor, och på julafton slår barnen på den och sjunger tills godiset kommer fram under filten.'],
-    ['Vad gör den isländska julkatten med den som inte har fått något nytt klädesplagg till jul?', ['Äter upp dem', 'Stjäl deras julklappar', 'Spinner så högt att de inte kan sova', 'Sover på deras fötter tills nyår'], 'Jólakötturinn är ett jättestort monster ur gamla isländska sagor. Hotet fick folk att arbeta hårt med ullen före jul, så att alla hann få något nytt.'],
-    ['Vad gömmer många i Norge på julafton?', ['Alla kvastar', 'Alla saxar', 'Alla nycklar', 'Den vänstra tofflan'], 'Enligt gammal tro kommer häxor och onda andar ut på julnatten och letar efter kvastar att flyga på.'],
-    ['Vad hände med den allra första Gävlebocken 1966?', ['Den brändes ner på nyårsnatten', 'Den blåste bort till Finland', 'Den åts upp av älgar', 'Den såldes på auktion till USA'], 'Sedan dess har bocken bränts eller förstörts väldigt många gånger, och det hålls vad om hur det ska gå för den varje år.'],
-    ['Den ”tyska” traditionen att gömma en glasgurka i granen – var är den mest känd?', ['I USA', 'I Tyskland', 'I Polen', 'I Grekland'], 'De flesta tyskar har aldrig hört talas om den. Den som hittar gurkan i granen sägs få en extra julklapp, och gurkorna såldes mest i amerikanska varuhus.'],
-    ['Varför skapades Rudolf med röda mulen 1939?', ['Till ett gratishäfte från ett varuhus', 'Till en Disneyfilm', 'Som maskot för ett flygbolag', 'Till en reklam för näsdroppar'], 'Varuhuskedjan Montgomery Ward gav bort en sagobok till barn som julklapp. Det blev succé, och tio år senare kom sången.'],
-    ['Vilket postnummer har tomten i Kanada?', ['H0H 0H0', 'X0X 0X0', 'N0R TH1', '000 001'], 'Kanadensisk post har sedan 1980-talet svarat på brev till tomten, och de kan skrivas på vilket språk som helst, även punktskrift.'],
-    ['Var kommer den stora julgranen på Trafalgar Square i London ifrån?', ['Den är en gåva från Oslo', 'Den växer där året om', 'Den är gjord av gamla telefonkioskar', 'Den kommer från drottningens trädgård'], 'Norge har skänkt en gran varje år sedan 1947 som tack för Storbritanniens hjälp under andra världskriget.'],
-    ['Vem kommer med godis till barnen i Italien natten före trettondagen?', ['En gammal häxa på en kvast', 'Tre små grisar', 'En talande åsna', 'Påven i en luftballong'], 'Hon heter Befana. Snälla barn får godis i strumpan, och olydiga barn får kol (som numera ofta är svart socker).']
+    ['emoji', '🦌🔴👃', ['Rudolf med röda mulen', 'Rudolph the Red-Nosed Reindeer', 'Rudolf', 'Rudolph'],
+      ['Räven raskar över isen', 'Tomtarnas julnatt', 'Frosty the Snowman'], '🦌 ren, 🔴 röd, 👃 näsa (mule).'],
+    ['emoji', '🔔🔔🛷', ['Bjällerklang', 'Jingle Bells', 'Jingle Bell Rock'],
+      ['Sankta Lucia', 'Tänd ett ljus', 'Silver Bells'], 'Bjällror och en släde, ”Bjällerklang, bjällerklang, hör hur det slår”. Jingle Bell Rock godkänns också.'],
+    ['emoji', '👋🎅🎅🥂', ['Hej tomtegubbar', 'Hej tomtegubbar slå i glasen'],
+      ['Tomtarnas julnatt', 'Raska fötter springa tripp tripp tripp', 'Jag såg mamma kyssa tomten'], '👋 hej, 🎅🎅 tomtegubbar, 🥂 slå i glasen.'],
+    ['emoji', '✅❄️❄️❄️', ['Let It Snow', 'Let It Snow Let It Snow Let It Snow'],
+      ['White Christmas', 'Frosty the Snowman', 'Snöflingor dansar'], '✅ låt det, ❄️❄️❄️ snöa, snöa, snöa.'],
+    ['emoji', '🏃👣👣👣', ['Raska fötter springa tripp tripp tripp', 'Raska fötter'],
+      ['Hej tomtegubbar', 'Nu är det jul igen', 'Räven raskar över isen'], 'Raska 🏃 fötter 👣 springa tripp, tripp, tripp.'],
+    ['emoji', '🎄🙏🫵', ['All I Want for Christmas Is You', 'All I Want for Christmas'],
+      ['Last Christmas', 'Driving Home for Christmas', 'Merry Christmas Everyone'], '🎄 till jul, 🙏 önskar jag mig bara 🫵 dig.'],
+    ['krangel', 'Ljudlös dygnsperiod med kraftigt reducerat solljus', ['Stilla natt', 'Silent Night'],
+      ['O helga natt', 'Midnatt råder', 'Gläns över sjö och strand'], 'Ljudlös = stilla, dygnsperiod utan sol = natt.'],
+    ['krangel', 'Omedelbar antändning av ett fyrsiffrigt antal säsongsbundna stearinprodukter', ['Nu tändas tusen juleljus', 'Tusen juleljus'],
+      ['Tänd ett ljus', 'Jul, jul, strålande jul', 'Det strålar en stjärna'], 'Omedelbar = nu, antändning = tändas, fyrsiffrigt antal = tusen, stearinprodukter = juleljus.'],
+    ['krangel', 'Under föregående års decemberhögtid överlämnades mitt hjärta till dig', ['Last Christmas'],
+      ['All I Want for Christmas Is You', 'Driving Home for Christmas', 'Wonderful Christmastime'], '”Last Christmas I gave you my heart.”'],
+    ['krangel', 'Iakttagelse av vårdnadshavare i fysisk kontakt med skäggig säsongsanställd gåvoleverantör', ['Jag såg mamma kyssa tomten', 'I Saw Mommy Kissing Santa Claus', 'I Saw Mommy Kissing Santa', 'Mamma kyssa tomten'],
+      ['Tomtarnas julnatt', 'Hej tomtegubbar', 'Santa Claus Is Coming to Town'], 'Iakttagelse = jag såg, vårdnadshavare = mamma, fysisk kontakt = kyssa, gåvoleverantör = tomten.'],
+    ['krangel', 'Klockslaget 00.00 är gällande och ljudnivån i bostadsbeståndet är låg', ['Tomtarnas julnatt', 'Midnatt råder', 'Midnatt rader tyst det ar i husen'],
+      ['Stilla natt', 'Nu tändas tusen juleljus', 'O helga natt'], '”Midnatt råder, tyst det är i husen.” Sången heter Tomtarnas julnatt, men Midnatt råder godkänns också.'],
+    ['krangel', 'Skäggig gåvoleverantör befinner sig under förflyttning mot tätorten', ['Santa Claus Is Coming to Town', 'Santa Claus Is Comin to Town', 'Santa Claus Is Coming'],
+      ['Here Comes Santa Claus', 'Jag såg mamma kyssa tomten', 'Tomtarnas julnatt'], '”Santa Claus is coming to town.” Here Comes Santa Claus är en annan sång.']
   ];
 
-  // Tävlingsfrågorna, förvrängda så att ingen ser dem av misstag.
-  var FORVRANGT =
-    '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' +
-    'yvYDPm+BTLyIl51W';
+  // Tävlingsfrågorna, förvrängda så att ingen ser dem av misstag. Skrivs när nivån är bestämd.
+  var FORVRANGT = '';
 
-  // Dagar med Julquiz. Varje dag får ANTAL frågor ur poolen, valda med dagens frö.
+  // Dagar med Julsångsquiz. Varje dag får ANTAL frågor ur poolen, valda med dagens frö.
   var TAVLINGSDAGAR = [23];
-  var ANTAL = 10;
-  var MEDALJER = { guld: 8, silver: 6, brons: 4 };
+  var ANTAL = 7;
+  var MEDALJER = { guld: 12, silver: 9, brons: 6 };
 
   function avvrang(text) {
-    var bin = atob(text), slump = Advent.skapaSlump('julquiz-forvrangning');
+    if (!text) return [];
+    var bin = atob(text), slump = Advent.skapaSlump('julsang-forvrangning');
     var bytes = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
     return JSON.parse(new TextDecoder().decode(bytes));
@@ -282,7 +254,7 @@
       tavlingsfragor[d] = valda;
     });
   })();
-  var dagensIdn = harBorjat(dag) && tavlingsfragor[dag]
+  var dagensIdn = harBorjat(dag) && tavlingsfragor[dag] && tavlingsfragor[dag].length === ANTAL
     ? tavlingsfragor[dag]
     : valj(testIdn(), Advent.dagensSlump(dag));
 
@@ -299,9 +271,11 @@
     return idn;
   }
 
-  // Alternativens ordning blandas utifrån frågan, så att alla får samma ordning.
+  // De fyra förslagen i en ordning som blandas utifrån frågan, så att alla får samma ordning.
+  // Index 0 är det rätta (sångens namn), 1–3 de felaktiga.
+  function alternativ(f) { return [f[2][0]].concat(f[3]); }
   function ordning(id) {
-    var slump = Advent.skapaSlump('julquiz-ordning-' + fraga(id)[0]);
+    var slump = Advent.skapaSlump('julsang-ordning-' + fraga(id)[1]);
     var o = [0, 1, 2, 3];
     for (var i = o.length - 1; i > 0; i--) {
       var j = Math.floor(slump() * (i + 1)), t = o[i];
@@ -310,24 +284,63 @@
     return o;
   }
 
+  // ===== Rätta fritext =====
+  function normalisera(t) {
+    return t.toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/[éè]/g, 'e').replace(/ü/g, 'u')
+      .replace(/['’´`]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+  // Antal ändringar mellan två texter. Två bokstäver som bytt plats räknas som en ändring.
+  function avstand(a, b) {
+    var d = [], i, j;
+    for (i = 0; i <= a.length; i++) { d[i] = [i]; }
+    for (j = 0; j <= b.length; j++) d[0][j] = j;
+    for (i = 1; i <= a.length; i++) {
+      for (j = 1; j <= b.length; j++) {
+        var kostnad = a[i - 1] === b[j - 1] ? 0 : 1;
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + kostnad);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+    return d[a.length][b.length];
+  }
+  // Rätt om ett godkänt svar finns i gissningen, eller om gissningen eller någon del av den
+  // med lika många ord bara skiljer sig med ett stavfel (två för långa namn).
+  function arRatt(gissning, godkant) {
+    var g = normalisera(gissning);
+    if (!g) return false;
+    var ord = g.split(' ');
+    return godkant.some(function (s) {
+      var n = normalisera(s);
+      if ((' ' + g + ' ').indexOf(' ' + n + ' ') !== -1) return true;
+      if (n.length < 5) return false;
+      var tillat = n.length >= 16 ? 2 : 1, antalOrd = n.split(' ').length;
+      for (var i = 0; i + antalOrd <= ord.length; i++) {
+        if (avstand(ord.slice(i, i + antalOrd).join(' '), n) <= tillat) return true;
+      }
+      return false;
+    });
+  }
+
   // ===== Spelets tillstånd =====
   // Dagens frågor sparas i telefonen, så att man inte kan börja om genom att ladda om sidan.
   var sparNyckel = 'julquiz:' + dag + ':' + dagensIdn.join(',');
-  var s;          // { idn, svar, tider, steg, fragaStart, start, slut, skickad }
+  var s;          // { idn, svar, tider, steg, fas, gissning, fragaStart, start, slut, skickad }
   var ovning = false;
+  // svar[i] = { p: 2 | 1 | 0, g: fritextgissning, v: valt alternativ (index i alternativ()) eller null }
+  // fas för den aktuella frågan: 'text' (skriv) eller 'val' (fyra förslag).
 
-  function nyttTillstand(idn) { return { idn: idn, svar: [], tider: [], steg: 0, fragaStart: null, start: null, slut: null, skickad: false }; }
+  function nyttTillstand(idn) { return { idn: idn, svar: [], tider: [], steg: 0, fas: 'text', gissning: '', fragaStart: null, start: null, slut: null, skickad: false }; }
   function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
   function arKlart() { return s.svar.length >= s.idn.length && s.steg >= s.idn.length; }
-  // svar[i] är index i frågans alternativlista, 0 är rätt. -1 = "Visa svaret" i övningen.
-  function antalRatt(t) { return t.svar.filter(function (v) { return v === 0; }).length; }
+  function summa(t) { return t.svar.reduce(function (a, v) { return a + v.p; }, 0); }
   function totalMs(t) {
     var ms = t.tider.reduce(function (a, b) { return a + b; }, 0);
     if (t.fragaStart) ms += Date.now() - t.fragaStart;
     return ms;
   }
-  function rutorText(t) { return t.svar.map(function (v) { return v === 0 ? '🟩' : '🟥'; }).join(''); }
-  function medalj(ratt) { return ratt >= MEDALJER.guld ? 'guld' : ratt >= MEDALJER.silver ? 'silver' : ratt >= MEDALJER.brons ? 'brons' : ''; }
+  function ruta(p) { return p === 2 ? '🟩' : p === 1 ? '🟨' : '🟥'; }
+  function rutorText(t) { return t.svar.map(function (v) { return ruta(v.p); }).join(''); }
+  function medalj(p) { return p >= MEDALJER.guld ? 'guld' : p >= MEDALJER.silver ? 'silver' : p >= MEDALJER.brons ? 'brons' : ''; }
 
   // ===== Ritning =====
   function el(tagg, klass, text) {
@@ -342,7 +355,7 @@
     p.textContent = '';
     s.idn.forEach(function (_, i) {
       var v = s.svar[i];
-      p.appendChild(el('span', v != null ? (v === 0 ? 'ratt' : 'fel') : i === s.steg ? 'nu' : ''));
+      p.appendChild(el('span', v ? 'p' + v.p : i === s.steg ? 'nu' : ''));
     });
   }
 
@@ -353,6 +366,7 @@
   }
   setInterval(ritaKlocka, 250);
 
+  var ritadFraga = -1;
   function rita() {
     $('slut').hidden = true;
     if (arKlart()) {
@@ -365,47 +379,91 @@
     ritaKlocka();
 
     var i = s.steg, id = s.idn[i], f = fraga(id);
-    var besvarad = s.svar.length > i, valt = s.svar[i];
+    var svar = s.svar[i], besvarad = !!svar;
     var kort = $('fragaKort');
-    kort.style.animation = 'none'; void kort.offsetWidth; kort.style.animation = '';
-    $('fragaNr').textContent = 'Fråga ' + (i + 1) + ' av ' + s.idn.length;
-    $('fragaText').textContent = f[0];
+    if (ritadFraga !== i) {
+      kort.style.animation = 'none'; void kort.offsetWidth; kort.style.animation = '';
+      $('gissning').value = '';
+      ritadFraga = i;
+    }
+    $('fragaNr').textContent = 'Sång ' + (i + 1) + ' av ' + s.idn.length + (f[0] === 'emoji' ? ': vilken julsång är det här?' : ': vilken julsång beskrivs?');
+    var led = $('ledtrad');
+    led.textContent = f[0] === 'krangel' ? '”' + f[1] + '”' : f[1];
+    led.className = 'ledtrad ' + f[0];
 
-    var val = $('val');
-    val.textContent = '';
-    ordning(id).forEach(function (a) {
-      var b = el('button', '', f[1][a]);
-      b.type = 'button';
-      if (besvarad) {
-        b.disabled = true;
-        if (a === 0) b.classList.add('ratt');
-        else if (a === valt) b.classList.add('fel');
-      } else {
-        b.addEventListener('click', function () { svara(a); });
-      }
-      val.appendChild(b);
-    });
+    var visaVal = besvarad ? svar.p < 2 : s.fas === 'val';
+    $('textFas').hidden = besvarad || s.fas !== 'text';
+    $('valFas').hidden = !visaVal;
+
+    if (visaVal) {
+      var gissning = besvarad ? svar.g : s.gissning;
+      $('tips').textContent = gissning ? '”' + gissning + '” var inte rätt. Välj bland de här:' : 'Välj bland de här:';
+      var val = $('val'), alt = alternativ(f);
+      val.textContent = '';
+      ordning(id).forEach(function (a) {
+        var b = el('button', '', alt[a]);
+        b.type = 'button';
+        if (besvarad) {
+          b.disabled = true;
+          if (a === 0) b.classList.add('ratt');
+          else if (a === svar.v) b.classList.add('fel');
+        } else {
+          b.addEventListener('click', function () { valj4(a); });
+        }
+        val.appendChild(b);
+      });
+    }
 
     $('visaSvar').hidden = !ovning || besvarad;
     $('forklaring').hidden = !besvarad;
     if (besvarad) {
-      $('omdome').textContent = valt === 0 ? 'Rätt!' : valt === -1 ? 'Här är svaret' : 'Inte riktigt';
-      $('fakta').textContent = f[2];
-      $('nasta').textContent = i + 1 < s.idn.length ? 'Nästa fråga' : 'Visa resultatet';
+      $('omdome').textContent = svar.p === 2 ? 'Rätt! 2 poäng' : svar.p === 1 ? 'Rätt! 1 poäng' : svar.v == null && !svar.g && ovning ? 'Här är svaret' : 'Inte riktigt';
+      $('faktaRubrik').textContent = f[2][0];
+      $('fakta').textContent = f[4];
+      $('nasta').textContent = i + 1 < s.idn.length ? 'Nästa sång' : 'Visa resultatet';
     }
   }
 
-  function svara(a) {
-    if (s.svar.length > s.steg || !s.fragaStart) return;
+  function klar(resultat) {
     s.tider.push(Date.now() - s.fragaStart);
     s.fragaStart = null;
-    s.svar.push(a);
+    s.svar.push(resultat);
+    s.fas = 'text';
+    s.gissning = '';
     sparaDagens();
     rita();
   }
 
-  // Bara i övningen: visar rätt svar på frågan, som då räknas som fel.
-  $('visaSvar').addEventListener('click', function () { if (ovning) svara(-1); });
+  function aktiv() { return s && s.fragaStart && s.svar.length <= s.steg && !arKlart(); }
+
+  $('gissaForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!aktiv() || s.fas !== 'text') return;
+    var g = $('gissning').value.trim();
+    if (!g) return;
+    $('gissning').blur();
+    if (arRatt(g, fraga(s.idn[s.steg])[2])) { klar({ p: 2, g: g, v: null }); return; }
+    s.fas = 'val';
+    s.gissning = g;
+    sparaDagens();
+    rita();
+  });
+
+  $('vetInte').addEventListener('click', function () {
+    if (!aktiv() || s.fas !== 'text') return;
+    s.fas = 'val';
+    s.gissning = '';
+    sparaDagens();
+    rita();
+  });
+
+  function valj4(a) {
+    if (!aktiv() || s.fas !== 'val') return;
+    klar({ p: a === 0 ? 1 : 0, g: s.gissning, v: a });
+  }
+
+  // Bara i övningen: visar rätt svar på frågan, som då ger 0 poäng.
+  $('visaSvar').addEventListener('click', function () { if (ovning && aktiv()) klar({ p: 0, g: '', v: null }); });
 
   $('nasta').addEventListener('click', function () {
     s.steg++;
@@ -423,10 +481,10 @@
   }
 
   function visaSlut() {
-    var ratt = antalRatt(s), m = medalj(ratt);
+    var p = summa(s), m = medalj(p);
     $('slut').hidden = false;
-    $('antalRatt').textContent = ratt;
-    $('avRatt').textContent = 'av ' + s.idn.length + ' rätt';
+    $('poang').textContent = p;
+    $('avPoang').textContent = 'av ' + s.idn.length * 2 + ' poäng';
     $('rutor').textContent = rutorText(s);
     $('sluttid').textContent = 'Tid: ' + tidText(s);
     $('sluttext').textContent = m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : '';
@@ -436,8 +494,8 @@
     lista.textContent = '';
     s.idn.forEach(function (id, i) {
       var f = fraga(id), li = el('li');
-      li.appendChild(el('div', 'gq', (s.svar[i] === 0 ? '🟩 ' : '🟥 ') + f[0]));
-      li.appendChild(el('div', 'gs', 'Rätt svar: ' + f[1][0]));
+      li.appendChild(el('div', 'gq', ruta(s.svar[i].p) + ' ' + f[1]));
+      li.appendChild(el('div', 'gs', f[2][0]));
       lista.appendChild(li);
     });
 
@@ -445,13 +503,13 @@
     uppdateraGavUpp();
   }
 
-  // Flest rätt först, sedan kortast tid. Värdet blir högre ju bättre.
+  // Högst poäng först, sedan kortast tid. Värdet blir högre ju bättre.
   function resultatet(t) {
-    var ratt = antalRatt(t), tiondelar = Math.min(99999, Math.round(totalMs(t) / 100));
+    var p = summa(t), tiondelar = Math.min(99999, Math.round(totalMs(t) / 100));
     return {
-      varde: ratt * 100000 + (99999 - tiondelar),
-      medalj: medalj(ratt),
-      text: rutorText(t) + ' · ' + ratt + '/' + t.idn.length + ' · ' + tidText(t)
+      varde: p * 100000 + (99999 - tiondelar),
+      medalj: medalj(p),
+      text: rutorText(t) + ' · ' + p + ' p · ' + tidText(t)
     };
   }
 
@@ -501,7 +559,8 @@
   // ===== Visa en omgång =====
   function visa(idn, arOvning) {
     ovning = arOvning;
-    $('under').textContent = ovning ? 'Övningsfrågor' : 'Lucka ' + dag;
+    ritadFraga = -1;
+    $('under').textContent = ovning ? 'Övningssånger' : 'Lucka ' + dag;
     $('ovningsmarke').hidden = !ovning;
     $('tillDagens').hidden = !ovning;
     $('skickat').textContent = '';
