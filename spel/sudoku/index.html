@@ -103,7 +103,6 @@
   .tangent.bred { flex: 1 1 0; max-width: 180px; height: 44px; font-size: 16px; }
   .tangent.pa { background: var(--glod); color: var(--text); }
   .knappsats.anteckna .siffra { font-weight: 400; color: var(--glod); }
-  .verktyg { display: grid; gap: 10px; margin-bottom: 16px; }
 
   .slut { margin-bottom: 16px; text-align: center; }
   .slut h2 { margin: 0 0 4px; font-size: 18px; }
@@ -140,10 +139,10 @@
       <button class="tangent bred" id="anteckna" type="button" aria-pressed="false">Anteckna</button>
       <button class="tangent bred" id="sudda" type="button">Sudda</button>
     </div>
-  </div>
-  <div class="verktyg" id="verktyg">
-    <button class="knapp diskret" id="ledtrad" type="button">Ledtråd (+30 s)</button>
-    <button class="knapp diskret" id="rensaAllt" type="button">Rensa allt</button>
+    <div class="knapprad">
+      <button class="tangent bred" id="ledtrad" type="button">Ledtråd +30 s</button>
+      <button class="tangent bred" id="rensaAllt" type="button">Rensa allt</button>
+    </div>
   </div>
 
   <div class="slut kort" id="slut" hidden>
@@ -464,7 +463,7 @@
     ritaRutnat();
     ritaKnappsats();
     ritaMatare();
-    $('knappsats').hidden = $('verktyg').hidden = !spelbart();
+    $('knappsats').hidden = !spelbart();
     $('geUpp').hidden = ovning || !!s.slut;
     var tips = '';
     if (s.slut) tips = '';
@@ -523,7 +522,7 @@
     // Visa det lösta pusslet en stund, sedan nästa.
     var r = $('rutnat');
     r.classList.add('lost');
-    $('knappsats').hidden = $('verktyg').hidden = true;
+    $('knappsats').hidden = true;
     s.nr++;
     s.rutor = tommaRutor();
     s.anteck = tommaRutor();
