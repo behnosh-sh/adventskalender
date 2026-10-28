@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minisudoku</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+
+  /* Rutnätet: sex rutor (2 × 3 celler) i 2 kolumner × 3 rader. Storlekar i cqw så att allt skalar. */
+  .rutnat-ram { container-type: inline-size; position: relative; max-width: 400px; margin: 0 auto 10px; }
+  .rutnat {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3cqw;
+    padding: 2cqw;
+    border-radius: 3cqw;
+    background: rgba(255,255,255,.14);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .box { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6cqw; }
+  .cell {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 1.4cqw;
+    background: var(--kort);
+    color: #2E6BB0;   /* egna siffror blå, givna mörkgröna */
+    font: 600 9cqw/1 var(--text-typsnitt);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cell.given { color: var(--text); cursor: default; }
+  .cell.last { background: var(--oppnad); color: var(--gron-mork); cursor: default; }
+  .cell.grupp { background: #E4ECF7; }
+  .cell.samma { background: #FFE9A6; }
+  .cell.vald { background: var(--glod); box-shadow: inset 0 0 0 .8cqw #fff; }
+  .cell.krock { color: var(--fel); }
+  .cell.krock::after { content: ''; position: absolute; left: 25%; right: 25%; bottom: 10%; height: .8cqw; border-radius: 1cqw; background: var(--fel); }
+  .anteck { position: absolute; inset: 6%; display: grid; grid-template-columns: repeat(3, 1fr); color: var(--dampad); font: 400 4cqw/1 var(--text-typsnitt); }
+  .anteck span { display: flex; align-items: center; justify-content: center; }
+  .rutnat.lost .cell { background: var(--accent); color: var(--text); }
+  .lager {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 3cqw;
+    background: var(--himmel);
+    color: var(--himmel-text);
+    text-align: center;
+  }
+  .lager b { font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .lager p { margin: 0; }
+  .lager .knapp { min-width: 60%; }
+
+  /* Knappsatsen sitter fast längst ner på skärmen, som tangentbordet i Kodkrysset. */
+  .knappsats {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    display: grid;
+    gap: 6px;
+    margin: 0 -16px 10px;
+    padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+    background: var(--himmel);
+    touch-action: manipulation;
+  }
+  .knapprad { display: flex; justify-content: center; gap: 6px; }
+  .tangent {
+    flex: 1 1 0;
+    max-width: 60px;
+    height: 52px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255,255,255,.16);
+    color: var(--himmel-text);
+    font: 600 24px var(--text-typsnitt);
+    cursor: pointer;
+  }
+  .tangent:active { background: rgba(255,255,255,.3); }
+  .tangent.klar { opacity: .4; }
+  .tangent.bred { flex: 1 1 0; max-width: 180px; height: 44px; font-size: 16px; }
+  .tangent.pa { background: var(--glod); color: var(--text); }
+  .knappsats.anteckna .siffra { font-weight: 400; color: var(--glod); }
+  .verktyg { display: grid; gap: 10px; margin-bottom: 16px; }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut p { margin: 4px 0; }
+  .slut .info { color: var(--himmel-dampad); font-size: 14px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Minisudoku <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Pussel</span><b id="pusselNr">1 av 3</b></div>
+    <div><span>Tid</span><b id="tid">0:00</b></div>
+    <div><span>Ledtrådar</span><b id="ledtradar">0</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="rutnat-ram">
+    <div class="rutnat" id="rutnat" aria-label="Sudoku 6 × 6. Tryck på en ruta och välj siffra på knappsatsen."></div>
+  </div>
+
+  <div class="knappsats" id="knappsats">
+    <div class="knapprad" id="siffror"></div>
+    <div class="knapprad">
+      <button class="tangent bred" id="anteckna" type="button" aria-pressed="false">Anteckna</button>
+      <button class="tangent bred" id="sudda" type="button">Sudda</button>
+    </div>
+  </div>
+  <div class="verktyg" id="verktyg">
+    <button class="knapp diskret" id="ledtrad" type="button">Ledtråd (+30 s)</button>
+  </div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutRubrik"></h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Fyll i siffrorna 1–6 så att varje rad, varje kolumn och varje ruta med 2 × 3 celler har alla sex siffrorna en gång.</li>
+      <li>Tryck på en tom cell och välj siffra på knappsatsen. På dator går det bra med siffertangenterna och piltangenterna.</li>
+      <li>Med Anteckna på skriver du små minnessiffror i cellen i stället. De försvinner av sig själva när siffran skrivs in bredvid.</li>
+      <li>Krockar (samma siffra två gånger i en rad, kolumn eller ruta) blir röda. Om en siffra är fel på annat sätt får du inte veta.</li>
+      <li>Tre pussel i rad: lätt, medel och svår. Klockan startar när du trycker på Starta och står still mellan pusslen. Alla går att lösa utan att gissa.</li>
+      <li>Fastnar du kan du ta en ledtråd. Den fyller i en rätt siffra men kostar 30 sekunder.</li>
+      <li>Lägst sammanlagd tid vinner. Guld under 4 minuter, silver under 6, brons under 9.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
+  </details>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens sudokun</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=15"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  // ===== Sudokumotorn =====
+  var N = 6, ALLA = (1 << N) - 1;
+  function box(i) { return Math.floor(Math.floor(i / N) / 2) * 2 + Math.floor((i % N) / 3); }
+  var ENHETER = [];
+  (function () {
+    for (var k = 0; k < N; k++) { ENHETER.push([], [], []); }
+    for (var i = 0; i < N * N; i++) {
+      ENHETER[Math.floor(i / N) * 3].push(i);
+      ENHETER[(i % N) * 3 + 1].push(i);
+      ENHETER[box(i) * 3 + 2].push(i);
+    }
+  })();
+  var GRANNAR = [];
+  for (var i = 0; i < N * N; i++) {
+    GRANNAR[i] = [];
+    for (var j = 0; j < N * N; j++) {
+      if (j !== i && (Math.floor(j / N) === Math.floor(i / N) || j % N === i % N || box(j) === box(i))) GRANNAR[i].push(j);
+    }
+  }
+  var INNEHALL = ENHETER.map(function (u) { var m = {}; u.forEach(function (j) { m[j] = true; }); return m; });
+  function bitar(m) { var n = 0; while (m) { m &= m - 1; n++; } return n; }
+  function siffra(m) { return 31 - Math.clz32(m) + 1; }   // m har en enda bit
+
+  function blanda(lista, slump) {
+    for (var a = lista.length - 1; a > 0; a--) { var b = Math.floor(slump() * (a + 1)); var t = lista[a]; lista[a] = lista[b]; lista[b] = t; }
+    return lista;
+  }
+
+  // Fyller ett tomt rutnät med slumpad backtracking.
+  function fyll(slump) {
+    var g = []; for (var i = 0; i < N * N; i++) g.push(0);
+    function steg(i) {
+      if (i === N * N) return true;
+      var s = blanda([1, 2, 3, 4, 5, 6], slump);
+      for (var k = 0; k < s.length; k++) {
+        if (GRANNAR[i].every(function (j) { return g[j] !== s[k]; })) { g[i] = s[k]; if (steg(i + 1)) return true; }
+      }
+      g[i] = 0;
+      return false;
+    }
+    steg(0);
+    return g;
+  }
+
+  // Löser med mänsklig logik. Returnerar svåraste nivån som behövdes (1–3), eller 0 om det inte gick.
+  // 1 = gömd singel, 2 = + naken singel, 3 = + par och pekande par.
+  // Ett pussel som går att lösa så har exakt en lösning.
+  function losLogiskt(givna, maxNiva) {
+    var g = givna.slice(), kand = new Array(N * N), kvar = 0, i, e, d, k, u, j, bit;
+    for (i = 0; i < N * N; i++) { kand[i] = g[i] ? 0 : ALLA; if (!g[i]) kvar++; }
+    function satt(i, v) {
+      g[i] = v; kand[i] = 0; kvar--;
+      var gr = GRANNAR[i], b = ~(1 << (v - 1));
+      for (var q = 0; q < gr.length; q++) kand[gr[q]] &= b;
+    }
+    for (i = 0; i < N * N; i++) if (givna[i]) {
+      var gr = GRANNAR[i], b = ~(1 << (givna[i] - 1));
+      for (k = 0; k < gr.length; k++) kand[gr[k]] &= b;
+    }
+    var niva = 1;
+    while (kvar) {
+      var hittat = false;
+      // Gömd singel: siffran får bara plats på ett ställe i en enhet.
+      for (e = 0; e < ENHETER.length && !hittat; e++) {
+        u = ENHETER[e];
+        var en = 0, flera = 0, sett = 0;
+        for (k = 0; k < N; k++) { j = u[k]; if (g[j]) sett |= 1 << (g[j] - 1); else { flera |= en & kand[j]; en |= kand[j]; } }
+        if ((en | sett) !== ALLA) return 0;   // en siffra får inte plats alls
+        var ensam = en & ~flera;
+        if (ensam) {
+          bit = ensam & -ensam;
+          for (k = 0; k < N; k++) if (kand[u[k]] & bit) { satt(u[k], siffra(bit)); break; }
+          hittat = true;
+        }
+      }
+      if (hittat) continue;
+      for (i = 0; i < N * N; i++) if (!g[i] && !kand[i]) return 0;   // motsägelse
+      if (maxNiva < 2) return 0;
+      for (i = 0; i < N * N; i++) {
+        if (!g[i] && (kand[i] & (kand[i] - 1)) === 0) { satt(i, siffra(kand[i])); hittat = true; niva = Math.max(niva, 2); break; }
+      }
+      if (hittat) continue;
+      if (maxNiva < 3) return 0;
+      var andrat = false;
+      // Pekande par: siffran i en ruta (box) ligger bara i en rad eller kolumn, eller tvärtom.
+      for (e = 0; e < ENHETER.length; e++) {
+        for (d = 0; d < N; d++) {
+          bit = 1 << d;
+          var p = ENHETER[e].filter(function (j) { return kand[j] & bit; });
+          if (p.length < 2) continue;
+          for (var f = 0; f < ENHETER.length; f++) {
+            if (f === e || !p.every(function (j) { return INNEHALL[f][j]; })) continue;
+            ENHETER[f].forEach(function (j) { if (p.indexOf(j) < 0 && kand[j] & bit) { kand[j] &= ~bit; andrat = true; } });
+          }
+        }
+      }
+      // Nakna par: två rutor i en enhet med samma två kandidater.
+      for (e = 0; e < ENHETER.length; e++) {
+        u = ENHETER[e];
+        for (var a = 0; a < N; a++) for (var c = a + 1; c < N; c++) {
+          var m = kand[u[a]];
+          if (m && bitar(m) === 2 && kand[u[c]] === m) {
+            for (k = 0; k < N; k++) if (k !== a && k !== c && kand[u[k]] & m) { kand[u[k]] &= ~m; andrat = true; }
+          }
+        }
+      }
+      // Gömda par: två siffror som bara får plats i samma två rutor.
+      for (e = 0; e < ENHETER.length; e++) {
+        u = ENHETER[e];
+        var platser = [];
+        for (d = 0; d < N; d++) { platser[d] = 0; for (k = 0; k < N; k++) if (kand[u[k]] & (1 << d)) platser[d] |= 1 << k; }
+        for (var d1 = 0; d1 < N; d1++) for (var d2 = d1 + 1; d2 < N; d2++) {
+          if (platser[d1] === platser[d2] && bitar(platser[d1]) === 2) {
+            var hall = (1 << d1) | (1 << d2);
+            for (k = 0; k < N; k++) if (platser[d1] & (1 << k) && kand[u[k]] & ~hall) { kand[u[k]] &= hall; andrat = true; }
+          }
+        }
+      }
+      if (!andrat) return 0;
+      niva = 3;
+    }
+    return niva;
+  }
+
+  // Skapar ett pussel. svarighet 0 = lätt (16 givna), 1 = medel (12 givna), 2 = svår (så få som möjligt).
+  // Alla går att lösa med logik, utan gissning. Ett 6×6 löses nästan alltid med singlar, så det är
+  // främst antalet givna som skiljer. Det svåra väljs bland flera försök: helst ett som kräver
+  // nakna singlar eller par, annars det med färst givna.
+  var GIVNA = [16, 12, 0];
+  function skapaPussel(slump, svarighet) {
+    var bast = null;
+    for (var forsok = 0; forsok < (svarighet === 2 ? 25 : 1); forsok++) {
+      var losning = fyll(slump);
+      var g = losning.slice(), givna = N * N;
+      var ordning = [];
+      for (var i = 0; i < N * N; i++) ordning.push(i);
+      blanda(ordning, slump);
+      for (var k = 0; k < ordning.length && givna > GIVNA[svarighet]; k++) {
+        var c = ordning[k], v = g[c];
+        g[c] = 0;
+        if (losLogiskt(g, svarighet === 2 ? 3 : 1)) givna--; else g[c] = v;
+      }
+      var p = { givna: g, losning: losning, antal: givna, niva: losLogiskt(g, 3) };
+      if (!bast || p.niva > bast.niva || (p.niva === bast.niva && p.antal < bast.antal)) bast = p;
+    }
+    return bast;
+  }
+
+  var GULD = 240, SILVER = 360, BRONS = 540;   // sekunder, alla tre pusslen och ledtrådarna
+  var STRAFF = 30000;                          // ms per ledtråd
+  var NIVAER = ['Lätt', 'Medel', 'Svår'];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 18;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-sudoku';
+
+  function medalj(sek) { return sek < GULD ? 'guld' : sek < SILVER ? 'silver' : sek < BRONS ? 'brons' : ''; }
+  function tidText(ms) { return Advent.formateraTid(Math.floor(ms / 1000)); }
+  function ledtradText(n) { return n + (n === 1 ? ' ledtråd' : ' ledtrådar'); }
+
+  // ===== Spelets tillstånd =====
+  // Pusslen räknas fram ur fröet (ett eget frö per pussel), så bara det man har skrivit sparas.
+  var sparNyckel = 'sudoku:' + dag;
+  var s;   // { fro, nr, startad, start, tider: [ms], ledtradar, rutor: [36], anteck: [36 bitar], last: [cell], slut, skickad }
+  var pussel = [];   // nr -> { givna, losning }
+  var ovning = false;
+  var vald = null, anteckna = false;
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function hamtaPussel(nr) {
+    if (!pussel[nr]) pussel[nr] = skapaPussel(Advent.skapaSlump(s.fro + '-' + nr), nr);
+    return pussel[nr];
+  }
+  function p() { return hamtaPussel(s.nr); }
+
+  function tommaRutor() { var r = []; for (var i = 0; i < N * N; i++) r.push(0); return r; }
+  function nyttTillstand(fro) {
+    return { fro: fro, nr: 0, startad: false, start: null, tider: [], ledtradar: 0,
+             rutor: tommaRutor(), anteck: tommaRutor(), last: [], slut: null, skickad: false };
+  }
+
+  function varde(i) { return p().givna[i] || s.rutor[i]; }
+  function arLast(i) { return !!p().givna[i] || s.last.indexOf(i) >= 0; }
+  function krockar(i) {
+    var v = varde(i);
+    return !!v && GRANNAR[i].some(function (j) { return varde(j) === v; });
+  }
+  function lost() {
+    for (var i = 0; i < N * N; i++) if (varde(i) !== p().losning[i]) return false;
+    return true;
+  }
+  function fullt() { for (var i = 0; i < N * N; i++) if (!varde(i)) return false; return true; }
+  function totalTid() {
+    var t = s.tider.reduce(function (a, b) { return a + b; }, 0);
+    if (s.start) t += Date.now() - s.start;
+    return t + s.ledtradar * STRAFF;
+  }
+
+  // ===== Ritning =====
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ritaRutnat() {
+    var r = $('rutnat'), visaFacit = s.slut === 'gavupp';
+    r.textContent = '';
+    r.parentNode.querySelectorAll('.lager').forEach(function (x) { x.remove(); });
+    r.classList.toggle('lost', s.slut === 'klar');
+    var vv = vald != null ? varde(vald) : 0;
+    for (var b = 0; b < N; b++) {
+      var boxEl = el('div', 'box');
+      for (var k = 0; k < N; k++) {
+        var i = (Math.floor(b / 2) * 2 + Math.floor(k / 3)) * N + (b % 2) * 3 + k % 3;
+        var v = visaFacit ? p().losning[i] : varde(i);
+        var c = el('button', 'cell');
+        c.type = 'button';
+        c.dataset.i = i;
+        if (p().givna[i]) c.classList.add('given');
+        else if (s.last.indexOf(i) >= 0) c.classList.add('last');
+        if (spelbart()) {
+          if (i === vald) c.classList.add('vald');
+          else if (vv && v === vv) c.classList.add('samma');
+          else if (vald != null && GRANNAR[vald].indexOf(i) >= 0) c.classList.add('grupp');
+          if (krockar(i)) c.classList.add('krock');
+        }
+        if (v) c.textContent = v;
+        else if (s.anteck[i] && !s.slut) {
+          var a = el('span', 'anteck');
+          for (var d = 1; d <= N; d++) a.appendChild(el('span', null, s.anteck[i] & (1 << (d - 1)) ? String(d) : ''));
+          c.appendChild(a);
+        }
+        var rad = Math.floor(i / N) + 1, kol = i % N + 1;
+        c.setAttribute('aria-label', 'Rad ' + rad + ', kolumn ' + kol + (v ? ', ' + v : ', tom'));
+        boxEl.appendChild(c);
+      }
+      r.appendChild(boxEl);
+    }
+    if (!s.slut && !s.startad) {
+      var lager = el('div', 'lager');
+      if (s.nr > 0) {
+        lager.appendChild(el('p', null, NIVAER[s.nr - 1] + ' klart!'));
+        lager.appendChild(el('b', null, tidText(s.tider[s.nr - 1])));
+      }
+      lager.appendChild(el('p', null, 'Pussel ' + (s.nr + 1) + ' av 3 · ' + NIVAER[s.nr]));
+      var knapp = el('button', 'knapp', s.nr ? 'Nästa pussel' : 'Starta');
+      knapp.type = 'button';
+      knapp.addEventListener('click', starta);
+      lager.appendChild(knapp);
+      r.parentNode.appendChild(lager);
+    }
+  }
+
+  function ritaKnappsats() {
+    var t = $('siffror');
+    t.textContent = '';
+    for (var d = 1; d <= N; d++) {
+      var antal = 0;
+      for (var i = 0; i < N * N; i++) if (varde(i) === d) antal++;
+      var k = el('button', 'tangent siffra' + (antal >= N ? ' klar' : ''), String(d));
+      k.type = 'button';
+      k.dataset.d = d;
+      t.appendChild(k);
+    }
+    $('knappsats').classList.toggle('anteckna', anteckna);
+    $('anteckna').classList.toggle('pa', anteckna);
+    $('anteckna').setAttribute('aria-pressed', String(anteckna));
+    $('anteckna').textContent = anteckna ? 'Anteckna: på' : 'Anteckna';
+  }
+
+  function ritaMatare() {
+    $('tid').textContent = tidText(totalTid());
+    $('ledtradar').textContent = s.ledtradar;
+    $('pusselNr').textContent = Math.min(s.nr + 1, 3) + ' av 3';
+  }
+
+  function rita() {
+    ritaRutnat();
+    ritaKnappsats();
+    ritaMatare();
+    $('knappsats').hidden = $('verktyg').hidden = !spelbart();
+    $('geUpp').hidden = ovning || !!s.slut;
+    var tips = '';
+    if (s.slut) tips = '';
+    else if (!s.startad) tips = 'Klockan startar när du trycker på ' + (s.nr ? 'Nästa pussel.' : 'Starta.');
+    else if (fullt()) tips = 'Alla celler är ifyllda, men något stämmer inte än.';
+    else if (vald == null) tips = 'Tryck på en tom cell och välj en siffra.';
+    $('tips').textContent = tips;
+    ritaSlut();
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = !s.slut;
+    if (!s.slut) return;
+    if (s.slut === 'gavupp') {
+      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutPoang').textContent = '';
+      $('slutText').textContent = 'Facit står i rutnätet. Testa gärna att öva med andra pussel.';
+      return;
+    }
+    var tot = totalTid(), m = medalj(tot / 1000);
+    $('slutRubrik').textContent = 'Alla tre lösta!';
+    $('slutPoang').textContent = tidText(tot);
+    $('slutText').textContent = s.tider.map(function (t, n) { return NIVAER[n] + ' ' + tidText(t); }).join(' · ') + '. ' +
+      (s.ledtradar ? 'Med ' + ledtradText(s.ledtradar) + ' (+' + s.ledtradar * 30 + ' s). ' : 'Utan ledtrådar. ') +
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() { stoppaKlockan(); klocka = setInterval(ritaMatare, 250); }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  function starta() {
+    p();   // räkna fram pusslet innan klockan startar
+    s.startad = true;
+    s.start = Date.now();
+    vald = null;
+    startaKlockan();
+    sparaDagens();
+    rita();
+  }
+
+  function pusselKlart() {
+    s.tider.push(Date.now() - s.start);
+    s.start = null;
+    s.startad = false;
+    vald = null;
+    stoppaKlockan();
+    if (s.tider.length >= 3) {
+      s.slut = 'klar';
+      sparaDagens();
+      rita();
+      if (!ovning) forsokSkicka();
+      return;
+    }
+    // Visa det lösta pusslet en stund, sedan nästa.
+    var r = $('rutnat');
+    r.classList.add('lost');
+    $('knappsats').hidden = $('verktyg').hidden = true;
+    s.nr++;
+    s.rutor = tommaRutor();
+    s.anteck = tommaRutor();
+    s.last = [];
+    sparaDagens();
+    var nr = s.nr;
+    setTimeout(function () { if (s.nr === nr && !s.startad) rita(); }, 900);
+  }
+
+  function avsluta(orsak) {
+    if (s.slut) return;
+    if (s.start) { s.tider.push(Date.now() - s.start); s.start = null; }
+    stoppaKlockan();
+    s.slut = orsak;
+    s.startad = false;
+    vald = null;
+    sparaDagens();
+    rita();
+    if (!ovning) forsokSkicka();
+  }
+
+  // ===== Skriva =====
+  function spelbart() { return s && s.startad && !s.slut; }
+
+  function valj(i) {
+    if (!spelbart()) return;
+    vald = i;
+    rita();
+  }
+
+  function skriv(d) {
+    if (!spelbart()) return;
+    if (vald == null) { $('tips').textContent = 'Tryck först på en cell.'; return; }
+    if (arLast(vald)) { $('tips').textContent = 'Den siffran står redan fast.'; return; }
+    if (anteckna) {
+      if (s.rutor[vald]) return;
+      s.anteck[vald] ^= 1 << (d - 1);
+    } else {
+      s.rutor[vald] = s.rutor[vald] === d ? 0 : d;
+      s.anteck[vald] = 0;
+      // Stryk siffran ur anteckningarna i samma rad, kolumn och ruta.
+      if (s.rutor[vald]) GRANNAR[vald].forEach(function (j) { s.anteck[j] &= ~(1 << (d - 1)); });
+    }
+    sparaDagens();
+    rita();
+    if (lost()) pusselKlart();
+  }
+
+  function sudda() {
+    if (!spelbart() || vald == null || arLast(vald)) return;
+    s.rutor[vald] = 0;
+    s.anteck[vald] = 0;
+    sparaDagens();
+    rita();
+  }
+
+  // Ledtråden fyller i vald cell om den är tom eller fel, annars första felaktiga, annars första tomma.
+  function ledtrad() {
+    if (!spelbart()) return;
+    var los = p().losning, mal = null, i;
+    if (vald != null && !arLast(vald) && s.rutor[vald] !== los[vald]) mal = vald;
+    for (i = 0; i < N * N && mal == null; i++) if (s.rutor[i] && s.rutor[i] !== los[i]) mal = i;
+    for (i = 0; i < N * N && mal == null; i++) if (!varde(i)) mal = i;
+    if (mal == null) return;
+    s.rutor[mal] = los[mal];
+    s.anteck[mal] = 0;
+    GRANNAR[mal].forEach(function (j) { s.anteck[j] &= ~(1 << (los[mal] - 1)); });
+    s.last.push(mal);
+    s.ledtradar++;
+    vald = mal;
+    sparaDagens();
+    rita();
+    if (lost()) pusselKlart();
+  }
+
+  $('rutnat').addEventListener('click', function (e) {
+    var c = e.target.closest('.cell');
+    if (c) valj(+c.dataset.i);
+  });
+  $('siffror').addEventListener('click', function (e) {
+    var k = e.target.closest('.tangent');
+    if (k) skriv(+k.dataset.d);
+  });
+  $('sudda').addEventListener('click', sudda);
+  $('anteckna').addEventListener('click', function () { anteckna = !anteckna; ritaKnappsats(); });
+  $('ledtrad').addEventListener('click', ledtrad);
+
+  var PILAR = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !spelbart()) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (/^[1-6]$/.test(e.key)) { e.preventDefault(); skriv(+e.key); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') { e.preventDefault(); sudda(); return; }
+    if (e.key === 'n' || e.key === 'N') { anteckna = !anteckna; ritaKnappsats(); return; }
+    var r = PILAR[e.key];
+    if (!r) return;
+    e.preventDefault();
+    if (vald == null) { valj(0); return; }
+    var x = (vald % N + r[0] + N) % N, y = (Math.floor(vald / N) + r[1] + N) % N;
+    valj(y * N + x);
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var tot = dagens.tider.reduce(function (a, b) { return a + b; }, 0) + dagens.ledtradar * STRAFF;
+    var data = dagens.slut === 'gavupp'
+      ? { dag: dag, spel: 'sudoku', status: 'gav upp', medalj: '', text: '' }
+      // Tiden i tiondelar, ledtrådarna inräknade. Lägst vinner.
+      : { dag: dag, spel: 'sudoku', status: 'klar', varde: Math.floor(tot / 100),
+          medalj: medalj(tot / 1000), text: tidText(tot) + (dagens.ledtradar ? ' · ' + ledtradText(dagens.ledtradar) : '') };
+    R.skicka(data)
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa en omgång =====
+  function visa(arOvning) {
+    stoppaKlockan();
+    ovning = arOvning;
+    vald = null;
+    pussel = [];
+    $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    var sparat = !ovning && Advent.lasa(sparNyckel, null);
+    if (sparat && sparat.fro === dagensFro) s = sparat;
+    else s = nyttTillstand(ovning ? 'ovning-' + Math.floor(Math.random() * 4294967296) : dagensFro);
+    if (s.nr > 2) s.nr = 2;
+    rita();
+    if (s.start && !s.slut) startaKlockan();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('geUpp').addEventListener('click', function () {
+    if (!confirm('Vill du ge upp? Då räknas inte dagens försök.')) return;
+    avsluta('gavupp');
+    $('tavla').scrollIntoView({ behavior: 'smooth' });
+  });
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  visa(false);
+})();
+</script>
+</body>
+</html>
