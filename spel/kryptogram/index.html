@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kryptogram</title>
+<meta name="theme-color" content="#14233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../css/gemensam.css?v=4">
+<style>
+  h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
+  .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
+  .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
+
+  .matare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .matare div { background: rgba(255,255,255,.08); border-radius: 14px; padding: 6px 8px; text-align: center; }
+  .matare span { display: block; font-size: 14px; color: var(--himmel-dampad); }
+  .matare b { display: block; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .tips { margin: 0 0 10px; min-height: 1.4em; text-align: center; color: var(--himmel-dampad); font-size: 14px; }
+
+  /* Den krypterade titeln: ett ord per grupp, orden bryts aldrig mitt i. */
+  .pussel {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 14px 16px;
+    min-height: 150px;
+    padding: 18px 10px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.08);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .ord { display: flex; gap: 4px; }
+  .ruta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .ruta .gissning {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 34px;
+    border-radius: 6px;
+    background: var(--kort);
+    color: var(--text);
+    font: 600 22px var(--text-typsnitt);
+  }
+  .ruta .chiffer { margin-top: 3px; font-size: 14px; color: var(--himmel-dampad); }
+  .ruta.samma .gissning { background: #FFF1C2; }
+  .ruta.vald .gissning { background: var(--glod); box-shadow: 0 0 0 2px #fff; }
+  .ruta.last .gissning { background: var(--oppnad); color: var(--gron-mork); }
+  .ruta.last .chiffer { color: var(--accent); }
+  .tecken { align-self: flex-start; width: 10px; height: 34px; line-height: 34px; text-align: center; font: 600 22px var(--text-typsnitt); }
+  .pussel.lost .ruta .gissning { background: var(--accent); color: var(--text); }
+  .facit { flex-basis: 100%; margin: 0; text-align: center; color: var(--himmel-text); }
+  .facit span { color: var(--himmel-dampad); font-size: 14px; }
+  .startlager {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(20,35,63,.94);
+  }
+
+  /* Eget tangentbord, så att mobilens tangentbord inte skymmer titeln. */
+  .tangentbord { display: grid; gap: 6px; margin-bottom: 10px; touch-action: manipulation; }
+  .tangentrad { display: flex; justify-content: center; gap: 4px; }
+  .tangent {
+    flex: 1 1 0;
+    max-width: 40px;
+    height: 46px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(255,255,255,.16);
+    color: var(--himmel-text);
+    font: 600 18px var(--text-typsnitt);
+    cursor: pointer;
+  }
+  .tangent:active { background: rgba(255,255,255,.3); }
+  .tangent.anvand { opacity: .4; }
+  .tangent.sudda { flex: 1.6 1 0; max-width: 64px; font-size: 16px; }
+  .verktyg { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+
+  .slut { margin-bottom: 16px; text-align: center; }
+  .slut h2 { margin: 0 0 4px; font-size: 18px; }
+  .slut .poang { margin: 0; font: 600 24px var(--text-typsnitt); font-variant-numeric: tabular-nums; }
+  .slut p { margin: 4px 0; }
+  .slut ol { margin: 10px auto 0; padding-left: 22px; max-width: 360px; text-align: left; line-height: 1.45; }
+  .slut ol span { color: var(--himmel-dampad); font-size: 14px; }
+  .slut .info { color: var(--himmel-dampad); font-size: 14px; }
+
+  .regler { margin-top: 16px; }
+  .regler h2 { margin: 0 0 6px; font-size: 18px; }
+  .regler ol { margin: 0; padding-left: 22px; line-height: 1.45; }
+  .liten { font-size: 14px; color: var(--himmel-dampad); text-align: center; margin: 10px 0 0; }
+  .knappar { display: grid; gap: 12px; margin: 16px 0; }
+  .tavla { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<main class="spalt">
+  <a class="tillbaka" href="../../">← Kalendern</a>
+  <h1>Kryptogram <span class="ovning" id="ovningsmarke" hidden>Övning</span></h1>
+  <p class="under" id="under"></p>
+
+  <div class="matare">
+    <div><span>Tid</span><b id="tid">0:00</b></div>
+    <div><span>Titel</span><b id="titelnr">1 av 3</b></div>
+    <div><span>Ledtrådar</span><b id="ledtradar">0</b></div>
+  </div>
+  <p class="tips" id="tips" aria-live="polite"></p>
+
+  <div class="pussel" id="pussel" aria-label="Den krypterade låttiteln. Tryck på en ruta och välj bokstav på tangentbordet."></div>
+
+  <div id="spelkontroller">
+    <div class="tangentbord" id="tangentbord"></div>
+    <div class="verktyg">
+      <button class="knapp diskret" id="ledtrad" type="button">Ledtråd (+30 s)</button>
+    </div>
+  </div>
+  <div class="verktyg" id="nastaRad" hidden>
+    <button class="knapp" id="nasta" type="button">Nästa titel</button>
+  </div>
+
+  <div class="slut kort" id="slut" hidden>
+    <h2 id="slutRubrik"></h2>
+    <p class="poang" id="slutPoang"></p>
+    <p id="slutText"></p>
+    <ol id="slutLista"></ol>
+    <p class="info" id="skickat"></p>
+  </div>
+
+  <section id="tavla"></section>
+
+  <details class="regler kort">
+    <summary><h2>Så spelar du</h2></summary>
+    <ol>
+      <li>Tre kända engelska låttitlar från 1990 till 2015, från kort till lång. I varje titel är varje bokstav utbytt mot en annan, och samma bokstav byts alltid mot samma. Bytet är nytt för varje titel.</li>
+      <li>Tryck på en ruta och välj vilken bokstav du tror att den står för. Den fylls i överallt där samma krypterade bokstav finns. Två bokstäver är ifyllda från början.</li>
+      <li>Du får inte veta om en bokstav är fel. När hela titeln stämmer är den löst.</li>
+      <li>Fastnar du kan du ta en ledtråd. Den visar en rätt bokstav men kostar 30 sekunder.</li>
+      <li>Klockan går när en titel visas och står still mellan titlarna. Lägst sammanlagd tid vinner.</li>
+      <li>Guld under 3 minuter, silver under 5, brons under 8.</li>
+    </ol>
+    <p class="liten">Bara ditt första försök räknas. Klockan går även om du stänger sidan.</p>
+  </details>
+
+  <div class="knappar">
+    <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="igen" type="button">Öva</button>
+  </div>
+  <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens kryptogram</a></p>
+</main>
+
+<script src="../../js/gemensam.js?v=2"></script>
+<script src="../../js/luckor.js?v=9"></script>
+<script src="../../js/resultat.js?v=3"></script>
+<script>
+(function () {
+  var GULD = 180, SILVER = 300, BRONS = 480;   // sekunder, ledtrådar inräknade
+  var STRAFF = 30000;                          // ms per ledtråd
+  var ALFABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  // Övningstitlar i klartext, en lista per nivå (kort, medel, lång). Behnosh har sett de fem första.
+  var OVNING = [
+    [{ t: 'Wonderwall', a: 'Oasis', y: 1995 }, { t: 'Yellow', a: 'Coldplay', y: 2000 },
+     { t: 'Wannabe', a: 'Spice Girls', y: 1996 }, { t: 'Hallelujah', a: 'Jeff Buckley', y: 1994 }],
+    [{ t: 'Crazy in Love', a: 'Beyoncé', y: 2003 }, { t: "Hips Don't Lie", a: 'Shakira', y: 2006 },
+     { t: 'Poker Face', a: 'Lady Gaga', y: 2008 }, { t: 'Single Ladies', a: 'Beyoncé', y: 2008 }],
+    [{ t: 'Rolling in the Deep', a: 'Adele', y: 2010 }, { t: 'Smells Like Teen Spirit', a: 'Nirvana', y: 1991 },
+     { t: 'Livin\' la Vida Loca', a: 'Ricky Martin', y: 1999 }, { t: '...Baby One More Time', a: 'Britney Spears', y: 1998 }]
+  ];
+  // Omgången som spelas som dagens innan 16 december (Behnoshs exempel).
+  var EXEMPEL = [OVNING[0][0], OVNING[1][0], OVNING[2][0]];
+
+  // Tävlingstitlarna, förvrängda så att ingen ser dem av misstag. En titel per nivå väljs med dagens frö.
+  var FORVRANGT =
+    '8bT0qwiE+vjSsg8qApmUI5Qk3njlNqLWl28fjOvdnYvU2JriLDKZgSOJAeeXX49ENRxqpzQfTRIGx2vbGDNMbvWg2W9OrecmSWxk' +
+    '2dHL34Yx5GBQzeyimh6vdP+88bKvf//exxOY5HXET6YFDJB/2W3kIHf3it1RbcXGeBLxvF/meVLhPkuCyYQ/bIj8vINtkuhltENM' +
+    'XcG67rBqCT8qsm2PN/pQRo4nc8H8jU1iXWnk3EDAx4O3mBwobucxbpJQEYjGXHS+bg0dtz0NP2ZY1K/+nJv33GWI5CaRjFDwfuZl' +
+    'ubSpSwszfe6JuqgTmILUL57geCh2CrMLHbucOYriFhAVavGjNOUQDKsgAVZVfP3QXeu87RS2XDpv6UclgBuTzHxG/zb0QV0D6muh' +
+    'oFscJeQTzXm6ZDJN12Wt7Lp31pd3VQGO4PPcqQAwGuknFEZ1blRFdnsuYJAsLY/oXd7UFYSRZNAJoHVYxj7dcnmJ2vMHgra78y2Y' +
+    'LTQQMQnHPTVdOnV6P2nwz6lWXoJNi+qZ3LXePXQ1u28BHP+JLz4k9Gp+AR3UQHneHiXyRuXAVTRa3S8tVUMe5uTH6K7y8ecR0efN' +
+    '7GU9WRJQNCE/doO9FLb3MjretjIT9gcqDY0VH6g2waGP+BRCOamWarF6E8k/6JSFwgvnFPTHdTm7GSv4ugt00EGF4b7SvS/994y2' +
+    'zZOuuQl84SW6SyNje+Hy0ssmvZr3q8WmmtTlNbc83lsTO/YviJkKm74qtVA8tx0WHDnRliuchY8/oUoEIJ3Kb6dyO9tV3B5onb6s' +
+    '77UxbP+j+Tz80Hvyg8vguyjB3b5F1UB1K9WHhz0Rc9Y=';
+  function avvrang(text) {
+    var bin = atob(text), slump = Advent.skapaSlump('kryptogram-forvrangning');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  var TAVLINGSDAGAR = [16];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dag = Advent.hamtaDag() || 16;
+  Advent.markeraOppnad(dag);
+  var dagensFro = Advent.froForDag(dag) + '-kryptogram';
+
+  function harBorjat(d) { return new Date() >= new Date(2026, 11, d); }
+  function valjTitlar(pool, fro) {
+    var slump = Advent.skapaSlump(fro + '-val');
+    return pool.map(function (niva) { return niva[Math.floor(slump() * niva.length)]; });
+  }
+  function dagensTitlar() {
+    if (TAVLINGSDAGAR.indexOf(dag) !== -1 && harBorjat(dag)) return valjTitlar(avvrang(FORVRANGT), dagensFro);
+    return EXEMPEL;
+  }
+
+  function medalj(sek) { return sek < GULD ? 'guld' : sek < SILVER ? 'silver' : sek < BRONS ? 'brons' : ''; }
+  function tidText(ms) { return Advent.formateraTid(Math.floor(ms / 1000)); }
+  function ledtradText(n) { return n + (n === 1 ? ' ledtråd' : ' ledtrådar'); }
+
+  // ===== Chiffer =====
+  // Varje titel får ett eget byte (ingen bokstav står för sig själv) och två ifyllda bokstäver, ur fröet.
+  function bokstaver(titel) { return titel.toUpperCase().replace(/[^A-Z]/g, ''); }
+  function skapaChiffer(fro, nr, titel) {
+    var slump = Advent.skapaSlump(fro + '-' + nr);
+    var b = ALFABET.split(''), ok;
+    do {
+      for (var j = b.length - 1; j > 0; j--) {
+        var k = Math.floor(slump() * (j + 1));
+        var t = b[j]; b[j] = b[k]; b[k] = t;
+      }
+      ok = b.every(function (c, i) { return c !== ALFABET[i]; });
+    } while (!ok);
+    var tillChiffer = {}, tillKlar = {};
+    ALFABET.split('').forEach(function (c, i) { tillChiffer[c] = b[i]; tillKlar[b[i]] = c; });
+
+    var olika = [];
+    bokstaver(titel).split('').forEach(function (c) { if (olika.indexOf(c) === -1) olika.push(c); });
+    for (j = olika.length - 1; j > 0; j--) {
+      k = Math.floor(slump() * (j + 1));
+      t = olika[j]; olika[j] = olika[k]; olika[k] = t;
+    }
+    var ifyllda = olika.slice(0, olika.length <= 4 ? 1 : 2).map(function (c) { return tillChiffer[c]; });
+    return { tillChiffer: tillChiffer, tillKlar: tillKlar, ifyllda: ifyllda };
+  }
+
+  // ===== Spelets tillstånd =====
+  // s.gissat[nr][chiffer] = gissad bokstav. s.last[nr] = chifferbokstäver som är ifyllda från start eller via ledtråd.
+  var sparNyckel = 'kryptogram:' + dag;
+  var s;          // { fro, titlar, nr, gissat, last, lost, ledtradar, tidKlar, start, startad, slut, skickad }
+  var ovning = false;
+  var chiffer = [];   // chiffret för varje titel (räknas ut, sparas inte)
+  var vald = null;    // vald chifferbokstav
+
+  function sparaDagens() { if (!ovning) Advent.spara(sparNyckel, s); }
+
+  function nyttTillstand(fro, titlar) {
+    s = { fro: fro, titlar: titlar, nr: 0, gissat: [{}, {}, {}], last: [[], [], []], lost: [false, false, false],
+          ledtradar: 0, tidKlar: 0, start: null, startad: false, slut: null, skickad: false };
+    raknaChiffer();
+    s.last = chiffer.map(function (c) { return c.ifyllda.slice(); });
+  }
+  function raknaChiffer() {
+    chiffer = s.titlar.map(function (t, i) { return skapaChiffer(s.fro, i, t.t); });
+  }
+
+  function forflutet() { return s.tidKlar + (s.start ? Date.now() - s.start : 0); }
+  function totalTid() { return forflutet() + s.ledtradar * STRAFF; }
+
+  // Chifferbokstäverna i titeln i läsordning, utan dubbletter.
+  function chifferIOrdning() {
+    var c = chiffer[s.nr], lista = [];
+    bokstaver(s.titlar[s.nr].t).split('').forEach(function (b) {
+      var x = c.tillChiffer[b];
+      if (lista.indexOf(x) === -1) lista.push(x);
+    });
+    return lista;
+  }
+  function arLast(x) { return s.last[s.nr].indexOf(x) !== -1; }
+  function visad(x) { return arLast(x) ? chiffer[s.nr].tillKlar[x] : s.gissat[s.nr][x] || ''; }
+  function arRatt(x) { return visad(x) === chiffer[s.nr].tillKlar[x]; }
+  function titelLost() { return chifferIOrdning().every(arRatt); }
+  function allaIfyllda() { return chifferIOrdning().every(function (x) { return !!visad(x); }); }
+
+  // ===== Ritning =====
+  function el(tagg, klass, text) {
+    var e = document.createElement(tagg);
+    if (klass) e.className = klass;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function ritaPussel() {
+    var p = $('pussel'), titel = s.titlar[s.nr], c = chiffer[s.nr];
+    var lost = s.lost[s.nr] || s.slut;
+    p.textContent = '';
+    p.classList.toggle('lost', !!s.lost[s.nr]);
+    titel.t.toUpperCase().split(' ').forEach(function (ord) {
+      var o = el('div', 'ord');
+      ord.split('').forEach(function (b) {
+        if (!/[A-Z]/.test(b)) { o.appendChild(el('span', 'tecken', b)); return; }
+        var x = c.tillChiffer[b];
+        var r = el('button', 'ruta');
+        r.type = 'button';
+        r.dataset.c = x;
+        // Efter "ge upp" visas facit.
+        r.appendChild(el('span', 'gissning', s.slut === 'gavupp' ? b : visad(x)));
+        r.appendChild(el('span', 'chiffer', x));
+        if (arLast(x)) r.classList.add('last');
+        if (!lost && vald === x) r.classList.add('vald');
+        r.setAttribute('aria-label', 'Krypterad ' + x + (visad(x) ? ', ifylld ' + visad(x) : ', tom'));
+        o.appendChild(r);
+      });
+      p.appendChild(o);
+    });
+    if (s.lost[s.nr]) {
+      var f = el('p', 'facit', titel.a + ' ');
+      f.appendChild(el('span', null, '(' + titel.y + ')'));
+      p.appendChild(f);
+    }
+    if (!s.startad && !s.slut) {
+      var lager = el('div', 'startlager');
+      var k = el('button', 'knapp', 'Starta');
+      k.type = 'button';
+      k.addEventListener('click', starta);
+      lager.appendChild(k);
+      p.appendChild(lager);
+    }
+  }
+
+  function ritaTangentbord() {
+    var t = $('tangentbord'), anvanda = {};
+    chifferIOrdning().forEach(function (x) { if (visad(x)) anvanda[visad(x)] = true; });
+    t.textContent = '';
+    ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM-'].forEach(function (rad) {
+      var r = el('div', 'tangentrad');
+      rad.split('').forEach(function (b) {
+        var k = el('button', 'tangent', b === '-' ? 'Sudda' : b);
+        k.type = 'button';
+        k.dataset.b = b;
+        if (b === '-') k.classList.add('sudda');
+        else if (anvanda[b]) k.classList.add('anvand');
+        r.appendChild(k);
+      });
+      t.appendChild(r);
+    });
+  }
+
+  function ritaMatare() {
+    $('tid').textContent = tidText(totalTid());
+    $('titelnr').textContent = (s.nr + 1) + ' av 3';
+    $('ledtradar').textContent = s.ledtradar;
+  }
+
+  function rita() {
+    var spelar = s.startad && !s.slut && !s.lost[s.nr];
+    ritaPussel();
+    ritaTangentbord();
+    ritaMatare();
+    $('spelkontroller').hidden = !spelar;
+    $('nastaRad').hidden = !(s.lost[s.nr] && !s.slut);
+    $('geUpp').hidden = ovning || !!s.slut;
+    var tips = '';
+    if (s.slut) tips = '';
+    else if (!s.startad) tips = 'Klockan startar när du trycker på Starta.';
+    else if (s.lost[s.nr]) tips = 'Rätt! Klockan står still tills du går vidare.';
+    else if (allaIfyllda()) tips = 'Alla rutor är ifyllda, men något stämmer inte än.';
+    $('tips').textContent = tips;
+    ritaSlut();
+  }
+
+  function ritaSlut() {
+    $('slut').hidden = !s.slut;
+    if (!s.slut) return;
+    var lista = $('slutLista');
+    lista.textContent = '';
+    s.titlar.forEach(function (t) {
+      var li = el('li', null, t.t + ' ');
+      li.appendChild(el('span', null, t.a + ', ' + t.y));
+      lista.appendChild(li);
+    });
+    if (s.slut === 'gavupp') {
+      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutPoang').textContent = '';
+      $('slutText').textContent = 'Så här löd titlarna. Testa gärna att öva med andra.';
+      return;
+    }
+    var tot = totalTid(), m = medalj(tot / 1000);
+    $('slutRubrik').textContent = 'Alla tre knäckta!';
+    $('slutPoang').textContent = tidText(tot);
+    $('slutText').textContent = (s.ledtradar ? 'Med ' + ledtradText(s.ledtradar) + ' (+' + s.ledtradar * 30 + ' s). ' : 'Utan ledtrådar. ') +
+      (m ? { guld: '🥇 Guld!', silver: '🥈 Silver!', brons: '🥉 Brons!' }[m] : 'Ingen medalj den här gången.');
+  }
+
+  // ===== Klockan =====
+  var klocka = null;
+  function startaKlockan() { stoppaKlockan(); klocka = setInterval(ritaMatare, 250); }
+  function stoppaKlockan() { if (klocka) { clearInterval(klocka); klocka = null; } }
+
+  function starta() {
+    s.startad = true;
+    s.start = Date.now();
+    vald = chifferIOrdning().filter(function (x) { return !visad(x); })[0] || null;
+    startaKlockan();
+    sparaDagens();
+    rita();
+  }
+
+  function pausa() {
+    if (s.start) { s.tidKlar += Date.now() - s.start; s.start = null; }
+    stoppaKlockan();
+  }
+
+  function avsluta(orsak) {
+    if (s.slut) return;
+    pausa();
+    s.slut = orsak;
+    sparaDagens();
+    rita();
+    if (!ovning) forsokSkicka();
+  }
+
+  function kollaLost() {
+    if (!titelLost()) return;
+    s.lost[s.nr] = true;
+    vald = null;
+    if (s.nr === s.titlar.length - 1) { avsluta('klar'); return; }
+    pausa();
+    sparaDagens();
+    rita();
+  }
+
+  // ===== Gissa =====
+  function spelbart() { return s && s.startad && !s.slut && !s.lost[s.nr]; }
+
+  function nastaTomma(efter) {
+    var lista = chifferIOrdning(), i = lista.indexOf(efter);
+    for (var n = 1; n <= lista.length; n++) {
+      var x = lista[(i + n) % lista.length];
+      if (!visad(x)) return x;
+    }
+    return efter;
+  }
+
+  function valj(x) {
+    if (!spelbart()) return;
+    vald = x;
+    rita();
+  }
+
+  function skriv(b) {
+    if (!spelbart()) return;
+    if (!vald || arLast(vald)) vald = nastaTomma(vald);
+    if (!vald || arLast(vald)) return;
+    var g = s.gissat[s.nr];
+    // En bokstav som är låst på en annan ruta kan inte användas igen.
+    var lastPa = s.last[s.nr].filter(function (x) { return chiffer[s.nr].tillKlar[x] === b; })[0];
+    if (lastPa) { $('tips').textContent = b + ' finns redan, den är låst.'; return; }
+    Object.keys(g).forEach(function (x) { if (g[x] === b) delete g[x]; });
+    g[vald] = b;
+    vald = nastaTomma(vald);
+    sparaDagens();
+    rita();
+    kollaLost();
+  }
+
+  function sudda() {
+    if (!spelbart() || !vald || arLast(vald)) return;
+    delete s.gissat[s.nr][vald];
+    sparaDagens();
+    rita();
+  }
+
+  function ledtrad() {
+    if (!spelbart()) return;
+    var mal = vald && !arLast(vald) && !arRatt(vald) ? vald : chifferIOrdning().filter(function (x) { return !arRatt(x); })[0];
+    if (!mal) return;
+    var b = chiffer[s.nr].tillKlar[mal], g = s.gissat[s.nr];
+    Object.keys(g).forEach(function (x) { if (g[x] === b) delete g[x]; });
+    delete g[mal];
+    s.last[s.nr].push(mal);
+    s.ledtradar++;
+    vald = nastaTomma(mal);
+    sparaDagens();
+    rita();
+    kollaLost();
+  }
+
+  $('pussel').addEventListener('click', function (e) {
+    var r = e.target.closest('.ruta');
+    if (r) valj(r.dataset.c);
+  });
+  $('tangentbord').addEventListener('click', function (e) {
+    var k = e.target.closest('.tangent');
+    if (!k) return;
+    if (k.dataset.b === '-') sudda(); else skriv(k.dataset.b);
+  });
+  $('ledtrad').addEventListener('click', ledtrad);
+  $('nasta').addEventListener('click', function () {
+    s.nr++;
+    s.start = Date.now();
+    vald = chifferIOrdning().filter(function (x) { return !visad(x); })[0] || null;
+    startaKlockan();
+    sparaDagens();
+    rita();
+    $('pussel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !spelbart()) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (/^[a-z]$/i.test(e.key)) { e.preventDefault(); skriv(e.key.toUpperCase()); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); sudda(); return; }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      var lista = chifferIOrdning(), i = Math.max(0, lista.indexOf(vald));
+      valj(lista[(i + (e.key === 'ArrowRight' ? 1 : lista.length - 1)) % lista.length]);
+    }
+  });
+
+  // ===== Resultattavlan =====
+  var R = Advent.Resultat;
+  var tavlaStatus;   // undefined = vet inte än, null = inte inloggad, annars dagens data (harSpelat)
+  var skickar = false;
+  function kanSkicka() { return !!(R.arInkopplad() && R.kod() && tavlaStatus && !tavlaStatus.harSpelat); }
+
+  function forsokSkicka() {
+    var dagens = Advent.lasa(sparNyckel, null);
+    var info = $('skickat');
+    if (!dagens || !dagens.slut) return;
+    if (dagens.skickad) { if (!ovning) info.textContent = 'Ditt resultat är skickat till tavlan.'; return; }
+    if (tavlaStatus && tavlaStatus.harSpelat) { if (!ovning) info.textContent = 'Du har redan ett resultat på tavlan i dag.'; return; }
+    if (!R.arInkopplad()) return;
+    if (!R.kod()) { if (!ovning) info.textContent = 'Skriv in din kod nedan så skickas resultatet till tavlan.'; return; }
+    if (skickar || !kanSkicka()) return;
+    skickar = true;
+    var tot = dagens.tidKlar + dagens.ledtradar * STRAFF;
+    var data = dagens.slut === 'gavupp'
+      ? { dag: dag, spel: 'kryptogram', status: 'gav upp', medalj: '', text: '' }
+      // Tiden i tiondelar, ledtrådarna inräknade. Lägst vinner.
+      : { dag: dag, spel: 'kryptogram', status: 'klar', varde: Math.floor(tot / 100),
+          medalj: medalj(tot / 1000), text: tidText(tot) + (dagens.ledtradar ? ' · ' + ledtradText(dagens.ledtradar) : '') };
+    R.skicka(data)
+      .then(function () {
+        dagens.skickad = true;
+        Advent.spara(sparNyckel, dagens);
+        if (!ovning) { s.skickad = true; info.textContent = 'Ditt resultat är skickat till tavlan.'; }
+      }, function (fel) { if (!ovning) info.textContent = fel.message; })
+      .then(function () { skickar = false; });
+  }
+
+  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+
+  // ===== Visa en omgång =====
+  function visa(arOvning) {
+    stoppaKlockan();
+    ovning = arOvning;
+    vald = null;
+    $('under').textContent = ovning ? 'Fritt spel, räknas inte' : 'Lucka ' + dag;
+    $('ovningsmarke').hidden = !ovning;
+    $('tillDagens').hidden = !ovning;
+    $('skickat').textContent = '';
+    var sparat = !ovning && Advent.lasa(sparNyckel, null);
+    if (sparat && sparat.fro === dagensFro) { s = sparat; raknaChiffer(); }
+    else if (ovning) {
+      var fro = 'ovning-' + Math.floor(Math.random() * 4294967296);
+      nyttTillstand(fro, valjTitlar(OVNING, fro));
+    } else nyttTillstand(dagensFro, dagensTitlar());
+    if (s.start && !s.slut) {
+      vald = chifferIOrdning().filter(function (x) { return !visad(x); })[0] || null;
+      startaKlockan();
+    }
+    rita();
+    if (!ovning) forsokSkicka();
+  }
+
+  $('geUpp').addEventListener('click', function () {
+    if (!confirm('Vill du ge upp? Då räknas inte dagens försök.')) return;
+    avsluta('gavupp');
+    $('tavla').scrollIntoView({ behavior: 'smooth' });
+  });
+  $('igen').addEventListener('click', function () {
+    visa(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('tillDagensLank').addEventListener('click', function (e) {
+    e.preventDefault();
+    visa(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  visa(false);
+})();
+</script>
+</body>
+</html>
