@@ -111,9 +111,9 @@
     <summary><h2>Så spelar du</h2></summary>
     <ol>
       <li>Dra med fingret var som helst på banan (eller använd piltangenterna). Pepparkaksgubben går åt samma håll, men inte genom väggar.</li>
-      <li>Det gäller inte att vara snabb. Du ska komma fram till julklappen när exakt rätt tid har gått: 10 sekunder på första banan, 15 på andra och 20 på tredje.</li>
+      <li>Du ska komma fram till julklappen när exakt 15 sekunder har gått. Varje bana har längre väg än den förra, så på sista banan gäller det att skynda sig.</li>
       <li>Klockan startar när du börjar gå. Den syns de första 3 sekunderna och försvinner sedan. Du får räkna själv.</li>
-      <li>Det finns gott om tid. Det går bra att stå och vänta bredvid julklappen. Klockan stannar i samma stund som du kliver in på julklappen.</li>
+      <li>Det går bra att stå och vänta bredvid julklappen. Klockan stannar i samma stund som du kliver in på julklappen.</li>
       <li>Efter varje bana ser du hur långt ifrån du var. Felen läggs ihop, och lägst sammanlagt fel vinner. Medaljgränserna står ovanför banan.</li>
     </ol>
     <p class="liten">Alla får samma labyrinter. Bara ditt första försök räknas. Klockan går även om du stänger sidan mitt på en bana.</p>
@@ -131,11 +131,12 @@
 <script>
 (function () {
   // Banornas storlek (kolumner × rader) och måltid i sekunder. Julklappen läggs så att kortaste vägen
-  // är ungefär så många rutor som "rutor" säger. Det ska gå lugnt att hinna fram och sedan vänta.
+  // är ungefär så många rutor som "rutor" säger: första banan hinner man lugnt, andra blir lite stressig
+  // och tredje en utmaning att hinna på 15 sekunder.
   var BANOR = [
-    { b: 6, h: 8, mal: 10, rutor: 10 },
-    { b: 7, h: 9, mal: 15, rutor: 15 },
-    { b: 8, h: 11, mal: 20, rutor: 20 }
+    { b: 7, h: 9, mal: 15, rutor: 18 },
+    { b: 8, h: 11, mal: 15, rutor: 28 },
+    { b: 9, h: 13, mal: 15, rutor: 38 }
   ];
   // Klockan syns så här länge i början av varje bana, sedan får man räkna själv.
   var SYNLIG_MS = 3000;
