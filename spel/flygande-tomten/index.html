@@ -53,6 +53,7 @@
   }
   .lager b { font: 600 9cqw var(--text-typsnitt); }
   .lager span { font-size: 5cqw; font-weight: 600; }
+  .lager small { margin-top: 10px; padding: 0 8%; font-size: 4.4cqw; color: var(--glod); font-weight: 600; }
   @keyframes tona { from { opacity: 0; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .lager { animation: none; } }
 
@@ -238,6 +239,7 @@
 
   function krock(orsak) {
     runda.slut = orsak;
+    runda.slutTid = performance.now();
     rundanSlut();
   }
 
@@ -269,7 +271,8 @@
   }
 
   function lyft() {
-    if (!runda || runda.slut) return;
+    if (runda && runda.slut) { if (lyftEfterKrock()) flygIgen(); return; }
+    if (!runda) return;
     if (!ovning && s.slut) return;
     if (!runda.igang) {
       runda.igang = true;
@@ -488,13 +491,22 @@
     if (lager) lager.remove();
     if (!runda) return;
     var visa = null;
-    if (runda.slut) visa = { rubrik: SLUTRUBRIK[runda.slut], text: skorstenText(runda.antal) };
+    if (runda.slut) visa = { rubrik: SLUTRUBRIK[runda.slut], text: skorstenText(runda.antal), mer: merText() };
     else if (!ovning && s.slut && s.basta) visa = { rubrik: 'Klart för i dag', text: 'Bästa: ' + skorstenText(s.basta.antal) };
     if (!visa) return;
     lager = el('div', 'lager');
     lager.appendChild(el('b', null, visa.rubrik));
     lager.appendChild(el('span', null, visa.text));
+    if (visa.mer) lager.appendChild(el('small', null, visa.mer));
     bana.appendChild(lager);
+  }
+
+  // Under krockrubriken: hur många försök som är kvar och hur man flyger igen.
+  function merText() {
+    if (ovning) return 'Tryck för att flyga igen.';
+    if (s.slut) return 'Klart för i dag. Resultatet står under spelplanen.';
+    var kvar = FORSOK - s.forsok.length;
+    return (kvar === 1 ? '1 försök kvar.' : kvar + ' försök kvar.') + ' Tryck för att flyga igen.';
   }
 
   function ritaMatare() {
@@ -532,7 +544,9 @@
       return tips('Bästa hittills: ' + skorstenText(s.basta.antal) + '. Det längsta av ' + FORSOK + ' försök räknas.');
     }
     if (!ovning && s.slut) return tips('');
-    tips('Tryck på himlen för att börja.');
+    if (ovning) return tips('Tryck på himlen för att börja.');
+    var kvar = FORSOK - s.forsok.length;
+    tips(kvar === FORSOK ? 'Tryck på himlen för att börja. Du har ' + FORSOK + ' försök, det längsta räknas.' : 'Tryck på himlen för att börja försök ' + (s.forsok.length + 1) + ' av ' + FORSOK + '.');
   }
 
   function ritaSlut() {
@@ -553,10 +567,15 @@
     startaLoop();
   }
 
-  $('spelaIgen').addEventListener('click', function () {
+  function flygIgen() {
     if (!ovning && s.slut) return;
     nyFlygtur();
-  });
+  }
+  $('spelaIgen').addEventListener('click', flygIgen);
+  // Tryck på spelplanen efter en krock = nästa försök, men inte direkt, så att ett sista panikttryck inte startar om.
+  function lyftEfterKrock() {
+    return runda && runda.slut && (ovning || !s.slut) && performance.now() - (runda.slutTid || 0) > 800;
+  }
 
   $('nojd').addEventListener('click', function () {
     if (ovning || s.slut || !s.forsok.length) return;
