@@ -172,6 +172,7 @@
 
   <div class="knappar">
     <button class="knapp diskret" id="geUpp" type="button" hidden>Jag ger upp, visa resultaten</button>
+    <button class="knapp diskret" id="visaSvar" type="button" hidden>Visa svaret</button>
     <button class="knapp diskret" id="igen" type="button">Öva</button>
   </div>
   <p class="liten" id="tillDagens" hidden><a id="tillDagensLank" href="">Tillbaka till dagens sudoku</a></p>
@@ -465,6 +466,7 @@
     ritaMatare();
     $('knappsats').hidden = !spelbart();
     $('geUpp').hidden = ovning || !!s.slut;
+    $('visaSvar').hidden = !ovning || !!s.slut;
     var tips = '';
     if (s.slut) tips = '';
     else if (!s.startad) tips = 'Klockan startar när du trycker på ' + (s.nr ? 'Nästa pussel.' : 'Starta.');
@@ -478,9 +480,9 @@
     $('slut').hidden = !s.slut;
     if (!s.slut) return;
     if (s.slut === 'gavupp') {
-      $('slutRubrik').textContent = 'Du gav upp';
+      $('slutRubrik').textContent = ovning ? 'Här är svaret' : 'Du gav upp';
       $('slutPoang').textContent = '';
-      $('slutText').textContent = 'Facit står i rutnätet. Testa gärna att öva med ett annat pussel.';
+      $('slutText').textContent = ovning ? 'Facit står i rutnätet.' : 'Facit står i rutnätet. Testa gärna att öva med ett annat pussel.';
       return;
     }
     var tot = totalTid(), m = medalj(tot / 1000);
@@ -703,6 +705,8 @@
         $('tavla').scrollIntoView({ behavior: 'smooth' });
       });
   });
+  // Bara i övningsläget: avslutar rundan och visar facit, inget skickas.
+  $('visaSvar').addEventListener('click', function () { avsluta('gavupp'); });
   $('igen').addEventListener('click', function () {
     visa(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
