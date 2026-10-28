@@ -19,6 +19,7 @@ window.LUCKOR = {
   15: { titel: 'Zoombilden', sokvag: 'spel/zoombild/' },
   16: { titel: 'Kodkryss', sokvag: 'spel/kodkryss/' },
   17: { titel: 'Memory', sokvag: 'spel/memory/' },
+  18: { titel: 'Minisudoku', sokvag: 'spel/sudoku/' },
   19: { titel: 'TimeGuessr', sokvag: 'spel/timeguessr/', lagreArBattre: false }
 };
 
