@@ -19,7 +19,8 @@ window.LUCKOR = {
   15: { titel: 'Zoombilden', sokvag: 'spel/zoombild/' },
   16: { titel: 'Kodkryss', sokvag: 'spel/kodkryss/' },
   17: { titel: 'Memory', sokvag: 'spel/memory/' },
-  19: { titel: 'TimeGuessr', sokvag: 'spel/timeguessr/', lagreArBattre: false }
+  19: { titel: 'TimeGuessr', sokvag: 'spel/timeguessr/', lagreArBattre: false },
+  20: { titel: 'Tidskänslan', sokvag: 'spel/tidskanslan/' }
 };
 
 // Under bygget är alla luckor öppna. Sätt till false när datumlåset ska gälla.
