@@ -224,7 +224,7 @@ details.regler[open] { padding-bottom: 14px; }
 .tavla-lista.utan-medalj .medalj { display: none; }
 
 /* Egen fråga-ruta (Advent.fraga) i stället för webbläsarens confirm(). */
-.fraga-bakgrund {
+.fragaruta-bakgrund {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -233,9 +233,9 @@ details.regler[open] { padding-bottom: 14px; }
   justify-content: center;
   padding: 16px;
   background: rgba(10,18,34,.72);
-  animation: fraga-in .15s ease-out;
+  animation: fragaruta-in .15s ease-out;
 }
-.fraga {
+.fragaruta {
   width: 100%;
   max-width: 340px;
   padding: 22px 20px 18px;
@@ -246,8 +246,8 @@ details.regler[open] { padding-bottom: 14px; }
   color: var(--himmel-text);
   text-align: center;
 }
-.fraga h2 { margin: 0 0 6px; }
-.fraga p { margin: 0 0 18px; color: var(--himmel-dampad); font-size: 14px; line-height: 1.45; }
-.fraga .knapp + .knapp { margin-top: 12px; }
-@keyframes fraga-in { from { opacity: 0; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .fraga-bakgrund { animation: none; } }
+.fragaruta h2 { margin: 0 0 6px; }
+.fragaruta p { margin: 0 0 18px; color: var(--himmel-dampad); font-size: 14px; line-height: 1.45; }
+.fragaruta .knapp + .knapp { margin-top: 12px; }
+@keyframes fragaruta-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .fragaruta-bakgrund { animation: none; } }
