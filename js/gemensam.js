@@ -108,9 +108,9 @@
   function fraga(o) {
     return new Promise(function (svara) {
       var bak = document.createElement('div');
-      bak.className = 'fraga-bakgrund';
+      bak.className = 'fragaruta-bakgrund';
       var ruta = document.createElement('div');
-      ruta.className = 'fraga';
+      ruta.className = 'fragaruta';
       ruta.setAttribute('role', 'alertdialog');
       ruta.setAttribute('aria-modal', 'true');
       var h = document.createElement('h2');
