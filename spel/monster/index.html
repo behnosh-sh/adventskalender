@@ -11,8 +11,8 @@
 <style>
   :root {
     --ratt: #5FAF7E;
-    --ratt-ljus: #DDF0E3;
-    --fel-ljus: #F6DDD8;
+    --ratt-ljus: rgba(95,175,126,.25);
+    --fel-ljus: rgba(255,180,166,.18);
   }
   h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
   .under { margin: 0 0 14px; color: var(--accent); font-size: 14px; }
@@ -40,7 +40,7 @@
   .ruta {
     display: flex; align-items: center; justify-content: center;
     min-width: 44px; height: 52px; padding: 0 8px; border-radius: 12px;
-    background: #EEF3F0; font: 600 24px var(--text-typsnitt); color: var(--text);
+    background: var(--kort); font: 600 24px var(--text-typsnitt); color: var(--text);
   }
   .serie.figurer .ruta { width: 52px; padding: 4px; }
   .ruta svg { width: 100%; height: 100%; display: block; }
@@ -65,7 +65,7 @@
 
   .forklaring { margin: 14px 0 0; }
   .forklaring .omdome { margin: 0 0 6px; font: 600 18px var(--text-typsnitt); text-align: center; }
-  .forklaring .varfor { margin: 0; padding: 10px 12px; border-radius: 12px; background: #EEF3F0; line-height: 1.4; font-size: 14px; }
+  .forklaring .varfor { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--kort); line-height: 1.4; font-size: 14px; }
   .forklaring .varfor b { display: block; margin-bottom: 2px; }
   .forklaring .knapp { margin-top: 16px; }
 
