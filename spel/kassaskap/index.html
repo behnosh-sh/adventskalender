@@ -139,8 +139,33 @@
   .lampknapp.lyser::after { opacity: 1; transition: opacity .6s; }
   .lampknapp.lyser { animation: puls 1.6s ease-in-out infinite; }
   @keyframes puls { 50% { transform: scale(1.1); } }
-  .lampraden { display: flex; align-items: center; gap: 14px; min-height: 52px; }
-  .skylt { min-width: 44px; padding: 4px 12px; border-radius: 8px; background: linear-gradient(#E9CF8A, #B98E3E); color: #3A2A10; font: 700 28px/1.2 var(--rubrik-typsnitt); text-align: center; box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); animation: upp .4s ease-out; }
+  .lampraden { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  /* Springan under lampan. När det är ens tur glider Mästarprovets kuvert ut. */
+  .springa { position: relative; width: 132px; height: 7px; border-radius: 4px; background: #0E1524; box-shadow: inset 0 2px 3px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); }
+  @keyframes gliUt { from { height: 0; } to { height: 50px; } }
+  .provkuvert {
+    position: absolute; left: 8px; top: 4px; width: 116px; height: 50px;
+    overflow: hidden; padding: 0; border: 0; border-radius: 0 0 6px 6px;
+    background: linear-gradient(#F3E8D2, #E2D2B2);
+    color: #3B2E25; font: 700 21px/1 Caveat, "Segoe Print", cursive;
+    box-shadow: 0 3px 0 rgba(0,0,0,.3);
+    cursor: pointer; animation: gliUt .9s ease-out .3s both;
+  }
+  .provkuvert span { display: block; padding-top: 16px; }
+  .provkuvert::after { content: ""; position: absolute; right: 8px; top: 8px; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #D9504F, #9A1F27 70%); }
+  .provkuvert.knuff { animation: gunga .5s ease-in-out; }
+  .lampraden.tur { margin-bottom: 44px; }
+  /* Kuvertet med ens siffra ligger kvar under skåpet. */
+  .svarskuvert {
+    position: relative; display: block; margin: 0 auto 8px; width: 170px; height: 104px;
+    padding: 0; border: 0; border-radius: 10px;
+    background: linear-gradient(#F3E8D2, #E2D2B2); box-shadow: 0 4px 0 rgba(0,0,0,.3);
+    color: #3B2E25; font: 700 22px/1 Caveat, "Segoe Print", cursive;
+    cursor: pointer; animation: upp .5s ease-out;
+  }
+  .svarskuvert::before { content: ""; position: absolute; inset: 0 0 40% 0; background: linear-gradient(#E9DBBE, #D8C49E); clip-path: polygon(0 0, 100% 0, 50% 100%); border-radius: 10px 10px 0 0; }
+  .svarskuvert .guld { position: absolute; left: 50%; top: 46%; width: 34px; height: 34px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 40% 35%, #FBE08A, #C9951E 70%); box-shadow: 0 2px 0 rgba(0,0,0,.25); display: grid; place-items: center; font-size: 16px; }
+  .svarskuvert .etikett { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; }
 
   /* Mästarprovet läggs ovanpå skåpet. */
   .prov {
@@ -568,10 +593,12 @@
     var lampa = el('button', 'lampknapp');
     lampa.type = 'button';
     lampraden.appendChild(lampa);
+    lampraden.appendChild(el('div', 'springa'));
     dorr.appendChild(lampraden);
     ritaLampa(lampa, lampraden);
     lampa.addEventListener('click', function () {
-      if (lampa.classList.contains('lyser')) { oppnaProv(dorr.parentNode, lampa, lampraden); return; }
+      var kuv = lampraden.querySelector('.provkuvert');
+      if (kuv) { kuv.classList.remove('knuff'); void kuv.offsetWidth; kuv.classList.add('knuff'); return; }
       dorr.classList.remove('ryck'); void dorr.offsetWidth; dorr.classList.add('ryck');
       if (vakt.stoppad) borjaFraga(lampa, lampraden);   // tryck på en matt lampa startar frågandet igen
     });
@@ -652,6 +679,7 @@
 
     ritaHjul();
     visaLas();
+    if (s.provKlar) setTimeout(function () { laggSvarskuvert(dorr.parentNode); }, 0);
   }
 
   // ===== Lampknapparna och turordningen =====
@@ -686,8 +714,53 @@
     var lyser = minTur();
     lampa.classList.toggle('lyser', lyser);
     lampa.setAttribute('aria-label', lyser ? 'En lysande lampa' : 'En släckt lampa');
-    var skylt = lampraden.querySelector('.skylt');
-    if (s.provKlar && !skylt) lampraden.appendChild(el('span', 'skylt', siffraFor(minPlats())));
+    lampraden.classList.toggle('tur', lyser);
+    var springa = lampraden.querySelector('.springa');
+    var kuv = springa.querySelector('.provkuvert');
+    if (lyser && !kuv) {
+      kuv = el('button', 'provkuvert');
+      kuv.type = 'button';
+      kuv.appendChild(el('span', null, 'Mästarprovet'));
+      kuv.addEventListener('click', function () {
+        oppnaProv(lampraden.closest('.skap'), lampa, lampraden);
+      });
+      springa.appendChild(kuv);
+    } else if (!lyser && kuv) {
+      kuv.remove();
+    }
+  }
+
+  // Kuvertet med ens siffra, som ligger kvar under skåpet när provet är klart.
+  function siffertext(namn) {
+    return 'Ormarnas mästare har talat! Snake har bugat sig för dig, ' + namn + ', och Nordpolen jublar. Som bevis på din storhet får du detta: en siffra ur tomtens hemliga kod.';
+  }
+  function provNamn() { return Advent.Resultat.namn() || (test ? 'Behnosh' : ''); }
+  function visaSiffran(skap) {
+    var prov = el('div', 'prov');
+    prov.appendChild(el('p', null, siffertext(provNamn())));
+    prov.appendChild(el('div', 'stor-siffra', siffraFor(minPlats())));
+    var stang = el('button', 'knapp', 'Stäng');
+    stang.type = 'button';
+    prov.appendChild(stang);
+    skap.appendChild(prov);
+    return { prov: prov, stang: stang };
+  }
+  function laggSvarskuvert(skap) {
+    var yta = skap.parentNode;
+    if (yta.querySelector('.svarskuvert')) return;
+    var kuv = el('button', 'svarskuvert');
+    kuv.type = 'button';
+    kuv.setAttribute('aria-label', 'Kuvert: Din siffra');
+    var guld = el('span', 'guld', '⭐');
+    guld.setAttribute('aria-hidden', 'true');
+    kuv.appendChild(guld);
+    kuv.appendChild(el('span', 'etikett', 'Din siffra'));
+    kuv.addEventListener('click', function () {
+      if (skap.querySelector('.prov')) return;
+      var v = visaSiffran(skap);
+      v.stang.addEventListener('click', function () { v.prov.remove(); });
+    });
+    yta.insertBefore(kuv, skap.nextSibling);
   }
 
   // Frågar arket hur många som är klara. Bara när sidan syns, bara medan man väntar på sin egen lampa,
@@ -717,7 +790,7 @@
       vakt.upptagen = false;
       tur.spelare = svar.spelare;
       tur.antal = svar.dag.antal;
-      if (svar.dag.harSpelat && !s.provKlar) { s.provKlar = true; spara(); }
+      if (svar.dag.harSpelat && !s.provKlar) { s.provKlar = true; spara(); if (vakt.lampa) laggSvarskuvert(vakt.lampa.closest('.skap')); }
       if (!vakt.lampa) return;
       ritaLampa(vakt.lampa, vakt.rad);
       if (minTur() || s.provKlar) return;
@@ -734,7 +807,6 @@
   // ===== Mästarprovet (låtsas tills spelen byggs i steg 4–6) =====
   function oppnaProv(skap, lampa, lampraden) {
     var plats = minPlats();
-    var namn = Advent.Resultat.namn() || (test ? 'Behnosh' : '');
     var prov = el('div', 'prov');
     prov.appendChild(el('p', 'mal', 'Snake. Minst 24.'));
     prov.appendChild(el('p', 'platshallare', 'Här kommer spelet (steg 4).'));
@@ -743,22 +815,18 @@
     prov.appendChild(klar);
     skap.appendChild(prov);
     klar.addEventListener('click', function () {
-      prov.textContent = '';
-      prov.appendChild(el('p', null, 'Ormarnas mästare har talat! Snake har bugat sig för dig, ' + namn + ', och Nordpolen jublar. Som bevis på din storhet får du detta: en siffra ur tomtens hemliga kod.'));
-      prov.appendChild(el('div', 'stor-siffra', siffraFor(plats)));
-      var stang = el('button', 'knapp', 'Stäng');
-      stang.type = 'button';
-      prov.appendChild(stang);
+      prov.remove();
+      var v = visaSiffran(skap), stang = v.stang;
       s.provKlar = true;
       if (test) s.testAntal = Math.max(s.testAntal || 0, plats + 1);
       spara();
       if (!test) Advent.Resultat.skicka({ dag: 24, spel: 'Mästarprovet', status: 'klar', varde: 0, medalj: '', text: 'klar' }).catch(function () {});
       stang.addEventListener('click', function () {
-        prov.remove();
-        // Siffran syns på dörren och lampan slocknar långsamt, ungefär tio sekunder.
-        lampraden.appendChild(el('span', 'skylt', siffraFor(plats)));
-        lampa.classList.remove('lyser');
-        lampa.setAttribute('aria-label', 'En släckt lampa');
+        v.prov.remove();
+        // Kuvertet glider in i springan, ett förseglat kuvert med siffran hamnar under skåpet
+        // och lampan slocknar långsamt, ungefär tio sekunder.
+        ritaLampa(lampa, lampraden);
+        laggSvarskuvert(skap);
       });
     });
   }
