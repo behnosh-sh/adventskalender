@@ -226,7 +226,7 @@
     transition: opacity .2s, transform .2s;
   }
   .figur.tyst { opacity: .4; transform: scale(.88); }
-  .figur.tomten { border-color: #F2C230; animation: upp .3s ease-out; }
+  .figur.tomten { border-color: #E5484D; animation: upp .3s ease-out; }
   .prat .vanster { flex: none; display: flex; flex-direction: column; gap: 6px; }
   .figur.pyssel { border-color: #B58CFF; }
   .figur.trassel { border-color: #6FD49A; }
@@ -248,10 +248,41 @@
   .bubbla.pyssel::after { left: -6px; bottom: 6px; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
   .bubbla.trassel { background: #DDF5E6; border-bottom-right-radius: 4px; }
   .bubbla.trassel::after { right: -6px; bottom: 6px; clip-path: polygon(0 0, 100% 100%, 0 100%); }
-  .bubbla.tomten { background: #FFF1CC; font-size: 17px; min-height: 98px; }
+  .bubbla.tomten { background: #FFE3DE; font-size: 17px; min-height: 98px; }
   .bubbla.tomten::after { left: -7px; bottom: 68px; clip-path: polygon(100% 0, 100% 100%, 0 50%); }
   .bubbla .vem { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 600; color: #5E5168; }
   .bubbla .mer { position: absolute; right: 10px; bottom: 4px; font-size: 13px; color: #7A6E80; }
+
+  /* ===== Prisutdelningen ===== */
+  .skap.hog { aspect-ratio: auto; height: 580px; }
+  .pris { position: absolute; inset: 0; z-index: 1; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .paketen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .paket {
+    position: relative;
+    height: 178px;
+    border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: rgba(255,255,255,.05);
+    border: 2px solid rgba(255,255,255,.12);
+    color: var(--himmel-text);
+    text-align: center;
+  }
+  .paket .ask { font-size: 54px; line-height: 1; }
+  .paket .lapp { font-size: 13px; color: var(--himmel-dampad); }
+  .paket.gungar .ask { animation: gunga .5s ease-in-out infinite; }
+  @keyframes oppna { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.06); } 100% { transform: none; opacity: 1; } }
+  .paket.oppen { justify-content: flex-start; align-items: stretch; gap: 3px; padding: 8px 8px 6px; background: #FBF6EC; border-color: #E6D9BF; color: #3A3127; text-align: left; font-size: 12.5px; line-height: 1.28; animation: oppna .5s ease-out; }
+  .paket.oppen .namn { font-weight: 700; font-size: 15px; }
+  .paket.oppen .plats-text { color: #7A6A55; font-size: 12px; margin-top: -3px; }
+  .paket.oppen .titel { margin-top: auto; padding-top: 3px; border-top: 1px dashed #D8C8A8; font-style: italic; color: #8A3B2E; }
+  .paket.mastare { border-color: var(--guld); box-shadow: 0 0 0 3px rgba(242,194,48,.35), 0 0 22px rgba(242,194,48,.45); }
+  .paket .stjarna { position: absolute; top: -12px; right: -6px; font-size: 26px; animation: upp .4s ease-out; }
+  .snoet { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .snoet span { position: absolute; top: -20px; color: #fff; opacity: .85; animation: falla linear infinite; }
+  @keyframes falla { to { transform: translateY(460px) rotate(200deg); } }
+  .pris .slut { margin-top: auto; text-align: center; }
+  .pris .slut .knapp { width: auto; display: inline-block; text-decoration: none; }
+  .pris .info { margin: auto 0; text-align: center; color: var(--himmel-dampad); }
 
   /* ===== Testläget ===== */
   .testruta { margin: 0 0 16px; padding: 12px 14px; border: 2px dashed var(--glod); border-radius: 14px; font-size: 14px; }
@@ -271,6 +302,7 @@
   <div class="testruta" id="testruta" hidden>
     <p>Exempelkod till sifferlåset: <b id="testKod"></b>. Exempelord för akt 2: <b id="testOrd"></b>.</p>
     <div class="hopp" id="hopp"></div>
+    <div class="hopp" id="exempel" style="margin-top:8px"></div>
   </div>
 
   <div id="scen"></div>
@@ -655,10 +687,261 @@
     }
 
     if (s.steg === 'oppet') {
-      scen.appendChild(el('div', null, '🎁🎁🎁🎁'));
-      scen.lastChild.style.fontSize = '40px';
-      if (test) scen.appendChild(el('p', 'platshallare', 'Här kommer prisutdelningen (steg 2).'));
+      inne.textContent = '';
+      inne.parentNode.classList.add('hog');
+      ritaPris(inne);
     }
+  }
+
+  // ===== Prisutdelningen =====
+  // Placering: flest vunna dagar, sedan flest guld, silver, brons. Bara dag 1–23 räknas.
+  // Telefonen ser bara de dagar den själv har spelat (så fungerar resultatarket).
+  var MEDALJ_VARDE = { guld: 3, silver: 2, brons: 1 };
+  var PLATS_ORD = ['första', 'andra', 'tredje', 'fjärde'];
+  function storBokstav(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  function namnLista(lista) {
+    return lista.length === 1 ? lista[0] : lista.slice(0, -1).join(', ') + ' och ' + lista[lista.length - 1];
+  }
+  function ordTal(n) { return ['noll', 'ett', 'två', 'tre', 'fyra'][n] || String(n); }
+
+  function arsStatistik(svar) {
+    var spelare = svar.spelare.slice().sort(function (a, b) { return a.localeCompare(b, 'sv'); });
+    var st = {};
+    spelare.forEach(function (n) { st[n] = { namn: n, vann: 0, guld: 0, silver: 0, brons: 0, spelade: 0, bast: null }; });
+    var dagarMedData = 0;
+    for (var d = 1; d <= 23; d++) {
+      var dd = svar.dagar[d];
+      if (!dd || !dd.harSpelat) continue;
+      dagarMedData++;
+      Advent.Resultat.ordna(d, dd, spelare).forEach(function (r) {
+        var p = st[r.spelare];
+        if (!p || r.status === 'ej') return;
+        p.spelade++;
+        if (r.status !== 'klar') return;
+        if (r.medalj && p[r.medalj] != null) p[r.medalj]++;
+        if (r.plats === 1) p.vann++;
+        var kand = { dag: d, plats: r.plats, medalj: MEDALJ_VARDE[r.medalj] || 0, text: r.text };
+        var b = p.bast;
+        if (!b || kand.plats < b.plats || (kand.plats === b.plats && kand.medalj > b.medalj)) p.bast = kand;
+      });
+    }
+    var lista = spelare.map(function (n) { return st[n]; });
+    function jamfor(a, b) { return (b.vann - a.vann) || (b.guld - a.guld) || (b.silver - a.silver) || (b.brons - a.brons); }
+    var ordnad = lista.slice().sort(jamfor);
+    ordnad.forEach(function (p, i) { p.plats = (i > 0 && jamfor(ordnad[i - 1], p) === 0) ? ordnad[i - 1].plats : i + 1; });
+    // Grupper efter placering, bäst först.
+    var grupper = [];
+    ordnad.forEach(function (p) {
+      var g = grupper[grupper.length - 1];
+      if (g && g[0].plats === p.plats) g.push(p); else grupper.push([p]);
+    });
+    lista.forEach(function (p) { p.alla = dagarMedData > 0 && p.spelade === 23; });
+    return { lista: lista, grupper: grupper };
+  }
+
+  // Tomtens hederspris till den som kom sist: den första som passar.
+  function hederstitel(p, lista) {
+    var maxB = Math.max.apply(null, lista.map(function (x) { return x.brons; }));
+    var maxS = Math.max.apply(null, lista.map(function (x) { return x.silver; }));
+    if (p.brons > 0 && p.brons === maxB) return { titel: 'Årets bronsmästare', text: 'Tre gånger så glänsande som guld, nästan.' };
+    if (p.silver > 0 && p.silver === maxS) return { titel: 'Årets ständiga tvåa', text: 'Alltid där, alltid nära, alltid farlig.' };
+    if (p.alla) return { titel: 'Årets trognaste', text: 'Inte en enda lucka missad.' };
+    if (p.bast) {
+      var spel = window.LUCKOR[p.bast.dag].titel;
+      return { titel: 'Mästare av ' + spel, text: p.bast.plats === 1
+        ? 'Den ' + p.bast.dag + ' december var ingen bättre.'
+        : 'Den ' + p.bast.dag + ' december var du nästan oslagbar.' };
+    }
+    return { titel: 'Årets julstjärna', text: 'Utan dig hade det inte blivit jul.' };
+  }
+
+  function ritaKortet(ruta, p, delad, titel) {
+    ruta.className = 'paket oppen' + (p.plats === 1 ? ' mastare' : '');
+    ruta.textContent = '';
+    ruta.appendChild(el('span', 'namn', p.namn));
+    ruta.appendChild(el('span', 'plats-text', (delad ? 'Delad ' + PLATS_ORD[p.plats - 1] + 'plats' : storBokstav(PLATS_ORD[p.plats - 1]) + ' plats')));
+    ruta.appendChild(el('span', null, '🥇 ' + p.guld + ' · 🥈 ' + p.silver + ' · 🥉 ' + p.brons));
+    ruta.appendChild(el('span', null, 'vann ' + p.vann + (p.vann === 1 ? ' dag' : ' dagar')));
+    if (p.bast) {
+      ruta.appendChild(el('span', null, 'Bästa dag: ' + window.LUCKOR[p.bast.dag].titel));
+      ruta.appendChild(el('span', null, p.bast.dag + ' december, ' + p.bast.text));
+    }
+    if (titel) ruta.appendChild(el('span', 'titel', titel.titel));
+    if (p.plats === 1) {
+      var stj = el('span', 'stjarna', '⭐');
+      stj.setAttribute('aria-hidden', 'true');
+      ruta.appendChild(stj);
+    }
+  }
+
+  function sno(inne) {
+    var snoet = el('div', 'snoet');
+    snoet.setAttribute('aria-hidden', 'true');
+    for (var i = 0; i < 22; i++) {
+      var f = el('span', null, '❄');
+      f.style.left = (Math.random() * 100) + '%';
+      f.style.fontSize = (10 + Math.random() * 12) + 'px';
+      f.style.animationDuration = (3 + Math.random() * 4) + 's';
+      f.style.animationDelay = (-Math.random() * 6) + 's';
+      snoet.appendChild(f);
+    }
+    inne.appendChild(snoet);
+  }
+
+  function ritaPris(inne) {
+    var pris = el('div', 'pris');
+    inne.appendChild(pris);
+    var info = el('p', 'info', 'Tomten letar fram sitt kalkylark…');
+    pris.appendChild(info);
+    var hamta = test ? Promise.resolve(exempelData(s.exempel || 'vanlig')) : Advent.Resultat.alla();
+    hamta.then(function (svar) {
+      info.remove();
+      utdelning(inne, pris, arsStatistik(svar));
+    }, function (fel) {
+      info.textContent = fel.message;
+      var igen = el('button', 'knapp', 'Försök igen');
+      igen.type = 'button';
+      igen.style.width = 'auto';
+      igen.addEventListener('click', function () { inne.textContent = ''; ritaPris(inne); });
+      pris.appendChild(igen);
+    });
+  }
+
+  function utdelning(inne, pris, data) {
+    var rutor = {};
+    var paketen = el('div', 'paketen');
+    data.lista.forEach(function (p) {
+      var r = el('div', 'paket');
+      var ask = el('span', 'ask', '🎁');
+      ask.setAttribute('aria-hidden', 'true');
+      r.appendChild(ask);
+      r.appendChild(el('span', 'lapp', 'Till ' + p.namn));
+      rutor[p.namn] = r;
+      paketen.appendChild(r);
+    });
+    pris.appendChild(paketen);
+
+    var grupper = data.grupper;
+    var mastare = grupper[0];
+    var jumbo = grupper.length > 1 ? grupper[grupper.length - 1] : [];
+    var mitten = grupper.slice(1, grupper.length > 1 ? -1 : 1).reverse();   // tredje, sedan andra
+    var titlar = {};
+    jumbo.forEach(function (p) { titlar[p.namn] = hederstitel(p, data.lista); });
+
+    function oppna(grupp) { grupp.forEach(function (p) { ritaKortet(rutor[p.namn], p, grupp.length > 1, titlar[p.namn]); }); }
+    function namnen(grupp) { return namnLista(grupp.map(function (p) { return p.namn; })); }
+
+    function slut() {
+      if (!pris.querySelector('.slut')) {
+        var slutRuta = el('div', 'slut');
+        var lank = el('a', 'knapp', 'Hela årets kalender');
+        lank.href = '../../resultat/';
+        slutRuta.appendChild(lank);
+        pris.appendChild(slutRuta);
+      }
+      if (!s.prisKlar) { s.prisKlar = true; spara(); }
+    }
+
+    // Redan sett: alla paket öppna direkt.
+    if (s.prisKlar) {
+      grupper.forEach(oppna);
+      if (!inne.querySelector('.snoet')) sno(inne);
+      slut();
+      return;
+    }
+
+    var steg = [];
+    steg.push(function (nasta) {
+      prata(inne, [
+        ['tomten', 'Varje dag i december har jag hållit koll. Varje kula, varje skorsten, varje sprängd mina.'],
+        ['pyssel', 'Han har ett kalkylark. Det är lite läskigt.'],
+        ['tomten', 'Nu öppnar vi paketen.']
+      ], nasta);
+    });
+    mitten.forEach(function (g) {
+      steg.push(function (nasta) {
+        oppna(g);
+        var plats = g[0].plats, rad;
+        if (g.length > 1) rad = 'Delad ' + PLATS_ORD[plats - 1] + 'plats! ' + namnen(g) + ', ni får dela på äran.';
+        else if (plats === 3) rad = 'På tredje plats… ' + g[0].namn + '! Stadig som en granfot hela december.';
+        else rad = 'Och på andra plats… ' + g[0].namn + '! Så nära toppen att stjärnan nästan ramlade ner.';
+        prata(inne, [['tomten', rad]], nasta);
+      });
+    });
+    if (jumbo.length) {
+      steg.push(function (nasta) {
+        var kvar = mastare.concat(jumbo);
+        kvar.forEach(function (p) { rutor[p.namn].classList.add('gungar'); });
+        var repliker = kvar.length === 2
+          ? [['pyssel', 'Två paket kvar.'], ['trassel', 'Ett innehåller årets mästare.'], ['pyssel', 'Och det andra…'], ['trassel', '…inte.']]
+          : [['pyssel', storBokstav(ordTal(kvar.length)) + ' paket kvar.'],
+             ['trassel', mastare.length > 1 ? 'Några innehåller årets mästare.' : 'Ett innehåller årets mästare.'],
+             ['pyssel', 'Och resten…'], ['trassel', '…inte.']];
+        prata(inne, repliker, function () {
+          kvar.forEach(function (p) { rutor[p.namn].classList.remove('gungar'); });
+          nasta();
+        });
+      });
+    }
+    steg.push(function (nasta) {
+      oppna(mastare);
+      sno(inne);
+      var rad = mastare.length > 1
+        ? 'Delad förstaplats! ' + namnen(mastare) + ', ni får dela på äran. Hela Nordpolen bugar.'
+        : 'Årets mästare är… ' + mastare[0].namn + '! Hela Nordpolen bugar. Den här stjärnan är din.';
+      prata(inne, [['tomten', rad], ['trassel', 'Okej, det där var faktiskt imponerande.']], nasta);
+    });
+    if (jumbo.length) {
+      steg.push(function (nasta) {
+        var repliker = [['pyssel', jumbo.length > 1 ? 'Och så de sista paketen.' : 'Och så det sista paketet.']];
+        prata(inne, repliker, function () {
+          oppna(jumbo);
+          var tomten = [];
+          jumbo.forEach(function (p) {
+            var t = titlar[p.namn];
+            tomten.push(['tomten', p.namn + ', ingen lämnar mitt skåp tomhänt. Tomten delar ut ett hederspris:']);
+            tomten.push(['tomten', t.titel + '. ' + t.text]);
+          });
+          prata(inne, tomten, nasta);
+        });
+      });
+    }
+    steg.push(function () { slut(); });
+
+    var i = 0;
+    (function kor() { var f = steg[i++]; if (f) f(kor); })();
+  }
+
+  // ===== Exempeldata i testläget =====
+  // Varje dag är en ordning av B(ehnosh), D(aniel), J(osefin), O (Joel). "D=J" betyder lika resultat.
+  // Etta får guld, tvåa silver, trea brons.
+  var EXEMPEL = {
+    vanlig: ['BDJO', 'DBOJ', 'JBDO', 'BJDO', 'OBJD', 'DJBO', 'BODJ', 'JDBO', 'BDOJ', 'DOBJ', 'JBOD', 'BJOD',
+             'ODBJ', 'DBJO', 'BJDO', 'JODB', 'DBJO', 'BDJO', 'OJBD', 'DJOB', 'BOJD', 'JBDO', 'BDOJ'],
+    delad2: ['BDJO', 'BJDO', 'DBJO', 'JBDO', 'OBDJ', 'OBJD', 'BDOJ', 'BJOD', 'DOBJ', 'JOBD', 'BDJO', 'BJDO',
+             'DBOJ', 'JBOD', 'BODJ', 'BOJD', 'ODJB', 'OJDB', 'DJBO', 'JDBO', 'BDJO', 'BJDO', 'B,D=J,O'],
+    delad1: ['BDJO', 'DBJO', 'BJDO', 'DJBO', 'JBDO', 'JDBO', 'BODJ', 'DOBJ', 'OBJD', 'ODJB', 'BJOD', 'DJOB',
+             'BDOJ', 'DBOJ', 'JOBD', 'JODB', 'BOJD', 'DOJB', 'OJBD', 'OJDB', 'BJDO', 'DJBO', 'B=D,J,O']
+  };
+  var EXEMPEL_NAMN = { vanlig: 'Vanlig', delad2: 'Delad andraplats', delad1: 'Delad förstaplats' };
+  function exempelData(vilken) {
+    var namn = { B: 'Behnosh', D: 'Daniel', J: 'Josefin', O: 'Joel' };
+    var medaljer = ['guld', 'silver', 'brons', ''];
+    var dagar = {};
+    EXEMPEL[vilken].forEach(function (ordning, i) {
+      var d = i + 1, lagre = !(window.LUCKOR[d] && window.LUCKOR[d].lagreArBattre === false);
+      var grupper = ordning.indexOf(',') === -1 ? ordning.split('') : ordning.split(',');
+      var rader = [], plats = 0;
+      grupper.forEach(function (g) {
+        g.split('=').forEach(function (k) {
+          var varde = lagre ? 30 + plats * 12 : 120 - plats * 12;
+          rader.push({ spelare: namn[k], status: 'klar', varde: varde, medalj: medaljer[plats], text: String(varde) });
+        });
+        plats += g.split('=').length;
+      });
+      dagar[d] = { harSpelat: true, antal: 4, rader: rader };
+    });
+    return { namn: 'Behnosh', spelare: ['Behnosh', 'Daniel', 'Josefin', 'Joel'], dagar: dagar };
   }
 
   // ===== Testläget =====
@@ -684,6 +967,16 @@
         rita();
       });
       hopp.appendChild(b);
+    });
+    var ex = $('exempel');
+    ex.textContent = '';
+    ex.hidden = s.steg !== 'oppet';
+    if (s.steg !== 'oppet') return;
+    Object.keys(EXEMPEL).forEach(function (k) {
+      var b = el('button', (s.exempel || 'vanlig') === k ? 'nu' : null, EXEMPEL_NAMN[k]);
+      b.type = 'button';
+      b.addEventListener('click', function () { s.exempel = k; s.prisKlar = false; spara(); rita(); });
+      ex.appendChild(b);
     });
   }
 
