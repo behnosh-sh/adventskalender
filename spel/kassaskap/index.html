@@ -143,7 +143,9 @@
   /* Springan under lampan. När det är ens tur glider Mästarprovets kuvert ut. */
   .springa { position: relative; width: 132px; height: 7px; border-radius: 4px; background: #0E1524; box-shadow: inset 0 2px 3px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); }
   /* Mästarprovets kuvert: samma kuvert i springan och under skåpet. */
-  @keyframes gliUt { from { height: 0; } to { height: 76px; } }
+  /* Kuvertet glider ut i ett stycke ur springan; utkastet klipper bort det som ännu är inne. */
+  @keyframes gliUt { from { transform: translateY(-100%); } to { transform: none; } }
+  .utkast { position: absolute; left: 4px; top: 4px; width: 124px; height: 79px; overflow: hidden; }
   .litet-kuvert {
     position: relative; width: 124px; height: 76px;
     overflow: hidden; padding: 0; border: 0; border-radius: 0 0 8px 8px;
@@ -161,7 +163,7 @@
   }
   .litet-kuvert .lack.guld { background: radial-gradient(circle at 40% 35%, #FBE08A, #C9951E 70%); }
   .litet-kuvert .etikett { position: absolute; left: 0; right: 0; bottom: 5px; text-align: center; }
-  .provkuvert { position: absolute; left: 4px; top: 4px; animation: gliUt .9s ease-out .3s both; }
+  .provkuvert { display: block; animation: gliUt .9s ease-out .3s both; }
   .provkuvert.knuff { animation: gunga .5s ease-in-out; }
   .lampraden.tur { margin-bottom: 70px; }
   .svarskuvert { display: block; margin: 0 auto 8px; border-radius: 8px; animation: upp .5s ease-out; }
@@ -718,12 +720,14 @@
     var kuv = springa.querySelector('.provkuvert');
     if (lyser && !kuv) {
       kuv = litetKuvert('provkuvert', '🎄', '');
+      var utkast = el('div', 'utkast');
       kuv.addEventListener('click', function () {
         oppnaProv(lampraden.closest('.skap'), lampa, lampraden);
       });
-      springa.appendChild(kuv);
+      utkast.appendChild(kuv);
+      springa.appendChild(utkast);
     } else if (!lyser && kuv) {
-      kuv.remove();
+      kuv.parentNode.remove();
     }
   }
 
