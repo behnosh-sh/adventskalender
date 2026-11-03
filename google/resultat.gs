@@ -55,8 +55,8 @@ function hantera(in_) {
     return { ok: true, namn: jag.namn, spelare: namnen, dag: tavlaForDag(dag, jag.namn, lasResultat()) };
   }
   if (in_.atgard === 'alla') {
-    var alla = lasResultat(), dagar = {};
-    for (var d = 1; d <= 24; d++) dagar[d] = tavlaForDag(d, jag.namn, alla);
+    var alla = lasResultat(), dagar = {}, allt = arJulafton();
+    for (var d = 1; d <= 24; d++) dagar[d] = tavlaForDag(d, jag.namn, alla, allt);
     return { ok: true, namn: jag.namn, spelare: namnen, dagar: dagar };
   }
   if (in_.atgard === 'skicka') {
@@ -90,10 +90,17 @@ function skicka(in_, namn, namnen) {
   }
 }
 
-// Andras resultat lämnas bara ut till den som själv har skickat in för dagen.
-function tavlaForDag(dag, namn, alla) {
+// Från julafton (24–31 december, svensk tid) visas hela året för alla, så att
+// prisutdelningen i lucka 24 räknar likadant på varje telefon.
+function arJulafton() {
+  return Utilities.formatDate(new Date(), 'Europe/Stockholm', 'MM-dd') >= '12-24';
+}
+
+// Andras resultat lämnas bara ut till den som själv har skickat in för dagen, utom från julafton
+// (allt = true, bara i hela årets lista).
+function tavlaForDag(dag, namn, alla, allt) {
   var rader = alla.filter(function (r) { return r.dag === dag; });
-  var harSpelat = rader.some(function (r) { return r.spelare === namn; });
+  var harSpelat = allt || rader.some(function (r) { return r.spelare === namn; });
   if (!harSpelat) return { harSpelat: false, antal: rader.length };
   return {
     harSpelat: true,
