@@ -129,6 +129,7 @@
 <script src="../../js/gemensam.js?v=5"></script>
 <script src="../../js/luckor.js?v=24"></script>
 <script src="../../js/resultat.js?v=3"></script>
+<script src="../../js/prov.js?v=1"></script>
 <script>
 (function () {
   var STORLEK = 15;
@@ -271,6 +272,8 @@
     if (ovning) {
       ovningForsok.push(res);
       if (battre(res, ovningBasta)) ovningBasta = res;
+      // I Mästarprovet (lucka 24) räknas varje runda, med samma värde som tavlan använder.
+      Advent.Prov.runda(res.langd * 10000 + (9999 - tiondelar(res.tid)), 'längd ' + res.langd);
     } else {
       s.pagar = null;
       s.forsok.push(res);
@@ -549,7 +552,7 @@
       .then(function () { skickar = false; });
   }
 
-  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+  if (!Advent.Prov.aktiv) R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
 
   // ===== Visa dagens eller övning =====
   var dagensS = Advent.lasa(sparNyckel, null);
@@ -597,7 +600,7 @@
   });
 
   window.addEventListener('resize', anpassaStorlek);
-  visa(false);
+  visa(Advent.Prov.aktiv);
   anpassaStorlek();
 })();
 </script>

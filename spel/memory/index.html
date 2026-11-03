@@ -201,6 +201,7 @@
 <script src="../../js/gemensam.js?v=5"></script>
 <script src="../../js/luckor.js?v=24"></script>
 <script src="../../js/resultat.js?v=3"></script>
+<script src="../../js/prov.js?v=1"></script>
 <script>
 (function () {
   var MOTIV = ['🎄', '⭐', '🎁', '🔔', '🕯️', '🦌', '⛄', '🍪', '🧦'];
@@ -371,6 +372,8 @@
     ritaBradet();
     ritaSlut();
     if (!ovning) forsokSkicka();
+    // I Mästarprovet (lucka 24) räknas varje klar runda, med samma värde som tavlan använder.
+    if (ovning && orsak !== 'gavupp') Advent.Prov.runda(s.drag * 100000 + Math.min(Math.floor(s.tid / 100), 99999), s.drag + ' drag');
   }
 
   // ===== Vända kort =====
@@ -618,7 +621,7 @@
       .then(function () { skickar = false; });
   }
 
-  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+  if (!Advent.Prov.aktiv) R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
 
   // ===== Visa en omgång =====
   function visa(arOvning) {
@@ -664,7 +667,8 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  visa(false);
+  if (Advent.Prov.aktiv) $('igen').textContent = 'Spela igen';
+  visa(Advent.Prov.aktiv);
   // Klockan står still medan man är borta från sidan, och brädet döljs (js/gemensam.js).
   Advent.pausKlocka({
     gar: function () { return !!(s && s.start && !s.slut); },

@@ -181,6 +181,18 @@
   .prov .stor-siffra { font: 700 84px/1 var(--rubrik-typsnitt); color: #8A3B2E; animation: oppna .6s ease-out; }
   .prov .knapp { width: auto; }
   .prov .platshallare { color: #7A6A55; }
+  .prov .inledning { font-size: 16px; }
+  .prov .skill { font-style: italic; color: #6B5A4E; font-size: 15px; }
+  /* Spelet i Mästarprovet fyller hela skärmen. */
+  .provspel { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: var(--himmel); animation: upp .3s ease-out; }
+  .provspel .topp { display: flex; align-items: center; gap: 8px; padding: 10px 12px calc(10px) 16px; padding-top: max(10px, env(safe-area-inset-top)); background: #0E1830; color: var(--himmel-text); }
+  .provspel .topp .mal { flex: 1; margin: 0; font: 700 18px/1.2 var(--rubrik-typsnitt); }
+  .provspel .stang { flex: none; width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; background: transparent; color: var(--himmel-text); font-size: 18px; cursor: pointer; }
+  .provspel .hjalp { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; background: #FBF6EC; color: #3A3127; text-align: center; animation: upp .3s ease-out; }
+  .provspel .hjalp p { margin: 0; font: 500 21px/1.25 Caveat, "Segoe Print", cursive; }
+  .provspel .hjalp .rad { display: flex; gap: 8px; justify-content: center; }
+  .provspel .hjalp .knapp { width: auto; margin: 0; padding: 8px 14px; font-size: 15px; }
+  .provspel iframe { flex: 1; width: 100%; border: 0; background: var(--himmel); }
 
   .hjulen { display: flex; justify-content: center; gap: 8px; }
   .hjulen.skakar { animation: skaka .45s ease-in-out; }
@@ -744,8 +756,14 @@
   }
 
   // Kuvertet med ens siffra, som ligger kvar under skåpet när provet är klart.
+  // Siffertexten beror på hur provet gick: fullt mål, sänkt mål eller överhoppat.
+  // Sänkt och överhoppat har fyra varianter, en per plats i turordningen, så att ingen får samma.
   function siffertext(namn) {
-    return 'Ormarnas mästare har talat! Snake har bugat sig för dig, ' + namn + ', och Nordpolen jublar. Som bevis på din storhet får du detta: en siffra ur tomtens hemliga kod.';
+    var p = s.prov || {}, nr = Math.max(0, minPlats()) % 4;
+    if (p.hur === 'sankt') return PROV_TEXT.sankt[nr].replace(/\{namn\}/g, namn);
+    if (p.hur === 'hoppat') return PROV_TEXT.hoppat[nr].replace(/\{namn\}/g, namn);
+    var spel = PROV_SPEL[p.dag] || PROV_SPEL[1];
+    return spel.siffertext.replace(/\{namn\}/g, namn);
   }
   function provNamn() { return Advent.Resultat.namn() || (test ? 'Behnosh' : ''); }
   function visaSiffran(skap) {
@@ -811,30 +829,239 @@
     if (!document.hidden && vakt.lampa && !vakt.timer && !vakt.upptagen && !vakt.stoppad) fragaArket();
   });
 
-  // ===== Mästarprovet (låtsas tills spelen byggs i steg 4–6) =====
-  function oppnaProv(skap, lampa, lampraden) {
-    var plats = minPlats();
-    var prov = el('div', 'prov');
-    prov.appendChild(el('p', 'mal', 'Snake. Minst 24.'));
-    prov.appendChild(el('p', 'platshallare', 'Här kommer spelet (steg 4).'));
-    var klar = el('button', 'knapp', 'Låtsas att jag klarade det');
-    klar.type = 'button';
-    prov.appendChild(klar);
-    skap.appendChild(prov);
-    klar.addEventListener('click', function () {
-      prov.remove();
-      var v = visaSiffran(skap), stang = v.stang;
-      s.provKlar = true;
-      if (test) s.testAntal = Math.max(s.testAntal || 0, plats + 1);
-      spara();
-      if (!test) Advent.Resultat.skicka({ dag: 24, spel: 'Mästarprovet', status: 'klar', varde: 0, medalj: '', text: 'klar' }).catch(function () {});
-      stang.addEventListener('click', function () {
-        v.prov.remove();
-        // Kuvertet glider in i springan, ett förseglat kuvert med siffran hamnar under skåpet
-        // och lampan slocknar långsamt, ungefär tio sekunder.
-        ritaLampa(lampa, lampraden);
-        laggSvarskuvert(skap);
+  // ===== Mästarprovet =====
+  // Spelen som kan bli mästarprov, efter dag. varde jämförs som i spelets egen tavla.
+  // mal(varde) ger målet i ord, sank(varde) ger ett 40 % lättare mål, nar(varde, mal) säger om rundan räcker.
+  var PROV_SPEL = {
+    1: {
+      namn: 'Snake', sokvag: '../snake/',
+      langd: function (v) { return Math.floor(v / 10000); },
+      malText: function (v) { return 'Snake. Minst längd ' + Math.floor(v / 10000) + '.'; },
+      sank: function (v) { return Math.max(4, Math.ceil(Math.floor(v / 10000) * 0.6)) * 10000; },
+      nar: function (v, mal) { return Math.floor(v / 10000) >= Math.floor(mal / 10000); },
+      skill: 'Snabba svängar, kalla nerver och en orm som aldrig får nog.',
+      siffertext: 'Ormarnas mästare har talat! Snake har bugat sig för dig, {namn}, och Nordpolen jublar. Som bevis på din storhet får du detta: en siffra ur tomtens hemliga kod.',
+      reserv: 15 * 10000
+    },
+    17: {
+      namn: 'Memory', sokvag: '../memory/',
+      malText: function (v) { return 'Memory. Högst ' + Math.floor(v / 100000) + ' drag.'; },
+      sank: function (v) { return Math.floor(Math.floor(v / 100000) * 1.4) * 100000 + 99999; },
+      nar: function (v, mal) { return Math.floor(v / 100000) <= Math.floor(mal / 100000); },
+      skill: 'Ett minne skarpare än nyfallen frost, och en Grinch som blandar korten.',
+      siffertext: 'Kort efter kort, och du mindes varenda ett. Tomtens bibliotekarier vill anställa dig, {namn}, men först får du detta: en siffra ur den hemliga koden.',
+      reserv: 30 * 100000 + 99999
+    }
+  };
+  var PROV_TEXT = {
+    // Inledningen: fyra öppningar per sort, en per plats i turordningen.
+    vann: [
+      'Hör, hör! Den {dag} december besegrade {namn} hela familjen i {spel}, med {resultat}. Nu kallar tomten på mästaren igen.',
+      'Nordpolens krönikor minns den {dag} december, dagen då {namn} vann {spel} med {resultat}. Kan bedriften göras om?',
+      'Ingen i familjen slog {namn} i {spel} den {dag} december. {resultat}. Tomten undrar: var det tur, eller storhet?',
+      'Alverna viskar fortfarande om {resultat} i {spel}, den {dag} december. {namn}, visa dem att ryktet stämmer.'
+    ],
+    bast: [
+      'Den {dag} december kom {namn} närmare toppen än någonsin, i {spel} med {resultat}. Nu är det dags att nå hela vägen.',
+      '{spel}, den {dag} december. {resultat}. Ditt bästa ögonblick i hela december, {namn}, och tomten har inte glömt det.',
+      'Tomten har studerat sitt kalkylark, {namn}. Ditt starkaste kort är {spel} från den {dag} december, med {resultat}.',
+      'Det var den {dag} december och {spel}. {resultat}. {namn}, nu får du visa att det inte var en slump.'
+    ],
+    reserv: 'Tomten har valt ett prov åt dig, {namn}: {spel}. Visa vad du går för.',
+    sankMal: 'Även mästare har dåliga dagar. Vill du att tomten blundar lite?',
+    hoppa: 'Tomten har sett nog av ditt mod. Vill du gå vidare ändå?',
+    sankt: [
+      'Även de största mästarna har stormiga kvällar, {namn}. Men du gav aldrig upp, och det är det tomten minns. Siffran är din.',
+      'Vägen var längre än väntat, {namn}, men du gick den hela. Tomten bugar för din envishet. Här är din siffra.',
+      'Stjärnorna stod inte på din sida i kväll, {namn}, men du kämpade ändå. Nordpolen hedrar din seger. Ta emot din siffra.',
+      'Ett mästarprov är inget för de svaga, och du stod kvar till slutet, {namn}. Tomten räcker dig din siffra med stolthet.'
+    ],
+    hoppat: [
+      'Tomten har sett nog, {namn}. Mod mäts inte bara i poäng, och ditt mod har ingen tvivlat på. Här är din siffra.',
+      'Även de största hjältarna vet när det är dags att gå vidare, {namn}. Tomten ger dig din siffra ändå, för familjen behöver den.',
+      'Provet besegrade dig i kväll, {namn}, men skåpet väntar inte. Tomten litar på dig. Ta emot din siffra.',
+      'Ingen kan vinna alla strider, {namn}. Men utan dig öppnas inget skåp, så här är din siffra.'
+    ]
+  };
+  var SANK_EFTER = 4, HOPPA_EFTER = 10;
+
+  // Vilket spel var och en får: först ett spel man vann (bäst medalj först), i turordning.
+  // Den som inte vann något får det där man placerade sig bäst bland de spel som är kvar. Ingen får samma.
+  function tilldelaProv(svar) {
+    var spelare = ordning(svar.spelare), dagar = Object.keys(PROV_SPEL).map(Number);
+    var kand = {};
+    spelare.forEach(function (n) { kand[n] = []; });
+    dagar.forEach(function (d) {
+      var dd = svar.dagar[d];
+      if (!dd || !dd.harSpelat) return;
+      Advent.Resultat.ordna(d, dd, svar.spelare).forEach(function (r) {
+        if (r.status !== 'klar' || !kand[r.spelare]) return;
+        kand[r.spelare].push({ dag: d, plats: r.plats, medalj: MEDALJ_VARDE[r.medalj] || 0, varde: r.varde, text: r.text });
       });
+    });
+    var tagna = {}, ut = {};
+    function ta(n, k, vann) { tagna[k.dag] = true; ut[n] = { dag: k.dag, varde: k.varde, text: k.text, vann: vann }; }
+    spelare.forEach(function (n) {
+      var vunna = kand[n].filter(function (k) { return k.plats === 1 && !tagna[k.dag]; })
+        .sort(function (a, b) { return b.medalj - a.medalj; });
+      if (vunna.length) ta(n, vunna[0], true);
+    });
+    spelare.forEach(function (n) {
+      if (ut[n]) return;
+      var rest = kand[n].filter(function (k) { return !tagna[k.dag]; })
+        .sort(function (a, b) { return (a.plats - b.plats) || (b.medalj - a.medalj); });
+      if (rest.length) { ta(n, rest[0], false); return; }
+      var ledig = dagar.filter(function (d) { return !tagna[d]; })[0] || dagar[0];
+      ta(n, { dag: ledig, varde: PROV_SPEL[ledig].reserv, text: '' }, null);
+    });
+    return ut;
+  }
+
+  // Testläget: exempel på ett decemberresultat, spelet väljs i testrutan.
+  var TEST_PROV = {
+    1: { dag: 1, varde: 12 * 10000 + 9000, text: 'längd 12 · 0:41', vann: true },
+    17: { dag: 17, varde: 28 * 100000 + 700, text: '28 drag · 1:10', vann: false }
+  };
+
+  function hamtaMittProv() {
+    if (s.prov && s.prov.dag) return Promise.resolve(s.prov);
+    var val = test ? Promise.resolve(TEST_PROV[s.testSpel || 1]) : Advent.Resultat.alla().then(function (svar) {
+      return tilldelaProv(svar)[Advent.Resultat.namn()];
+    });
+    return val.then(function (t) {
+      s.prov = { dag: t.dag, varde: t.varde, text: t.text, vann: t.vann, mal: t.varde, forsok: 0, missar: 0, sankt: false };
+      spara();
+      return s.prov;
+    });
+  }
+
+  function fyll(mall, p) {
+    var spel = PROV_SPEL[p.dag];
+    return mall.replace(/\{namn\}/g, provNamn()).replace(/\{spel\}/g, spel.namn)
+      .replace(/\{dag\}/g, String(p.dag)).replace(/\{resultat\}/g, p.text);
+  }
+
+  function oppnaProv(skap, lampa, lampraden) {
+    if (skap.querySelector('.prov')) return;
+    var prov = el('div', 'prov');
+    prov.appendChild(el('p', 'platshallare', 'Tomten letar i sitt kalkylark…'));
+    skap.appendChild(prov);
+    hamtaMittProv().then(function (p) {
+      var spel = PROV_SPEL[p.dag], nr = Math.max(0, minPlats()) % 4;
+      prov.textContent = '';
+      if (!p.forsok) {
+        var mall = p.vann === true ? PROV_TEXT.vann[nr] : p.vann === false ? PROV_TEXT.bast[nr] : PROV_TEXT.reserv;
+        prov.appendChild(el('p', 'inledning', fyll(mall, p)));
+        prov.appendChild(el('p', 'skill', spel.skill));
+      }
+      prov.appendChild(el('p', 'mal', spel.malText(p.mal)));
+      var start = el('button', 'knapp', p.forsok ? 'Fortsätt' : 'Anta utmaningen');
+      start.type = 'button';
+      prov.appendChild(start);
+      start.addEventListener('click', function () {
+        prov.remove();
+        spelaProv(skap, lampa, lampraden);
+      });
+    }, function (fel) {
+      prov.textContent = '';
+      prov.appendChild(el('p', null, fel.message));
+      var igen = el('button', 'knapp', 'Försök igen');
+      igen.type = 'button';
+      igen.addEventListener('click', function () { prov.remove(); oppnaProv(skap, lampa, lampraden); });
+      prov.appendChild(igen);
+    });
+  }
+
+  // Spelet öppnas i en ram över hela skärmen. Varje färdig runda räknas som ett försök.
+  function spelaProv(skap, lampa, lampraden) {
+    var p = s.prov, spel = PROV_SPEL[p.dag];
+    var yta = el('div', 'provspel');
+    var topp = el('div', 'topp');
+    var mal = el('p', 'mal', spel.malText(p.mal));
+    var stang = el('button', 'stang', '✕');
+    stang.type = 'button';
+    stang.setAttribute('aria-label', 'Tillbaka till skåpet');
+    topp.appendChild(mal);
+    topp.appendChild(stang);
+    var hjalp = el('div', 'hjalp');
+    hjalp.hidden = true;
+    var ram = el('iframe');
+    ram.title = spel.namn;
+    ram.src = spel.sokvag + '?dag=' + p.dag + '&prov=1';
+    yta.appendChild(topp);
+    yta.appendChild(hjalp);
+    yta.appendChild(ram);
+    document.body.appendChild(yta);
+    document.body.style.overflow = 'hidden';
+
+    function stangSpel() {
+      window.removeEventListener('message', tagEmot);
+      yta.remove();
+      document.body.style.overflow = '';
+    }
+    function ritaHjalp() {
+      var kanSanka = !p.sankt && p.missar >= SANK_EFTER, kanHoppa = p.forsok >= HOPPA_EFTER;
+      hjalp.textContent = '';
+      hjalp.hidden = !kanSanka && !kanHoppa;
+      if (hjalp.hidden) return;
+      hjalp.appendChild(el('p', null, kanHoppa ? PROV_TEXT.hoppa : PROV_TEXT.sankMal));
+      var rad = el('div', 'rad');
+      if (kanSanka) {
+        var sank = el('button', 'knapp', 'Sänk målet');
+        sank.type = 'button';
+        sank.addEventListener('click', function () {
+          p.sankt = true;
+          p.mal = spel.sank(p.varde);
+          spara();
+          mal.textContent = spel.malText(p.mal);
+          ritaHjalp();
+        });
+        rad.appendChild(sank);
+      }
+      if (kanHoppa) {
+        var hoppa = el('button', 'knapp gul', 'Hoppa över');
+        hoppa.type = 'button';
+        hoppa.addEventListener('click', function () { stangSpel(); provKlart('hoppat', skap, lampa, lampraden); });
+        rad.appendChild(hoppa);
+      }
+      hjalp.appendChild(rad);
+    }
+    function tagEmot(e) {
+      if (e.origin !== location.origin || e.source !== ram.contentWindow) return;
+      var d = e.data;
+      if (!d || d.typ !== 'provRunda' || typeof d.varde !== 'number') return;
+      p.forsok++;
+      if (spel.nar(d.varde, p.mal)) {
+        spara();
+        setTimeout(function () { stangSpel(); provKlart(p.sankt ? 'sankt' : 'fullt', skap, lampa, lampraden); }, 900);
+        return;
+      }
+      p.missar++;
+      spara();
+      ritaHjalp();
+    }
+    window.addEventListener('message', tagEmot);
+    stang.addEventListener('click', stangSpel);
+    ritaHjalp();
+  }
+
+  function provKlart(hur, skap, lampa, lampraden) {
+    var plats = minPlats();
+    s.prov.hur = hur;
+    s.provKlar = true;
+    if (test) s.testAntal = Math.max(s.testAntal || 0, plats + 1);
+    spara();
+    if (!test) {
+      Advent.Resultat.skicka({ dag: 24, spel: 'mästarprov ' + PROV_SPEL[s.prov.dag].namn, status: 'klar', varde: 0, medalj: '',
+        text: { fullt: 'fullt mål', sankt: 'sänkt mål', hoppat: 'hoppade över' }[hur] }).catch(function () {});
+    }
+    var v = visaSiffran(skap);
+    v.stang.addEventListener('click', function () {
+      v.prov.remove();
+      // Kuvertet glider in i springan, ett förseglat kuvert med siffran hamnar under skåpet
+      // och lampan slocknar långsamt, ungefär tio sekunder.
+      ritaLampa(lampa, lampraden);
+      laggSvarskuvert(skap);
     });
   }
 
@@ -1196,8 +1423,17 @@
       [0, 1, 2, 3].forEach(function (n) {
         var b = el('button', (s.testPlats || 0) === n ? 'nu' : null, String(n + 1));
         b.type = 'button';
-        b.addEventListener('click', function () { s.testPlats = n; s.testAntal = 0; s.provKlar = false; spara(); rita(); });
+        b.addEventListener('click', function () { s.testPlats = n; s.testAntal = 0; s.provKlar = false; s.prov = null; spara(); rita(); });
         ex.appendChild(b);
+      });
+      var spelRad = el('div', 'hopp');
+      spelRad.style.marginTop = '8px';
+      spelRad.appendChild(el('span', null, 'Mitt prov:'));
+      [1, 17].forEach(function (d) {
+        var b = el('button', (s.testSpel || 1) === d ? 'nu' : null, PROV_SPEL[d].namn + (TEST_PROV[d].vann ? ' (vann)' : ' (bästa)'));
+        b.type = 'button';
+        b.addEventListener('click', function () { s.testSpel = d; s.prov = null; s.provKlar = false; s.testAntal = 0; spara(); rita(); });
+        spelRad.appendChild(b);
       });
       var nasta = el('button', null, 'Nästa blir klar (' + (s.testAntal || 0) + ' av 4)');
       nasta.type = 'button';
@@ -1209,6 +1445,7 @@
         rita();
       });
       ex.appendChild(nasta);
+      ex.appendChild(spelRad);
       return;
     }
     if (s.steg !== 'oppet') return;
