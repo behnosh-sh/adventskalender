@@ -128,6 +128,33 @@
     -webkit-tap-highlight-color: transparent;
   }
   .lampknapp:active { transform: scale(.94); }
+  .lampknapp { position: relative; }
+  /* Ljuset ligger i ett eget lager så att det kan slockna långsamt. */
+  .lampknapp::after {
+    content: ""; position: absolute; inset: -3px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #FFF6C8, #FFCF45 55%, #D3921A);
+    box-shadow: 0 0 20px 6px rgba(255,205,70,.55);
+    opacity: 0; transition: opacity 10s linear;
+  }
+  .lampknapp.lyser::after { opacity: 1; transition: opacity .6s; }
+  .lampknapp.lyser { animation: puls 1.6s ease-in-out infinite; }
+  @keyframes puls { 50% { transform: scale(1.1); } }
+  .lampraden { display: flex; align-items: center; gap: 14px; min-height: 52px; }
+  .skylt { min-width: 44px; padding: 4px 12px; border-radius: 8px; background: linear-gradient(#E9CF8A, #B98E3E); color: #3A2A10; font: 700 28px/1.2 var(--rubrik-typsnitt); text-align: center; box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); animation: upp .4s ease-out; }
+
+  /* Mästarprovet läggs ovanpå skåpet. */
+  .prov {
+    position: absolute; inset: 10px; z-index: 6;
+    border-radius: 16px; background: #FBF6EC; color: #3A3127;
+    padding: 22px 20px; overflow: auto;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    text-align: center; animation: upp .3s ease-out;
+  }
+  .prov .mal { margin: 0; font: 700 24px/1.25 var(--rubrik-typsnitt); }
+  .prov p { margin: 0; line-height: 1.45; }
+  .prov .stor-siffra { font: 700 84px/1 var(--rubrik-typsnitt); color: #8A3B2E; animation: oppna .6s ease-out; }
+  .prov .knapp { width: auto; }
+  .prov .platshallare { color: #7A6A55; }
 
   .hjulen { display: flex; justify-content: center; gap: 8px; }
   .hjulen.skakar { animation: skaka .45s ease-in-out; }
@@ -291,6 +318,8 @@
   .hopp { display: flex; flex-wrap: wrap; gap: 6px; }
   .hopp button { padding: 6px 10px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: transparent; color: var(--himmel-text); font: 14px var(--text-typsnitt); cursor: pointer; }
   .hopp button.nu { background: var(--glod); color: #2F4A3A; border-color: var(--glod); }
+  .hopp span { align-self: center; font-size: 14px; }
+  .hopp button:disabled { opacity: .4; cursor: default; }
   .knappar { display: flex; justify-content: center; margin: 24px 0; }
 </style>
 </head>
@@ -343,7 +372,7 @@
   function hash(svar) { return String(Advent.hashStrang(SALT + svar)); }
   var SVAR = {
     test: { kod: '3816', ord: 'GRAN' },
-    riktig: { kod: null, ord: null }
+    riktig: { kod: null, ord: null, siffror: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
   };
 
   // ===== Tillstånd =====
@@ -352,7 +381,7 @@
   var STEG_NAMN = { kuvert: 'Kuvertet', las: 'Sifferlåset', akt2: 'Akt 2', akt3: 'Akt 3', oppet: 'Öppet' };
   var test = Advent.lasa('kassaskap-testlage', false);
   function nyckel() { return 'kassaskap:' + (test ? 'test' : dag); }
-  function nyttTillstand() { return { steg: 'kuvert', hjul: [0, 0, 0, 0], lastTill: 0, sett: {} }; }
+  function nyttTillstand() { return { steg: 'kuvert', hjul: [0, 0, 0, 0], lastTill: 0, sett: {}, testPlats: 0, testAntal: 0 }; }
   var s;
   function spara() { Advent.spara(nyckel(), s); ritaTest(); }
   function svar() { return SVAR[test ? 'test' : 'riktig']; }
@@ -534,12 +563,19 @@
   function ritaDorr(dorr, inne) {
     ['a', 'b', 'c', 'd'].forEach(function (k) { dorr.appendChild(el('span', 'nit ' + k)); });
 
-    // Lampknappen tänds först när det är ens tur (byggs i steg 3). Släckt rycker den bara till.
+    // Lampknappen lyser bara när det är ens tur. Släckt rycker dörren bara till.
+    var lampraden = el('div', 'lampraden');
     var lampa = el('button', 'lampknapp');
     lampa.type = 'button';
-    lampa.setAttribute('aria-label', 'En släckt lampa');
-    lampa.addEventListener('click', function () { dorr.classList.remove('ryck'); void dorr.offsetWidth; dorr.classList.add('ryck'); });
-    dorr.appendChild(lampa);
+    lampraden.appendChild(lampa);
+    dorr.appendChild(lampraden);
+    ritaLampa(lampa, lampraden);
+    lampa.addEventListener('click', function () {
+      if (lampa.classList.contains('lyser')) { oppnaProv(dorr.parentNode, lampa, lampraden); return; }
+      dorr.classList.remove('ryck'); void dorr.offsetWidth; dorr.classList.add('ryck');
+      if (vakt.stoppad) borjaFraga(lampa, lampraden);   // tryck på en matt lampa startar frågandet igen
+    });
+    borjaFraga(lampa, lampraden);
 
     var hjulen = el('div', 'hjulen');
     dorr.appendChild(hjulen);
@@ -616,6 +652,115 @@
 
     ritaHjul();
     visaLas();
+  }
+
+  // ===== Lampknapparna och turordningen =====
+  // Ordningen lottas likadant på alla telefoner (samma frö). Lamporna tänds i den ordningen,
+  // och ordningen på lamporna är ordningen på siffrorna i koden.
+  var ORDNING_FRO = 'kassaskap-ordning-2026';
+  var tur = { spelare: null, antal: 0 };   // från arket: vilka som finns och hur många som är klara med dag 24
+
+  function ordning(spelare) {
+    var lista = spelare.slice().sort(function (a, b) { return a.localeCompare(b, 'sv'); });
+    var slump = Advent.skapaSlump(ORDNING_FRO);
+    for (var i = lista.length - 1; i > 0; i--) {
+      var j = Math.floor(slump() * (i + 1)), t = lista[i];
+      lista[i] = lista[j];
+      lista[j] = t;
+    }
+    return lista;
+  }
+  function minPlats() {
+    if (test) return s.testPlats || 0;
+    var namn = Advent.Resultat.namn();
+    return tur.spelare && namn ? ordning(tur.spelare).indexOf(namn) : -1;
+  }
+  function klaraNu() { return test ? (s.testAntal || 0) : tur.antal; }
+  function minTur() { var p = minPlats(); return p >= 0 && !s.provKlar && klaraNu() === p; }
+  function siffraFor(plats) {
+    var k = test ? SVAR.test.kod : SVAR.riktig.siffror;
+    return k ? k.charAt(plats) : '?';
+  }
+
+  function ritaLampa(lampa, lampraden) {
+    var lyser = minTur();
+    lampa.classList.toggle('lyser', lyser);
+    lampa.setAttribute('aria-label', lyser ? 'En lysande lampa' : 'En släckt lampa');
+    var skylt = lampraden.querySelector('.skylt');
+    if (s.provKlar && !skylt) lampraden.appendChild(el('span', 'skylt', siffraFor(minPlats())));
+  }
+
+  // Frågar arket hur många som är klara. Bara när sidan syns, bara medan man väntar på sin egen lampa,
+  // aldrig i testläget eller före julafton. Var 5:e sekund i 10 minuter, sedan var 20:e, stopp efter en timme.
+  // En fråga i taget, 30 sekunders paus efter fel.
+  var vakt = { timer: null, start: 0, upptagen: false, stoppad: false, lampa: null, rad: null };
+  function arJulafton() { var d = new Date(); return d.getMonth() === 11 && d.getDate() >= 24; }
+  function stoppaFraga() { clearTimeout(vakt.timer); vakt.timer = null; vakt.lampa = null; }
+  function borjaFraga(lampa, lampraden) {
+    stoppaFraga();
+    if (test || !arJulafton() || s.provKlar || !Advent.Resultat.kod()) return;
+    vakt.lampa = lampa;
+    vakt.rad = lampraden;
+    vakt.start = Date.now();
+    vakt.stoppad = false;
+    fragaArket();
+  }
+  function fragaArket() {
+    vakt.timer = null;
+    if (!vakt.lampa || !document.body.contains(vakt.lampa)) return;
+    if (document.hidden) return;   // fortsätter när sidan syns igen
+    var gatt = Date.now() - vakt.start;
+    if (gatt > 3600000) { vakt.stoppad = true; return; }
+    if (vakt.upptagen) return;
+    vakt.upptagen = true;
+    Advent.Resultat.hamta(24).then(function (svar) {
+      vakt.upptagen = false;
+      tur.spelare = svar.spelare;
+      tur.antal = svar.dag.antal;
+      if (svar.dag.harSpelat && !s.provKlar) { s.provKlar = true; spara(); }
+      if (!vakt.lampa) return;
+      ritaLampa(vakt.lampa, vakt.rad);
+      if (minTur() || s.provKlar) return;
+      vakt.timer = setTimeout(fragaArket, gatt < 600000 ? 5000 : 20000);
+    }, function () {
+      vakt.upptagen = false;
+      if (vakt.lampa) vakt.timer = setTimeout(fragaArket, 30000);
+    });
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && vakt.lampa && !vakt.timer && !vakt.upptagen && !vakt.stoppad) fragaArket();
+  });
+
+  // ===== Mästarprovet (låtsas tills spelen byggs i steg 4–6) =====
+  function oppnaProv(skap, lampa, lampraden) {
+    var plats = minPlats();
+    var namn = Advent.Resultat.namn() || (test ? 'Behnosh' : '');
+    var prov = el('div', 'prov');
+    prov.appendChild(el('p', 'mal', 'Snake. Minst 24.'));
+    prov.appendChild(el('p', 'platshallare', 'Här kommer spelet (steg 4).'));
+    var klar = el('button', 'knapp', 'Låtsas att jag klarade det');
+    klar.type = 'button';
+    prov.appendChild(klar);
+    skap.appendChild(prov);
+    klar.addEventListener('click', function () {
+      prov.textContent = '';
+      prov.appendChild(el('p', null, 'Ormarnas mästare har talat! Snake har bugat sig för dig, ' + namn + ', och Nordpolen jublar. Som bevis på din storhet får du detta: en siffra ur tomtens hemliga kod.'));
+      prov.appendChild(el('div', 'stor-siffra', siffraFor(plats)));
+      var stang = el('button', 'knapp', 'Stäng');
+      stang.type = 'button';
+      prov.appendChild(stang);
+      s.provKlar = true;
+      if (test) s.testAntal = Math.max(s.testAntal || 0, plats + 1);
+      spara();
+      if (!test) Advent.Resultat.skicka({ dag: 24, spel: 'Mästarprovet', status: 'klar', varde: 0, medalj: '', text: 'klar' }).catch(function () {});
+      stang.addEventListener('click', function () {
+        prov.remove();
+        // Siffran syns på dörren och lampan slocknar långsamt, ungefär tio sekunder.
+        lampraden.appendChild(el('span', 'skylt', siffraFor(plats)));
+        lampa.classList.remove('lyser');
+        lampa.setAttribute('aria-label', 'En släckt lampa');
+      });
+    });
   }
 
   // Det som syns inne i skåpet. Akt 2 och 3 är platshållare tills de byggs.
@@ -970,7 +1115,27 @@
     });
     var ex = $('exempel');
     ex.textContent = '';
-    ex.hidden = s.steg !== 'oppet';
+    ex.hidden = s.steg !== 'oppet' && s.steg !== 'las';
+    if (s.steg === 'las') {
+      ex.appendChild(el('span', null, 'Min tur som nummer:'));
+      [0, 1, 2, 3].forEach(function (n) {
+        var b = el('button', (s.testPlats || 0) === n ? 'nu' : null, String(n + 1));
+        b.type = 'button';
+        b.addEventListener('click', function () { s.testPlats = n; s.testAntal = 0; s.provKlar = false; spara(); rita(); });
+        ex.appendChild(b);
+      });
+      var nasta = el('button', null, 'Nästa blir klar (' + (s.testAntal || 0) + ' av 4)');
+      nasta.type = 'button';
+      nasta.disabled = (s.testAntal || 0) >= 4;
+      nasta.addEventListener('click', function () {
+        if ((s.testAntal || 0) === s.testPlats && !s.provKlar) return;   // det är min tur, ingen annan kan bli klar
+        s.testAntal = Math.min(4, (s.testAntal || 0) + 1);
+        spara();
+        rita();
+      });
+      ex.appendChild(nasta);
+      return;
+    }
     if (s.steg !== 'oppet') return;
     Object.keys(EXEMPEL).forEach(function (k) {
       var b = el('button', (s.exempel || 'vanlig') === k ? 'nu' : null, EXEMPEL_NAMN[k]);
@@ -984,6 +1149,7 @@
     var yta = $('scen');
     yta.textContent = '';
     pratRuta = null;
+    stoppaFraga();
     if (s.steg === 'kuvert') ritaKuvert(yta);
     else ritaSkap(yta);
     ritaTest();
