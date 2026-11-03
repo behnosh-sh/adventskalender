@@ -142,30 +142,29 @@
   .lampraden { display: flex; flex-direction: column; align-items: center; gap: 10px; }
   /* Springan under lampan. När det är ens tur glider Mästarprovets kuvert ut. */
   .springa { position: relative; width: 132px; height: 7px; border-radius: 4px; background: #0E1524; box-shadow: inset 0 2px 3px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); }
-  @keyframes gliUt { from { height: 0; } to { height: 50px; } }
-  .provkuvert {
-    position: absolute; left: 8px; top: 4px; width: 116px; height: 50px;
-    overflow: hidden; padding: 0; border: 0; border-radius: 0 0 6px 6px;
+  /* Mästarprovets kuvert: samma kuvert i springan och under skåpet. */
+  @keyframes gliUt { from { height: 0; } to { height: 76px; } }
+  .litet-kuvert {
+    position: relative; width: 124px; height: 76px;
+    overflow: hidden; padding: 0; border: 0; border-radius: 0 0 8px 8px;
     background: linear-gradient(#F3E8D2, #E2D2B2);
-    color: #3B2E25; font: 700 21px/1 Caveat, "Segoe Print", cursive;
+    color: #3B2E25; font: 700 19px/1 Caveat, "Segoe Print", cursive;
     box-shadow: 0 3px 0 rgba(0,0,0,.3);
-    cursor: pointer; animation: gliUt .9s ease-out .3s both;
+    cursor: pointer;
   }
-  .provkuvert span { display: block; padding-top: 16px; }
-  .provkuvert::after { content: ""; position: absolute; right: 8px; top: 8px; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #D9504F, #9A1F27 70%); }
+  .litet-kuvert::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 52%; background: linear-gradient(#E9DBBE, #D8C49E); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  .litet-kuvert .lack {
+    position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; transform: translate(-50%, -50%);
+    border-radius: 50%; display: grid; place-items: center; font-size: 13px;
+    background: radial-gradient(circle at 40% 35%, #D9504F, #9A1F27 70%);
+    box-shadow: 0 2px 0 rgba(0,0,0,.25), inset 0 0 0 3px rgba(0,0,0,.12);
+  }
+  .litet-kuvert .lack.guld { background: radial-gradient(circle at 40% 35%, #FBE08A, #C9951E 70%); }
+  .litet-kuvert .etikett { position: absolute; left: 0; right: 0; bottom: 5px; text-align: center; }
+  .provkuvert { position: absolute; left: 4px; top: 4px; animation: gliUt .9s ease-out .3s both; }
   .provkuvert.knuff { animation: gunga .5s ease-in-out; }
-  .lampraden.tur { margin-bottom: 44px; }
-  /* Kuvertet med ens siffra ligger kvar under skåpet. */
-  .svarskuvert {
-    position: relative; display: block; margin: 0 auto 8px; width: 170px; height: 104px;
-    padding: 0; border: 0; border-radius: 10px;
-    background: linear-gradient(#F3E8D2, #E2D2B2); box-shadow: 0 4px 0 rgba(0,0,0,.3);
-    color: #3B2E25; font: 700 22px/1 Caveat, "Segoe Print", cursive;
-    cursor: pointer; animation: upp .5s ease-out;
-  }
-  .svarskuvert::before { content: ""; position: absolute; inset: 0 0 40% 0; background: linear-gradient(#E9DBBE, #D8C49E); clip-path: polygon(0 0, 100% 0, 50% 100%); border-radius: 10px 10px 0 0; }
-  .svarskuvert .guld { position: absolute; left: 50%; top: 46%; width: 34px; height: 34px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 40% 35%, #FBE08A, #C9951E 70%); box-shadow: 0 2px 0 rgba(0,0,0,.25); display: grid; place-items: center; font-size: 16px; }
-  .svarskuvert .etikett { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; }
+  .lampraden.tur { margin-bottom: 70px; }
+  .svarskuvert { display: block; margin: 0 auto 8px; border-radius: 8px; animation: upp .5s ease-out; }
 
   /* Mästarprovet läggs ovanpå skåpet. */
   .prov {
@@ -718,9 +717,7 @@
     var springa = lampraden.querySelector('.springa');
     var kuv = springa.querySelector('.provkuvert');
     if (lyser && !kuv) {
-      kuv = el('button', 'provkuvert');
-      kuv.type = 'button';
-      kuv.appendChild(el('span', null, 'Mästarprovet'));
+      kuv = litetKuvert('provkuvert', '🎄', '');
       kuv.addEventListener('click', function () {
         oppnaProv(lampraden.closest('.skap'), lampa, lampraden);
       });
@@ -728,6 +725,18 @@
     } else if (!lyser && kuv) {
       kuv.remove();
     }
+  }
+
+  // Mästarprovets kuvert. Rött sigill i springan, guldsigill när det ligger kvar under skåpet.
+  function litetKuvert(klass, tecken, lackKlass) {
+    var kuv = el('button', 'litet-kuvert ' + klass);
+    kuv.type = 'button';
+    kuv.setAttribute('aria-label', 'Kuvert: Mästarprovet');
+    var lack = el('span', 'lack' + lackKlass, tecken);
+    lack.setAttribute('aria-hidden', 'true');
+    kuv.appendChild(lack);
+    kuv.appendChild(el('span', 'etikett', 'Mästarprovet'));
+    return kuv;
   }
 
   // Kuvertet med ens siffra, som ligger kvar under skåpet när provet är klart.
@@ -748,13 +757,7 @@
   function laggSvarskuvert(skap) {
     var yta = skap.parentNode;
     if (yta.querySelector('.svarskuvert')) return;
-    var kuv = el('button', 'svarskuvert');
-    kuv.type = 'button';
-    kuv.setAttribute('aria-label', 'Kuvert: Din siffra');
-    var guld = el('span', 'guld', '⭐');
-    guld.setAttribute('aria-hidden', 'true');
-    kuv.appendChild(guld);
-    kuv.appendChild(el('span', 'etikett', 'Din siffra'));
+    var kuv = litetKuvert('svarskuvert', '⭐', ' guld');
     kuv.addEventListener('click', function () {
       if (skap.querySelector('.prov')) return;
       var v = visaSiffran(skap);
