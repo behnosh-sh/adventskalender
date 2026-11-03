@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#14233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap">
 <link rel="stylesheet" href="../../css/gemensam.css?v=7">
 <style>
   h1 { margin: 4px 0 14px; font-size: 30px; line-height: 1.1; }
@@ -67,10 +68,10 @@
     background: #FBF4EA;
     color: #3B2E25;
     box-shadow: 0 6px 0 rgba(0,0,0,.3);
-    font-size: 17px;
-    line-height: 1.5;
+    font: 500 25px/1.3 Caveat, "Segoe Print", cursive;   /* tomtens handstil, bara här */
   }
-  .brev p { margin: 0 0 18px; }
+  .brev p { margin: 0 0 16px; }
+  .brev .knapp { font-family: var(--text-typsnitt); }
   .brev .underskrift { text-align: right; font-style: italic; }
   .brev .knapp.ljus { color: #6B5A4E; border-color: rgba(59,46,37,.3); }
   .brev .knapp.ljus:hover { color: #3B2E25; border-color: rgba(59,46,37,.55); }
@@ -158,20 +159,19 @@
   .hjulen.last .pil { opacity: .3; pointer-events: none; }
 
   /* Vredet: man vrider (trycker) för att pröva koden. */
+  /* Ratten: en gammal kassaskåpsratt med ekrar. Man vrider (trycker) för att pröva koden. */
   .vred {
-    position: relative;
-    width: 64px; height: 64px;
+    width: 92px; height: 92px;
     border: 0;
-    border-radius: 50%;
-    background: radial-gradient(circle at 40% 35%, #D9DEE7, #8B96A8 70%);
-    box-shadow: 0 3px 0 rgba(0,0,0,.35);
+    padding: 0;
+    background: none;
     cursor: pointer;
-    transition: transform .4s;
+    transition: transform .6s cubic-bezier(.4,.1,.3,1);
     -webkit-tap-highlight-color: transparent;
   }
-  .vred::after { content: ""; position: absolute; left: 50%; top: 8px; bottom: 8px; width: 10px; transform: translateX(-50%); border-radius: 5px; background: #5E6A7E; }
-  .vred.vrids { transform: rotate(90deg); }
-  .vred:disabled { cursor: default; }
+  .vred svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 0 rgba(0,0,0,.35)); }
+  .vred.vrids { transform: rotate(180deg); }
+  .vred:disabled { cursor: default; opacity: .7; }
   .hanglas { min-height: 22px; margin: -10px 0 0; color: #FFB4A6; font-weight: 600; font-variant-numeric: tabular-nums; }
 
   /* ===== Inuti: platshållare för akt 2 och 3 ===== */
@@ -204,42 +204,53 @@
   /* ===== Pratbubblor ===== */
   .prat {
     position: absolute;
-    left: 10px; right: 10px; bottom: 12px;
+    left: 8px; right: 8px; bottom: 10px;
     display: flex;
-    align-items: flex-end;
-    gap: 10px;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
     z-index: 5;
     cursor: pointer;
-    animation: upp .35s ease-out;
   }
-  @keyframes upp { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .prat .rad { display: flex; align-items: flex-end; gap: 6px; width: 100%; }
+  @keyframes upp { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
   .figur {
     flex: none;
-    width: 56px; height: 56px;
+    width: 46px; height: 46px;
     border-radius: 50%;
     border: 3px solid;
     background: #14233F;
     display: grid; place-items: center;
-    font-size: 30px;
+    font-size: 25px;
     box-shadow: 0 3px 0 rgba(0,0,0,.35);
+    transition: opacity .2s, transform .2s;
   }
-  .figur.tomten { border-color: #F2C230; }
+  .figur.tyst { opacity: .4; transform: scale(.88); }
+  .figur.tomten { width: 54px; height: 54px; font-size: 30px; border-color: #F2C230; animation: upp .3s ease-out; }
   .figur.pyssel { border-color: #B58CFF; }
   .figur.trassel { border-color: #6FD49A; }
+  /* Bubblan har den pratandes färg och en liten pil mot den som pratar. */
   .bubbla {
     position: relative;
     flex: 1;
-    padding: 12px 14px 14px;
-    border-radius: 16px 16px 16px 4px;
-    background: #FBF4EA;
+    min-width: 0;
+    padding: 10px 12px 14px;
+    border-radius: 16px;
     color: #2B2B2B;
     font-size: 16px;
     line-height: 1.4;
     box-shadow: 0 3px 0 rgba(0,0,0,.3);
+    animation: upp .3s ease-out;
   }
-  .bubbla.stor { font-size: 17px; }
-  .bubbla .vem { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 600; color: #6B5A4E; }
-  .bubbla .mer { position: absolute; right: 10px; bottom: 6px; font-size: 13px; color: #8A7A6E; }
+  .bubbla::after { content: ""; position: absolute; width: 14px; height: 14px; background: inherit; }
+  .bubbla.pyssel { background: #EADFFF; border-bottom-left-radius: 4px; }
+  .bubbla.pyssel::after { left: -6px; bottom: 6px; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+  .bubbla.trassel { background: #DDF5E6; border-bottom-right-radius: 4px; }
+  .bubbla.trassel::after { right: -6px; bottom: 6px; clip-path: polygon(0 0, 100% 100%, 0 100%); }
+  .bubbla.tomten { background: #FFF1CC; font-size: 17px; }
+  .bubbla.tomten::after { left: 50%; top: -7px; margin-left: -7px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .bubbla .vem { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 600; color: #5E5168; }
+  .bubbla .mer { position: absolute; right: 10px; bottom: 4px; font-size: 13px; color: #7A6E80; }
 
   /* ===== Testläget ===== */
   .testruta { margin: 0 0 16px; padding: 12px 14px; border: 2px dashed var(--glod); border-radius: 14px; font-size: 14px; }
@@ -277,7 +288,21 @@
   var dag = Advent.hamtaDag() || 24;
   Advent.markeraOppnad(dag);
 
-  var LAS_TID = 10;   // sekunder som hjulen är låsta efter fel kod
+  var LAS_TID = 10;
+
+  // Kassaskåpsratt: ring, sex ekrar med knoppar och ett nav i mitten.
+  var RATT_SVG = (function () {
+    var ekrar = '';
+    for (var i = 0; i < 6; i++) {
+      var v = i * 60 * Math.PI / 180, x = 50 + 44 * Math.sin(v), y = 50 - 44 * Math.cos(v);
+      ekrar += '<line x1="50" y1="50" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#B9C2D0" stroke-width="6" stroke-linecap="round"/>' +
+        '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6.5" fill="#E3E8EF" stroke="#7D899C" stroke-width="1.5"/>';
+    }
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<circle cx="50" cy="50" r="31" fill="none" stroke="#9AA6B8" stroke-width="6"/>' + ekrar +
+      '<circle cx="50" cy="50" r="13" fill="#D3D9E2" stroke="#7D899C" stroke-width="2"/>' +
+      '<circle cx="50" cy="50" r="4" fill="#7D899C"/></svg>';
+  })();   // sekunder som hjulen är låsta efter fel kod
 
   // Svaren jämförs som hashar, så att de riktiga svaren inte står i klartext här.
   // Exempelsvaren i testläget får synas. De riktiga fylls i när pusslen är byggda (null = inte klart än).
@@ -326,25 +351,44 @@
   };
   var pratRuta = null;
 
+  // Bygger en pratruta: tomten överst i mitten när han pratar, Pyssel och Trassel i var sitt hörn.
+  // Den som inte pratar är nedtonad.
+  function pratYta(vem, text, mer) {
+    var f = FIGURER[vem];
+    var ruta = el('div', 'prat');
+    function figur(namn) {
+      var e = el('div', 'figur ' + namn + (namn === vem ? '' : ' tyst'), FIGURER[namn].emoji);
+      e.setAttribute('aria-hidden', 'true');
+      return e;
+    }
+    if (vem === 'tomten') ruta.appendChild(figur('tomten'));
+    var rad = el('div', 'rad');
+    var bubbla = el('div', 'bubbla ' + vem);
+    bubbla.appendChild(el('span', 'vem', f.namn));
+    bubbla.appendChild(document.createTextNode(text));
+    if (mer) bubbla.appendChild(el('span', 'mer', '▸'));
+    if (vem === 'tomten') {
+      rad.appendChild(bubbla);
+    } else {
+      rad.appendChild(figur('pyssel'));
+      rad.appendChild(bubbla);
+      rad.appendChild(figur('trassel'));
+    }
+    ruta.appendChild(rad);
+    return ruta;
+  }
+
   // Visar repliker en i taget i skåpet. Tryck var som helst för nästa. repliker: [[vem, text], ...]
   function prata(yta, repliker, klar) {
     var i = 0;
     function visa() {
       if (pratRuta) pratRuta.remove();
       if (i >= repliker.length) { pratRuta = null; if (klar) klar(); return; }
-      var r = repliker[i], f = FIGURER[r[0]];
-      var ruta = el('div', 'prat');
+      var r = repliker[i], mer = i < repliker.length - 1;
+      var ruta = pratYta(r[0], r[1], mer);
       ruta.setAttribute('role', 'button');
-      ruta.setAttribute('aria-label', f.namn + ': ' + r[1] + (i < repliker.length - 1 ? '. Tryck för nästa.' : ''));
+      ruta.setAttribute('aria-label', FIGURER[r[0]].namn + ': ' + r[1] + (mer ? '. Tryck för nästa.' : ''));
       ruta.tabIndex = 0;
-      var figur = el('div', 'figur ' + r[0], f.emoji);
-      figur.setAttribute('aria-hidden', 'true');
-      var bubbla = el('div', 'bubbla' + (r[0] === 'tomten' ? ' stor' : ''));
-      bubbla.appendChild(el('span', 'vem', f.namn));
-      bubbla.appendChild(document.createTextNode(r[1]));
-      if (i < repliker.length - 1) bubbla.appendChild(el('span', 'mer', '▸'));
-      ruta.appendChild(figur);
-      ruta.appendChild(bubbla);
       ruta.addEventListener('click', function (e) { e.stopPropagation(); i++; visa(); });
       ruta.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); i++; visa(); } });
       yta.appendChild(ruta);
@@ -357,16 +401,9 @@
   // En kort kommentar som försvinner själv efter ett par sekunder.
   function kommentar(yta, vem, text) {
     if (pratRuta) pratRuta.remove();
-    var f = FIGURER[vem];
-    var ruta = el('div', 'prat');
+    var ruta = pratYta(vem, text, false);
     ruta.setAttribute('aria-live', 'polite');
-    var figur = el('div', 'figur ' + vem, f.emoji);
-    figur.setAttribute('aria-hidden', 'true');
-    var bubbla = el('div', 'bubbla');
-    bubbla.appendChild(el('span', 'vem', f.namn));
-    bubbla.appendChild(document.createTextNode(text));
-    ruta.appendChild(figur);
-    ruta.appendChild(bubbla);
+    ruta.style.cursor = 'default';
     yta.appendChild(ruta);
     pratRuta = ruta;
     setTimeout(function () { if (pratRuta === ruta) { ruta.remove(); pratRuta = null; } }, 2600);
@@ -477,7 +514,8 @@
     dorr.appendChild(hjulen);
     var vred = el('button', 'vred');
     vred.type = 'button';
-    vred.setAttribute('aria-label', 'Vredet');
+    vred.setAttribute('aria-label', 'Ratten');
+    vred.innerHTML = RATT_SVG;
     dorr.appendChild(vred);
     var hanglas = el('p', 'hanglas');
     hanglas.setAttribute('aria-live', 'polite');
