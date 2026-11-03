@@ -226,7 +226,8 @@
     transition: opacity .2s, transform .2s;
   }
   .figur.tyst { opacity: .4; transform: scale(.88); }
-  .figur.tomten { width: 54px; height: 54px; font-size: 30px; border-color: #F2C230; animation: upp .3s ease-out; }
+  .figur.tomten { border-color: #F2C230; animation: upp .3s ease-out; }
+  .prat .vanster { flex: none; display: flex; flex-direction: column; gap: 6px; }
   .figur.pyssel { border-color: #B58CFF; }
   .figur.trassel { border-color: #6FD49A; }
   /* Bubblan har den pratandes färg och en liten pil mot den som pratar. */
@@ -247,8 +248,8 @@
   .bubbla.pyssel::after { left: -6px; bottom: 6px; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
   .bubbla.trassel { background: #DDF5E6; border-bottom-right-radius: 4px; }
   .bubbla.trassel::after { right: -6px; bottom: 6px; clip-path: polygon(0 0, 100% 100%, 0 100%); }
-  .bubbla.tomten { background: #FFF1CC; font-size: 17px; }
-  .bubbla.tomten::after { left: 50%; top: -7px; margin-left: -7px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .bubbla.tomten { background: #FFF1CC; font-size: 17px; min-height: 98px; }
+  .bubbla.tomten::after { left: -7px; bottom: 68px; clip-path: polygon(100% 0, 100% 100%, 0 50%); }
   .bubbla .vem { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 600; color: #5E5168; }
   .bubbla .mer { position: absolute; right: 10px; bottom: 4px; font-size: 13px; color: #7A6E80; }
 
@@ -351,7 +352,7 @@
   };
   var pratRuta = null;
 
-  // Bygger en pratruta: tomten överst i mitten när han pratar, Pyssel och Trassel i var sitt hörn.
+  // Bygger en pratruta: Pyssel och Trassel i var sitt hörn, tomten ovanför Pyssel när han pratar.
   // Den som inte pratar är nedtonad.
   function pratYta(vem, text, mer) {
     var f = FIGURER[vem];
@@ -361,19 +362,17 @@
       e.setAttribute('aria-hidden', 'true');
       return e;
     }
-    if (vem === 'tomten') ruta.appendChild(figur('tomten'));
     var rad = el('div', 'rad');
     var bubbla = el('div', 'bubbla ' + vem);
     bubbla.appendChild(el('span', 'vem', f.namn));
     bubbla.appendChild(document.createTextNode(text));
     if (mer) bubbla.appendChild(el('span', 'mer', '▸'));
-    if (vem === 'tomten') {
-      rad.appendChild(bubbla);
-    } else {
-      rad.appendChild(figur('pyssel'));
-      rad.appendChild(bubbla);
-      rad.appendChild(figur('trassel'));
-    }
+    var vanster = el('div', 'vanster');
+    if (vem === 'tomten') vanster.appendChild(figur('tomten'));
+    vanster.appendChild(figur('pyssel'));
+    rad.appendChild(vanster);
+    rad.appendChild(bubbla);
+    rad.appendChild(figur('trassel'));
     ruta.appendChild(rad);
     return ruta;
   }
