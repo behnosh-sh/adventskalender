@@ -884,7 +884,10 @@
       'Ingen kan vinna alla strider, {namn}. Men utan dig öppnas inget skåp, så här är din siffra.'
     ]
   };
-  var SANK_EFTER = 4, HOPPA_EFTER = 10;
+  // Sänk målet: efter 4 missade rundor eller 2 minuters spel. Hoppa över: efter 10 rundor eller 5 minuter.
+  // Det som kommer först gäller, så att långsamma spel som Memory inte drar ut på tiden.
+  // Knapparna visas först när rundan man håller på med är slut.
+  var SANK_EFTER = 4, HOPPA_EFTER = 10, SANK_TID = 120000, HOPPA_TID = 300000;
 
   // Vilket spel var och en får: först ett spel man vann (bäst medalj först), i turordning.
   // Den som inte vann något får det där man placerade sig bäst bland de spel som är kvar. Ingen får samma.
@@ -996,22 +999,32 @@
     document.body.style.overflow = 'hidden';
 
     function stangSpel() {
+      clearInterval(klocka);
+      spara();
       window.removeEventListener('message', tagEmot);
       yta.remove();
       document.body.style.overflow = '';
     }
     // Efter fyra missar dyker Sänk målet upp, efter tio försök Hoppa över. Första gången med en
     // fråga, sedan ligger knapparna kvar under målet tillsammans med Spela igen.
+    var ritat = null;
     function ritaHjalp() {
-      var kanSanka = !p.sankt && p.missar >= SANK_EFTER, kanHoppa = p.forsok >= HOPPA_EFTER;
+      var tid = p.tid || 0;
+      var sankLas = p.missar >= SANK_EFTER || tid >= SANK_TID;
+      var kanSanka = !p.sankt && sankLas, kanHoppa = p.forsok >= HOPPA_EFTER || tid >= HOPPA_TID;
+      var nu = (kanSanka ? 's' : '') + (kanHoppa ? 'h' : '') + (p.sankt ? 'x' : '');
+      if (nu === ritat && !hjalp.dataset.ny) return;
+      ritat = nu;
+      delete hjalp.dataset.ny;
       hjalp.textContent = '';
-      hjalp.hidden = p.missar < SANK_EFTER && !kanHoppa;
+      hjalp.hidden = !sankLas && !kanHoppa;
       if (hjalp.hidden) return;
       var fraga = kanHoppa && !p.sagtHoppa ? 'hoppa' : kanSanka && !p.sagtSank ? 'sank' : null;
       if (fraga) hjalp.appendChild(el('p', null, fraga === 'hoppa' ? PROV_TEXT.hoppa : PROV_TEXT.sankMal));
       function sagt() {
         if (fraga === 'hoppa') p.sagtHoppa = true;
         if (fraga === 'sank') p.sagtSank = true;
+        hjalp.dataset.ny = '1';
       }
       var rad = el('div', 'rad');
       var igen = el('button', 'knapp ljus', 'Spela igen');
@@ -1057,6 +1070,14 @@
     }
     window.addEventListener('message', tagEmot);
     stang.addEventListener('click', stangSpel);
+    // Speltiden räknas bara medan provet är öppet och sidan syns.
+    var forra = Date.now();
+    var klocka = setInterval(function () {
+      var nu = Date.now();
+      if (!document.hidden) p.tid = (p.tid || 0) + Math.min(nu - forra, 5000);
+      forra = nu;
+      if (Math.floor(p.tid / 1000) % 5 === 0) spara();
+    }, 1000);   // knapparna visas först när en runda är slut (tagEmot), aldrig mitt i en runda
     ritaHjalp();
   }
 
