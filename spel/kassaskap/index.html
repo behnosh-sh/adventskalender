@@ -250,6 +250,32 @@
   .plats { width: 58px; height: 58px; border: 2px dashed rgba(255,255,255,.3); border-radius: 8px; }
   .platshallare { margin: 0; font-size: 14px; color: var(--himmel-dampad); }
 
+  /* ===== Akt 2: Pyssels dörr och granen ===== */
+  .smadorr { font: inherit; font-size: 30px; color: inherit; padding: 0; }
+  .smadorr:disabled { cursor: default; opacity: 1; }
+  .smadorr.glant {
+    cursor: pointer; transform-origin: left center; transform: perspective(320px) rotateY(-22deg);
+    background: linear-gradient(90deg, rgba(181,140,255,.16), rgba(181,140,255,.05));
+    box-shadow: 10px 0 18px -4px rgba(255,214,107,.55);
+    animation: glant 2.6s ease-in-out infinite;
+  }
+  @keyframes glant { 50% { transform: perspective(320px) rotateY(-30deg); box-shadow: 14px 0 22px -2px rgba(255,214,107,.7); } }
+  .smadorr.glant::after { content: '🎄'; font-size: 26px; opacity: .85; }
+  .granscen { justify-content: flex-start; gap: 10px; padding-top: 12px; }
+  .granscen .bakat { align-self: flex-start; background: none; border: 0; color: var(--himmel-dampad); font: inherit; font-size: 15px; padding: 4px 2px; cursor: pointer; }
+  .hemligt { margin: 0; font-weight: 600; color: #FFD66B; }
+  .gran-svg { width: 100%; max-width: 270px; height: auto; display: block; }
+  .gran-svg .plats { cursor: pointer; }
+  .gran-svg.las .plats { cursor: default; }
+  .gran-svg .kula { transition: opacity .25s, filter .25s; }
+  .gran-svg.blinkar .kula { opacity: .45; }
+  .gran-svg.blinkar .plats.lyser .kula { opacity: 1; filter: brightness(1.3) drop-shadow(0 0 7px currentColor) drop-shadow(0 0 12px currentColor); }
+  .pyntlada { display: flex; gap: 8px; padding: 8px 10px; border-radius: 14px; background: #6B4E3A; box-shadow: inset 0 3px 0 rgba(0,0,0,.25), 0 3px 0 rgba(0,0,0,.3); }
+  .pyntlada button { width: 54px; height: 54px; border-radius: 12px; border: 3px solid transparent; background: rgba(0,0,0,.18); display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .pyntlada button[aria-pressed="true"] { border-color: #FFD66B; background: rgba(255,214,107,.18); }
+  .pyntlada .liten-kula { width: 28px; height: 28px; border-radius: 50%; box-shadow: inset -4px -5px 0 rgba(0,0,0,.18), inset 4px 4px 0 rgba(255,255,255,.35); }
+  .granscen .tips { margin: 0; font-size: 14px; color: var(--himmel-dampad); max-width: 300px; }
+
   /* Ett textfält med "Fel" direkt under, så att tangentbordet inte döljer det. */
   .falt { width: 100%; max-width: 300px; text-align: left; }
   .falt .rad { display: flex; gap: 8px; }
@@ -410,8 +436,12 @@
   var SALT = 'kassaskap-2026:';
   function hash(svar) { return String(Advent.hashStrang(SALT + svar)); }
   var SVAR = {
-    test: { kod: '3816', ord: 'GRAN' },
-    riktig: { kod: null, ord: null, siffror: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
+    test: {
+      kod: '3816', ord: 'GRAN',
+      // Pyssels gran: tio platser, rad för rad uppifrån (1, 2, 3, 4). blink = ordningen kulorna lyser i när granen stämmer.
+      gran: { kulor: ['guld', 'rod', '', 'bla', 'silver', 'rod', '', 'guld', 'bla', 'silver'], blink: ['guld', 'rod', 'silver', 'bla'] }
+    },
+    riktig: { kod: null, ord: null, siffror: null, gran: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
   };
 
   // ===== Tillstånd =====
@@ -702,9 +732,11 @@
   var ORDNING_FRO = 'kassaskap-ordning-2026';
   var tur = { spelare: null, antal: 0 };   // från arket: vilka som finns och hur många som är klara med dag 24
 
-  function ordning(spelare) {
+  function ordning(spelare) { return blandaFast(spelare, ORDNING_FRO); }
+  // Blandar namnen likadant på alla telefoner: sorterar först, sedan en blandning med fast frö.
+  function blandaFast(spelare, fro) {
     var lista = spelare.slice().sort(function (a, b) { return a.localeCompare(b, 'sv'); });
-    var slump = Advent.skapaSlump(ORDNING_FRO);
+    var slump = Advent.skapaSlump(fro);
     for (var i = lista.length - 1; i > 0; i--) {
       var j = Math.floor(slump() * (i + 1)), t = lista[i];
       lista[i] = lista[j];
@@ -918,7 +950,7 @@
       sank: function (v) { return Math.round(v * 14) / 10; },
       nar: function (v, mal) { return Math.round(v * 10) <= Math.round(mal * 10); },
       skill: 'Kall logik, och ett finger som aldrig gissar.',
-      siffertext: 'Nerver av stål och inte en enda smäll! Minorna låg stilla för att de fruktade dig, {namn}. Tomten överlämnar högtidligt din siffra till den modigaste i familjen.',
+      siffertext: 'Inte en mina fick sista ordet! Du läste banan som en öppen bok, {namn}, och minorna fick ge sig. Tomten överlämnar högtidligt din siffra till den modigaste i familjen.',
       reserv: 120
     }
   };
@@ -1176,42 +1208,259 @@
     });
   }
 
-  // Det som syns inne i skåpet. Akt 2 och 3 är platshållare tills de byggs.
+  // ===== Akt 2 =====
+  // Lagen lottas med ett fast frö, så att alla telefoner får samma lag. A och B tar Pyssels dörr
+  // (A ser den hemliga granen, B pyntar), C och D tar Trassels.
+  var LAG_FRO = 'kassaskap-lag-2026';
+  var TEST_NAMN = ['Behnosh', 'Daniel', 'Josefin', 'Joel'];
+  function hamtaLag() {
+    if (test) {
+      var lag = TEST_NAMN.slice(1);
+      lag.splice(s.testRoll || 0, 0, TEST_NAMN[0]);
+      return Promise.resolve(lag);
+    }
+    if (s.lag) return Promise.resolve(s.lag);
+    return Advent.Resultat.hamta(24).then(function (svar) {
+      s.lag = blandaFast(svar.spelare, LAG_FRO);
+      spara();
+      return s.lag;
+    });
+  }
+  function minRoll(lag) { return test ? (s.testRoll || 0) : lag.indexOf(Advent.Resultat.namn()); }
+  function lagText(t, lag) { return t.replace(/\{([ABCD])\}/g, function (m, b) { return lag['ABCD'.indexOf(b)] || ''; }); }
+
+  function ritaAkt2(inne, scen) {
+    inne.parentNode.classList.remove('hog');
+    stoppaBlink();
+    var dorrar = el('div', 'smadorrar');
+    var lila = el('button', 'smadorr lila', '🔒');
+    lila.type = 'button';
+    lila.disabled = true;
+    lila.setAttribute('aria-label', 'Pyssels dörr, låst');
+    var gron = el('div', 'smadorr gron', '🔒');
+    gron.setAttribute('aria-label', 'Trassels dörr, låst');
+    dorrar.appendChild(lila);
+    dorrar.appendChild(gron);
+    scen.appendChild(dorrar);
+    var under = el('div');
+    scen.appendChild(under);
+
+    function visaDorrar(lag) {
+      var roll = minRoll(lag);
+      if (roll === 0 || roll === 1) {
+        lila.disabled = false;
+        lila.textContent = '';
+        lila.classList.add('glant');
+        lila.setAttribute('aria-label', 'Pyssels dörr, på glänt. Tryck för att öppna.');
+        lila.addEventListener('click', function () { oppnaGran(inne, lag, roll); });
+      }
+      if (test) under.appendChild(el('p', 'platshallare', 'Här kommer färglåset och brevet.'));
+      var trassel = roterande(['Haha. Nej.', 'Fel. Men kreativt.', 'Pyssel, de har inte knäckt koden än.', 'Morfar hade gissat samma sak.', 'Läs gåtan en gång till. Långsamt.']);
+      under.appendChild(falt('Gåtans svar', function (text) {
+        if (stammer(text, svar().ord)) {
+          prata(inne, [['trassel', 'Va?! Det har ingen klarat förut. Okej. Ni är bättre än vi trodde.']], function () {
+            s.steg = 'akt3';
+            spara();
+            ritaInne(inne);
+          });
+          return true;
+        }
+        kommentar(inne, 'trassel', trassel());
+        return false;
+      }));
+    }
+    function efterIntro() {
+      hamtaLag().then(function (lag) {
+        if (s.sett.lag) { visaDorrar(lag); return; }
+        prata(inne, [
+          ['pyssel', lagText('Vi delar upp er. {A} och {B}, ni tar min dörr.', lag)],
+          ['trassel', lagText('{C} och {D}, ni får min. Spara på hjärncellerna.', lag)],
+          ['pyssel', 'Och ni som inte spelar: inget fusk från soffan.']
+        ], function () { s.sett.lag = true; spara(); visaDorrar(lag); });
+      }, function () {
+        var igen = el('button', 'knapp ljus', 'Försök igen');
+        igen.type = 'button';
+        igen.style.width = 'auto';
+        igen.addEventListener('click', function () { under.textContent = ''; efterIntro(); });
+        under.appendChild(el('p', 'platshallare', 'Skåpet når inte resultatarket just nu.'));
+        under.appendChild(igen);
+      });
+    }
+    if (s.sett.akt2) { efterIntro(); return; }
+    prata(inne, [
+      ['pyssel', 'Psst. Vi är tomtens barnbarn. Morfar tror att vi bara sitter med mobilen hela julen.'],
+      ['trassel', 'Vilket vi gör. Men i år har vi också tagit över hans skåp.'],
+      ['pyssel', 'Vi har byggt två egna dörrar. Ingen av dem går att öppna ensam, det har vi sett till.'],
+      ['trassel', 'Morfar har ingen aning.']
+    ], function () { s.sett.akt2 = true; spara(); efterIntro(); });
+  }
+
+  // Pyssels gran bakom den lila dörren. roll 0 ser den hemliga granen, roll 1 pyntar.
+  function oppnaGran(inne, lag, roll) {
+    var g = svar().gran;
+    inne.textContent = '';
+    pratRuta = null;
+    inne.parentNode.classList.add('hog');
+    var scen = el('div', 'scen granscen');
+    inne.appendChild(scen);
+    var bakat = el('button', 'bakat', '← Dörrarna');
+    bakat.type = 'button';
+    bakat.addEventListener('click', function () { stoppaBlink(); ritaInne(inne); });
+    scen.appendChild(bakat);
+    function visa() {
+      if (!g) { scen.appendChild(el('p', 'platshallare', 'Granen är inte klar än.')); return; }
+      if (roll === 0) {
+        scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
+        var hemlig = granSvg(g.kulor, null);
+        hemlig.setAttribute('aria-label', 'Den hemliga granen');
+        scen.appendChild(hemlig);
+        return;
+      }
+      pynta(inne, scen, g);
+    }
+    if (s.sett.gran) { visa(); return; }
+    prata(inne, [
+      ['pyssel', 'Morfars gran var så tråkig att vi pyntade om den. Sen ångrade vi oss och rev av allt.'],
+      ['trassel', 'Klassiskt.'],
+      ['pyssel', lagText('{A}, bara du får se hur granen ska se ut. Visa den inte för någon, beskriv den med ord.', lag)],
+      ['trassel', lagText('{B}, du har lådan med pynt. Du får lyssna och fråga, men aldrig titta på {A}s skärm.', lag)],
+      ['pyssel', 'Gör den exakt likadan.']
+    ], function () { s.sett.gran = true; spara(); visa(); });
+  }
+
+  function pynta(inne, scen, g) {
+    if (!s.gran || s.gran.length !== g.kulor.length) s.gran = g.kulor.map(function () { return ''; });
+    var vald = s.granVald || 'rod';
+    var gran = granSvg(s.gran, function (i) {
+      if (s.granKlar) return;
+      s.gran[i] = s.gran[i] === vald ? '' : vald;
+      gran.satt(i, s.gran[i]);
+      if (s.gran.every(function (f, j) { return f === g.kulor[j]; })) {
+        s.granKlar = true;
+        klar();
+        prata(inne, [['pyssel', 'Okej, wow. Exakt som vi gjorde den. Kolla hur kulorna lyser.']]);
+      }
+      spara();
+    });
+    gran.setAttribute('aria-label', 'Granen du pyntar');
+    scen.appendChild(gran);
+    var lada = el('div', 'pyntlada');
+    lada.setAttribute('aria-label', 'Lådan med pynt');
+    Object.keys(KULFARG).forEach(function (f) {
+      var b = el('button');
+      b.type = 'button';
+      b.setAttribute('aria-label', KULFARG[f].namn + ' kula');
+      b.setAttribute('aria-pressed', String(f === vald));
+      var k = el('span', 'liten-kula');
+      k.style.background = KULFARG[f].fyll;
+      b.appendChild(k);
+      b.addEventListener('click', function () {
+        vald = s.granVald = f;
+        spara();
+        lada.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      });
+      lada.appendChild(b);
+    });
+    var tips = el('p', 'tips', 'Välj en kula i lådan och tryck på granen. Tryck en gång till för att ta bort den.');
+    scen.appendChild(lada);
+    scen.appendChild(tips);
+    function klar() {
+      lada.remove();
+      tips.remove();
+      gran.classList.add('las');
+      startaBlink(gran, g.blink);
+    }
+    if (s.granKlar) klar();
+  }
+
+  // Granen ritas som granarna på kalenderns vimpel: en grön triangel med snö på toppen.
+  // Tio platser för kulor, 1, 2, 3 och 4 på varje rad uppifrån.
+  var KULFARG = {
+    rod: { namn: 'Röd', fyll: '#E5484D', kant: '#A92D33' },
+    guld: { namn: 'Guld', fyll: '#F5C451', kant: '#B98A1E' },
+    bla: { namn: 'Blå', fyll: '#4C9EEB', kant: '#2B6DB0' },
+    silver: { namn: 'Silver', fyll: '#E6EBF2', kant: '#8E9AAD' }
+  };
+  var GRAN_RADER = [[0.36, 1], [0.55, 2], [0.72, 3], [0.89, 4]];
+  function granSvg(kulor, klick) {
+    var NS = 'http://www.w3.org/2000/svg';
+    function e(tagg, attr, mor) {
+      var x = document.createElementNS(NS, tagg);
+      for (var k in attr) x.setAttribute(k, attr[k]);
+      if (mor) mor.appendChild(x);
+      return x;
+    }
+    var W = 214, H = 290, X0 = 28, Y0 = 6;
+    var p = function (pts) { return pts.map(function (q) { return (X0 + q[0] * W).toFixed(1) + ',' + (Y0 + q[1] * H).toFixed(1); }).join(' '); };
+    var svg = e('svg', { viewBox: '0 0 270 304', class: 'gran-svg', role: 'img' });
+    e('polygon', { points: p([[0.5, 0], [1, 1], [0, 1]]), fill: '#5FAF7E' }, svg);
+    e('polygon', { points: p([[0.5, 0], [0.76, 0.158], [0.66, 0.134], [0.58, 0.182], [0.5, 0.142], [0.42, 0.189], [0.34, 0.142], [0.24, 0.158]]), fill: '#FFFFFF' }, svg);
+    var platser = [];
+    GRAN_RADER.forEach(function (rad) {
+      for (var i = 0; i < rad[1]; i++) platser.push([0.5 + (i - (rad[1] - 1) / 2) * 0.2, rad[0]]);
+    });
+    var grupper = platser.map(function (q, i) {
+      var cx = X0 + q[0] * W, cy = Y0 + q[1] * H;
+      var gr = e('g', { class: 'plats' }, svg);
+      gr.dataset.cx = cx;
+      gr.dataset.cy = cy;
+      if (klick) {
+        gr.setAttribute('role', 'button');
+        gr.setAttribute('tabindex', '0');
+        gr.addEventListener('click', function () { klick(i); });
+        gr.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); klick(i); } });
+      }
+      return gr;
+    });
+    function satt(i, farg) {
+      var gr = grupper[i], cx = +gr.dataset.cx, cy = +gr.dataset.cy;
+      while (gr.firstChild) gr.removeChild(gr.firstChild);
+      gr.dataset.farg = farg || '';
+      gr.setAttribute('aria-label', 'Plats ' + (i + 1) + ': ' + (farg ? KULFARG[farg].namn.toLowerCase() + ' kula' : 'tom'));
+      e('circle', { cx: cx, cy: cy, r: 20, fill: 'transparent' }, gr);   // större yta att trycka på
+      if (!farg) {
+        e('circle', { cx: cx, cy: cy, r: 12, fill: 'rgba(255,255,255,.12)', stroke: 'rgba(255,255,255,.55)', 'stroke-width': 1.5, 'stroke-dasharray': '3 3' }, gr);
+        return;
+      }
+      var k = KULFARG[farg];
+      var kula = e('g', { class: 'kula' }, gr);
+      kula.style.color = k.fyll;
+      e('rect', { x: cx - 4, y: cy - 19, width: 8, height: 6, rx: 1.5, fill: '#B9A27A' }, kula);
+      e('circle', { cx: cx, cy: cy, r: 14, fill: k.fyll, stroke: k.kant, 'stroke-width': 2 }, kula);
+      e('circle', { cx: cx - 5, cy: cy - 5, r: 4, fill: 'rgba(255,255,255,.55)' }, kula);
+    }
+    kulor.forEach(function (f, i) { satt(i, f); });
+    svg.satt = satt;
+    return svg;
+  }
+
+  // Kulorna lyser färg för färg i blinkordningen, sedan en paus, och så börjar det om.
+  var blink = null;
+  function stoppaBlink() { if (blink) clearTimeout(blink.t); blink = null; }
+  function startaBlink(svg, ordning) {
+    stoppaBlink();
+    var b = blink = { t: null }, i = 0;
+    svg.classList.add('blinkar');
+    function tand(farg) {
+      svg.querySelectorAll('.plats').forEach(function (pl) { pl.classList.toggle('lyser', !!farg && pl.dataset.farg === farg); });
+    }
+    function steg() {
+      if (blink !== b) return;
+      if (!document.body.contains(svg)) { stoppaBlink(); return; }
+      if (i >= ordning.length) { i = 0; b.t = setTimeout(steg, 1800); return; }
+      tand(ordning[i++]);
+      b.t = setTimeout(function () { tand(null); b.t = setTimeout(steg, 350); }, 900);
+    }
+    b.t = setTimeout(steg, 600);
+  }
+
+  // Det som syns inne i skåpet. Akt 3 är en platshållare tills den byggs.
   function ritaInne(inne) {
     inne.textContent = '';
     var scen = el('div', 'scen');
     inne.appendChild(scen);
 
-    if (s.steg === 'akt2') {
-      var dorrar = el('div', 'smadorrar');
-      dorrar.appendChild(el('div', 'smadorr lila', '🔒'));
-      dorrar.appendChild(el('div', 'smadorr gron', '🔒'));
-      scen.appendChild(dorrar);
-      var visaPlatshallare = function () {
-        if (test) scen.appendChild(el('p', 'platshallare', 'Här kommer Pyssels gran, färglåset och brevet.'));
-        var trassel = roterande(['Haha. Nej.', 'Fel. Men kreativt.', 'Pyssel, de har inte knäckt koden än.', 'Morfar hade gissat samma sak.', 'Läs gåtan en gång till. Långsamt.']);
-        scen.appendChild(falt('Gåtans svar', function (text) {
-          if (stammer(text, svar().ord)) {
-            prata(inne, [['trassel', 'Va?! Det har ingen klarat förut. Okej. Ni är bättre än vi trodde.']], function () {
-              s.steg = 'akt3';
-              spara();
-              ritaInne(inne);
-            });
-            return true;
-          }
-          kommentar(inne, 'trassel', trassel());
-          return false;
-        }));
-      };
-      if (s.sett.akt2) { visaPlatshallare(); return; }
-      prata(inne, [
-        ['pyssel', 'Psst. Vi är tomtens barnbarn. Morfar tror att vi bara sitter med mobilen hela julen.'],
-        ['trassel', 'Vilket vi gör. Men i år har vi också tagit över hans skåp.'],
-        ['pyssel', 'Vi har byggt två egna dörrar. Ingen av dem går att öppna ensam, det har vi sett till.'],
-        ['trassel', 'Morfar har ingen aning.']
-      ], function () { s.sett.akt2 = true; spara(); visaPlatshallare(); });
-      return;
-    }
+    if (s.steg === 'akt2') { ritaAkt2(inne, scen); return; }
 
     if (s.steg === 'akt3') {
       var hylla = el('div', 'hylla');
@@ -1528,7 +1777,18 @@
     });
     var ex = $('exempel');
     ex.textContent = '';
-    ex.hidden = s.steg !== 'oppet' && s.steg !== 'las';
+    ex.hidden = s.steg !== 'oppet' && s.steg !== 'las' && s.steg !== 'akt2';
+    if (s.steg === 'akt2') {
+      ex.appendChild(el('span', null, 'Min roll:'));
+      ['Ser granen', 'Pyntar', 'Trassels lag'].forEach(function (t, n) {
+        var roll = n === 2 ? 2 : n;
+        var b = el('button', (s.testRoll || 0) === roll ? 'nu' : null, t);
+        b.type = 'button';
+        b.addEventListener('click', function () { s.testRoll = roll; s.gran = null; s.granKlar = false; spara(); rita(); });
+        ex.appendChild(b);
+      });
+      return;
+    }
     if (s.steg === 'las') {
       ex.appendChild(el('span', null, 'Min tur som nummer:'));
       [0, 1, 2, 3].forEach(function (n) {
@@ -1573,6 +1833,7 @@
     yta.textContent = '';
     pratRuta = null;
     stoppaFraga();
+    stoppaBlink();
     if (s.steg === 'kuvert') ritaKuvert(yta);
     else ritaSkap(yta);
     ritaTest();
