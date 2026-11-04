@@ -889,6 +889,37 @@
       skill: 'Stadig hand på slädens tyglar, och inga skorstenar i vägen.',
       siffertext: 'Skorstenarna darrar fortfarande. Ingen har flugit tomtens släde så djärvt som du, {namn}, och tomten själv tog av sig luvan i beundran. Ta emot din siffra, himlarnas härskare.',
       reserv: 5 * 1000
+    },
+    14: {
+      // värdet är tiden i tiondelar × 10 000 + drag, tiden jämförs i hela sekunder som den visas
+      namn: 'Femtonspel', sokvag: '../femton/',
+      sek: function (v) { return Math.round(Math.floor(v / 10000) / 10); },
+      malText: function (v) { return 'Femtonspel. Högst ' + Advent.formateraTid(this.sek(v)) + '.'; },
+      sank: function (v) { return Math.round(this.sek(v) * 1.4) * 10 * 10000 + 9999; },
+      nar: function (v, mal) { return this.sek(v) <= this.sek(mal); },
+      skill: 'Snabba fingrar, och en plan för varenda bricka.',
+      siffertext: 'Brickorna gled på plats som av trolldom. Tomten har sett många pusselläggare, {namn}, men ingen med sådana fingrar. Här är din belöning, en siffra ur skåpets hemlighet.',
+      reserv: 300 * 10 * 10000 + 9999
+    },
+    12: {
+      // värdet är den sammanlagda tiden för de tre banorna i tiondelar
+      namn: 'Labyrinten', sokvag: '../labyrint/',
+      malText: function (v) { return 'Labyrinten. Högst ' + Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10) + '.'; },
+      sank: function (v) { return Math.round(v * 1.4); },
+      nar: function (v, mal) { return v <= mal; },
+      skill: 'Ett säkert lokalsinne, även när mörkret ligger tätt.',
+      siffertext: 'Gångarna slingrade och väggarna lurade, men du hittade rätt väg, {namn}. Inte ens tomtens egna renar hittar ut så snabbt. Ta emot din siffra, labyrintens erövrare.',
+      reserv: 900
+    },
+    10: {
+      // värdet är tiden i sekunder med en decimal, samma bana som den 10 december; en mina är en missad runda
+      namn: 'Minesweeper', sokvag: '../minesweeper/',
+      malText: function (v) { return 'Minesweeper. Högst ' + v.toFixed(1).replace('.', ',') + ' s.'; },
+      sank: function (v) { return Math.round(v * 14) / 10; },
+      nar: function (v, mal) { return Math.round(v * 10) <= Math.round(mal * 10); },
+      skill: 'Kall logik, och ett finger som aldrig gissar.',
+      siffertext: 'Nerver av stål och inte en enda smäll! Minorna låg stilla för att de fruktade dig, {namn}. Tomten överlämnar högtidligt din siffra till den modigaste i familjen.',
+      reserv: 120
     }
   };
   var PROV_TEXT = {
@@ -965,7 +996,10 @@
     8: { dag: 8, varde: 724, text: '72,4 %', vann: true },
     15: { dag: 15, varde: 1040, text: '40 poäng', vann: false },
     22: { dag: 22, varde: 6 * 10000 + 9000, text: 'längd 6 · 0:21', vann: true },
-    23: { dag: 23, varde: 5 * 1000 + 300, text: '5 skorstenar', vann: false }
+    23: { dag: 23, varde: 5 * 1000 + 300, text: '5 skorstenar', vann: false },
+    14: { dag: 14, varde: 1534 * 10000 + 142, text: '2:33 · 142 drag', vann: true },
+    12: { dag: 12, varde: 1124, text: '1:52,4', vann: false },
+    10: { dag: 10, varde: 45.3, text: '45,3 s', vann: true }
   };
 
   function hamtaMittProv() {
@@ -1506,7 +1540,7 @@
       var spelRad = el('div', 'hopp');
       spelRad.style.marginTop = '8px';
       spelRad.appendChild(el('span', null, 'Mitt prov:'));
-      [1, 17, 8, 15, 22, 23].forEach(function (d) {
+      [1, 17, 8, 15, 22, 23, 14, 12, 10].forEach(function (d) {
         var b = el('button', (s.testSpel || 1) === d ? 'nu' : null, PROV_SPEL[d].namn + (TEST_PROV[d].vann ? ' (vann)' : ' (bästa)'));
         b.type = 'button';
         b.addEventListener('click', function () { s.testSpel = d; s.prov = null; s.provKlar = false; s.testAntal = 0; spara(); rita(); });

@@ -124,6 +124,7 @@
 </main>
 
 <script src="../../js/gemensam.js?v=5"></script>
+<script src="../../js/prov.js?v=1"></script>
 <script src="../../js/luckor.js?v=24"></script>
 <script src="../../js/resultat.js?v=3"></script>
 <script>
@@ -261,6 +262,8 @@
       ritaSlut();
       if (!ovning) forsokSkicka();
       else $('nastaKnappar').hidden = false;
+      // Mästarprovet i lucka 24: samma värde som tavlan får.
+      if (ovning) Advent.Prov.runda(tiondelar(nuTid()), tidText(nuTid()));
       return;
     }
     // Kort paus med banans tid, sedan nästa labyrint. Klockan står still tills man går igen.
@@ -572,7 +575,7 @@
       .then(function () { skickar = false; });
   }
 
-  R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
+  if (!Advent.Prov.aktiv) R.tavla($('tavla'), dag, { vidStatus: function (d) { tavlaStatus = d; forsokSkicka(); }, sparNyckel: sparNyckel });
 
   // ===== Visa dagens eller övning =====
   function visa(arOvning, fro) {
@@ -581,7 +584,7 @@
     mellanBanor = false;
     nere = null;
     if (ovning) {
-      s = nyttTillstand(fro || 'ovning-' + Math.floor(Math.random() * 4294967296));
+      s = nyttTillstand(fro || (Advent.Prov.aktiv ? dagensFro : null) || 'ovning-' + Math.floor(Math.random() * 4294967296));
     } else {
       dagensS = Advent.lasa(sparNyckel, null);
       if (!dagensS || dagensS.fro !== dagensFro) dagensS = nyttTillstand(dagensFro);
@@ -618,7 +621,9 @@
   });
 
   window.addEventListener('resize', function () { anpassaStorlek(false); });
-  visa(false);
+  // I Mästarprovet spelar man om dagens labyrinter, i övningsläge.
+  if (Advent.Prov.aktiv) $('spelaIgen').textContent = 'Spela igen';
+  visa(Advent.Prov.aktiv);
   requestAnimationFrame(animera);
   // Klockan står still medan man är borta från sidan, och brädet döljs (js/gemensam.js).
   Advent.pausKlocka({
