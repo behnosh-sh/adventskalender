@@ -188,8 +188,8 @@
   .provspel .topp { display: flex; align-items: center; gap: 8px; padding: 10px 12px calc(10px) 16px; padding-top: max(10px, env(safe-area-inset-top)); background: #0E1830; color: var(--himmel-text); }
   .provspel .topp .mal { flex: 1; margin: 0; font: 700 18px/1.2 var(--rubrik-typsnitt); }
   .provspel .stang { flex: none; width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; background: transparent; color: var(--himmel-text); font-size: 18px; cursor: pointer; }
-  .provspel .hjalp { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; background: #FBF6EC; color: #3A3127; text-align: center; animation: upp .3s ease-out; }
-  .provspel .hjalp p { margin: 0; font-size: 15px; line-height: 1.4; }
+  .provspel .hjalp { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; background: #FBF6EC; color: #3A3127; text-align: center; }
+  .provspel .hjalp p { margin: 0; font-size: 15px; line-height: 1.4; animation: upp .3s ease-out; }
   .provspel .hjalp .rad { display: flex; gap: 8px; justify-content: center; }
   .provspel .hjalp .knapp { width: auto; margin: 0; padding: 8px 14px; font-size: 15px; }
   .provspel .hjalp .knapp.ljus { color: #6B5A4E; border-color: rgba(59,46,37,.35); }
@@ -1000,21 +1000,35 @@
       yta.remove();
       document.body.style.overflow = '';
     }
+    // Efter fyra missar dyker Sänk målet upp, efter tio försök Hoppa över. Första gången med en
+    // fråga, sedan ligger knapparna kvar under målet tillsammans med Spela igen.
     function ritaHjalp() {
       var kanSanka = !p.sankt && p.missar >= SANK_EFTER, kanHoppa = p.forsok >= HOPPA_EFTER;
       hjalp.textContent = '';
-      hjalp.hidden = !kanSanka && !kanHoppa;
+      hjalp.hidden = p.missar < SANK_EFTER && !kanHoppa;
       if (hjalp.hidden) return;
-      hjalp.appendChild(el('p', null, kanSanka ? PROV_TEXT.sankMal : PROV_TEXT.hoppa));
+      var fraga = kanHoppa && !p.sagtHoppa ? 'hoppa' : kanSanka && !p.sagtSank ? 'sank' : null;
+      if (fraga) hjalp.appendChild(el('p', null, fraga === 'hoppa' ? PROV_TEXT.hoppa : PROV_TEXT.sankMal));
+      function sagt() {
+        if (fraga === 'hoppa') p.sagtHoppa = true;
+        if (fraga === 'sank') p.sagtSank = true;
+      }
       var rad = el('div', 'rad');
+      var igen = el('button', 'knapp ljus', 'Spela igen');
+      igen.type = 'button';
+      igen.addEventListener('click', function () { sagt(); spara(); ram.src = ram.src; ritaHjalp(); });
+      rad.appendChild(igen);
       if (kanSanka) {
         var sank = el('button', 'knapp', 'Sänk målet');
         sank.type = 'button';
         sank.addEventListener('click', function () {
+          sagt();
+          p.sagtSank = true;
           p.sankt = true;
           p.mal = spel.sank(p.varde);
           spara();
           mal.textContent = spel.malText(p.mal);
+          ram.src = ram.src;
           ritaHjalp();
         });
         rad.appendChild(sank);
@@ -1025,11 +1039,6 @@
         hoppa.addEventListener('click', function () { stangSpel(); provKlart('hoppat', skap, lampa, lampraden); });
         rad.appendChild(hoppa);
       }
-      // Prova igen startar en ny runda och döljer frågan tills nästa miss.
-      var igen = el('button', 'knapp ljus', 'Prova igen');
-      igen.type = 'button';
-      igen.addEventListener('click', function () { hjalp.hidden = true; ram.src = ram.src; });
-      rad.appendChild(igen);
       hjalp.appendChild(rad);
     }
     function tagEmot(e) {
@@ -1048,7 +1057,7 @@
     }
     window.addEventListener('message', tagEmot);
     stang.addEventListener('click', stangSpel);
-    if (p.missar) ritaHjalp();
+    ritaHjalp();
   }
 
   function provKlart(hur, skap, lampa, lampraden) {
