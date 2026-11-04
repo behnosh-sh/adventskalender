@@ -184,6 +184,7 @@ h1 { margin: 4px 0 2px; font-size: 30px; line-height: 1.1; }
 </main>
 
 <script src="../../js/gemensam.js?v=5"></script>
+<script src="../../js/prov.js?v=1"></script>
 <script src="../../js/luckor.js?v=24"></script>
 <script src="../../js/resultat.js?v=3"></script>
 <script>
@@ -409,6 +410,7 @@ const dagens = skapaBana(dagensFro, DAGENS_PROFIL);
 // ===== Gemensam resultattavla =====
 // Det första klarade försöket på dagens bana sparas och skickas till tavlan (js/resultat.js).
 // Är man inte inloggad än skickas det när man har skrivit in sin kod.
+const PROV = !!(window.Advent && Advent.Prov && Advent.Prov.aktiv);
 const R = window.Advent && Advent.Resultat;
 const lasa = (k, std) => (window.Advent ? Advent.lasa(k, std) : std);
 const spara = (k, v) => { if (window.Advent) Advent.spara(k, v); };
@@ -449,7 +451,7 @@ function uppdateraTavlaKnappar() {
   $("r-gavupp").hidden = !syns || !$("resultat").dataset.forlust;
 }
 
-if (R) {
+if (R && !PROV) {
   R.tavla($("tavla"), dag, { vidStatus: d => { tavlaStatus = d; forsokSkicka(); }, sparNyckel: forstaNyckel });
 } else {
   $("tavla").hidden = true;
@@ -632,7 +634,7 @@ function visaResultat(vann, orsak, t) {
   $("spel").style.display = "none";
   $("resultat").hidden = false;
   $("resultat").dataset.forlust = vann ? "" : "1";
-  $("r-igen").hidden = ovning;
+  $("r-igen").hidden = ovning && !PROV;
   $("r-rekord").textContent = "";
   $("r-skickat").textContent = "";
   $("r-bana").textContent = `Bana ${b.W}×${b.H} med ${b.antal} minor` +
@@ -682,6 +684,8 @@ function visaResultat(vann, orsak, t) {
     }
   }
   placeraTavla(ovning ? null : "r-tavlaplats");
+  // Mästarprovet i lucka 24: tiden i sekunder som på tavlan, en sprängd mina är en missad runda.
+  if (ovning && PROV) Advent.Prov.runda(vann ? Math.round(t * 10) / 10 : 1e9, vann ? fmt(t) + " s" : "mina");
   uppdateraTavlaKnappar();
   window.scrollTo(0, 0);
 }
@@ -808,7 +812,13 @@ Advent.pausKlocka({
   nyckel: () => null
 });
 
-visaIntro();
+if (PROV) {
+  // Mästarprovet: dagens bana direkt, i övningsläge. Spela igen startar samma bana.
+  ["r-tillbaka", "r-ovning", "avbryt"].forEach(id => { $(id).hidden = true; $(id).style.display = "none"; });
+  $("r-igen").textContent = "Spela igen";
+  $("r-igen").onclick = () => startaSpel(dagens, true);
+  startaSpel(dagens, true);
+} else visaIntro();
 </script>
 </body>
 </html>
