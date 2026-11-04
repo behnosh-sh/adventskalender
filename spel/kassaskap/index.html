@@ -849,9 +849,46 @@
       malText: function (v) { return 'Memory. Högst ' + Math.floor(v / 100000) + ' drag.'; },
       sank: function (v) { return Math.floor(Math.floor(v / 100000) * 1.4) * 100000 + 99999; },
       nar: function (v, mal) { return Math.floor(v / 100000) <= Math.floor(mal / 100000); },
-      skill: 'Ett minne skarpare än nyfallen frost, och en Grinch som blandar korten.',
+      skill: 'Ett minne som en elefant, och en Grinch som blandar korten.',
       siffertext: 'Kort efter kort, och du mindes varenda ett. Tomtens bibliotekarier vill anställa dig, {namn}, men först får du detta: en siffra ur den hemliga koden.',
       reserv: 30 * 100000 + 99999
+    },
+    8: {
+      namn: 'Perfekt cirkel', sokvag: '../perfekt-cirkel/',
+      malText: function (v) { return 'Perfekt cirkel. Minst ' + (v / 10).toFixed(1).replace('.', ',') + ' %.'; },
+      sank: function (v) { return Math.round(v * 0.6); },
+      nar: function (v, mal) { return v >= mal; },
+      skill: 'En stadig hand och ett öga för det runda.',
+      siffertext: 'En cirkel så rund att månen blev avundsjuk. Tomten har mätt den tre gånger och kan inte hitta ett fel, {namn}. Ta emot din siffra, du geometrins konstnär.',
+      reserv: 700
+    },
+    15: {
+      // värdet är poäng + 1000, poängen kan vara negativ
+      namn: 'Snöflingefångaren', sokvag: '../snoflingor/',
+      malText: function (v) { var p = v - 1000; return 'Snöflingefångaren. Minst ' + (p < 0 ? '−' + (-p) : p) + ' poäng.'; },
+      sank: function (v) { var p = v - 1000; return Math.floor(p - Math.abs(p) * 0.4) + 1000; },
+      nar: function (v, mal) { return v >= mal; },
+      skill: 'Snabba skidor och skarpa ögon i yrsnön.',
+      siffertext: 'Inte en snöflinga undkom dig! Vintern själv har gett upp, {namn}, och stjärnorna har samlats för att hylla dig. Din siffra väntar, mästare av kälken.',
+      reserv: 1020
+    },
+    22: {
+      namn: 'Simon säger', sokvag: '../simon/',
+      malText: function (v) { return 'Simon säger. Minst längd ' + Math.floor(v / 10000) + '.'; },
+      sank: function (v) { return Math.max(2, Math.ceil(Math.floor(v / 10000) * 0.6)) * 10000; },
+      nar: function (v, mal) { return Math.floor(v / 10000) >= Math.floor(mal / 10000); },
+      skill: 'Kulorna lyser, och du minns. Varje gång, i rätt ordning.',
+      siffertext: 'Kulorna lyste och du glömde ingenting. Ditt minne är skarpare än nyfallen frost, {namn}, och tomtens alver har redan börjat sjunga om dig. Här är din siffra.',
+      reserv: 6 * 10000
+    },
+    23: {
+      namn: 'Flygande tomten', sokvag: '../flygande-tomten/',
+      malText: function (v) { var n = Math.floor(v / 1000); return 'Flygande tomten. Minst ' + n + (n === 1 ? ' skorsten.' : ' skorstenar.'); },
+      sank: function (v) { return Math.max(1, Math.ceil(Math.floor(v / 1000) * 0.6)) * 1000; },
+      nar: function (v, mal) { return Math.floor(v / 1000) >= Math.floor(mal / 1000); },
+      skill: 'Stadig hand på slädens tyglar, och inga skorstenar i vägen.',
+      siffertext: 'Skorstenarna darrar fortfarande. Ingen har flugit tomtens släde så djärvt som du, {namn}, och tomten själv tog av sig luvan i beundran. Ta emot din siffra, himlarnas härskare.',
+      reserv: 5 * 1000
     }
   };
   var PROV_TEXT = {
@@ -924,7 +961,11 @@
   // Testläget: exempel på ett decemberresultat, spelet väljs i testrutan.
   var TEST_PROV = {
     1: { dag: 1, varde: 12 * 10000 + 9000, text: 'längd 12 · 0:41', vann: true },
-    17: { dag: 17, varde: 28 * 100000 + 700, text: '28 drag · 1:10', vann: false }
+    17: { dag: 17, varde: 28 * 100000 + 700, text: '28 drag · 1:10', vann: false },
+    8: { dag: 8, varde: 724, text: '72,4 %', vann: true },
+    15: { dag: 15, varde: 1040, text: '40 poäng', vann: false },
+    22: { dag: 22, varde: 6 * 10000 + 9000, text: 'längd 6 · 0:21', vann: true },
+    23: { dag: 23, varde: 5 * 1000 + 300, text: '5 skorstenar', vann: false }
   };
 
   function hamtaMittProv() {
@@ -1465,7 +1506,7 @@
       var spelRad = el('div', 'hopp');
       spelRad.style.marginTop = '8px';
       spelRad.appendChild(el('span', null, 'Mitt prov:'));
-      [1, 17].forEach(function (d) {
+      [1, 17, 8, 15, 22, 23].forEach(function (d) {
         var b = el('button', (s.testSpel || 1) === d ? 'nu' : null, PROV_SPEL[d].namn + (TEST_PROV[d].vann ? ' (vann)' : ' (bästa)'));
         b.type = 'button';
         b.addEventListener('click', function () { s.testSpel = d; s.prov = null; s.provKlar = false; s.testAntal = 0; spara(); rita(); });
