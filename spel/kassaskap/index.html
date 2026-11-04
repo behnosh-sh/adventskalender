@@ -886,6 +886,7 @@
   };
   // Sänk målet: efter 4 missade rundor eller 2 minuters spel. Hoppa över: efter 10 rundor eller 5 minuter.
   // Det som kommer först gäller, så att långsamma spel som Memory inte drar ut på tiden.
+  // Knapparna visas först när rundan man håller på med är slut.
   var SANK_EFTER = 4, HOPPA_EFTER = 10, SANK_TID = 120000, HOPPA_TID = 300000;
 
   // Vilket spel var och en får: först ett spel man vann (bäst medalj först), i turordning.
@@ -1076,8 +1077,7 @@
       if (!document.hidden) p.tid = (p.tid || 0) + Math.min(nu - forra, 5000);
       forra = nu;
       if (Math.floor(p.tid / 1000) % 5 === 0) spara();
-      ritaHjalp();
-    }, 1000);
+    }, 1000);   // knapparna visas först när en runda är slut (tagEmot), aldrig mitt i en runda
     ritaHjalp();
   }
 
