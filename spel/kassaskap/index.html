@@ -1333,7 +1333,7 @@
     function farglas(lag) {
       var g = svar().gran;
       if (!g) { under.appendChild(el('p', 'platshallare', 'Färglåset är inte klart än.')); return; }
-      var n = 0;
+      var n = 0, tryckt = [];
       var fel = roterande(['Nej. Bara nej.', 'Inte ens nära.', 'Trassel, de håller på att trycka på måfå.', 'Har ni ens tittat på granen?', 'Ok, jag hämtar popcorn.', 'Det är fyra färger. Fyra. Ni klarar det.']);
       var knappar = el('div', 'fargknappar');
       knappar.setAttribute('aria-label', 'Färglåset på Trassels dörr');
@@ -1343,29 +1343,31 @@
         b.setAttribute('aria-label', PYNT_FARG[f].namn);
         b.style.background = PYNT_FARG[f].fyll;
         b.addEventListener('click', function () {
+          // Varje tryck tänder nästa lampa i den färgen. Först när alla fyra lyser avgörs om det stämmer.
           var lamps = lampor.children;
-          if (f === g.blink[n]) {
-            lamps[n].style.background = PYNT_FARG[f].fyll;
-            lamps[n].style.color = PYNT_FARG[f].fyll;
-            lamps[n].classList.add('tand');
-            n++;
-            if (n === g.blink.length) {
+          if (n >= g.blink.length) return;
+          lamps[n].style.background = PYNT_FARG[f].fyll;
+          lamps[n].style.color = PYNT_FARG[f].fyll;
+          lamps[n].classList.add('tand');
+          tryckt.push(f);
+          n++;
+          if (n < g.blink.length) return;
+          var ratt = tryckt.every(function (x, i) { return x === g.blink[i]; });
+          setTimeout(function () {
+            if (ratt) {
               s.fargKlar = true;
               spara();
-              knappar.remove();
-              setTimeout(function () {
-                prata(inne, [['pyssel', 'Snyggt. Nu får vi se om ni klarar brevet också.']], function () {
-                  oppnaTrassel();
-                  under.appendChild(gataFalt(inne));
-                });
-              }, 500);
+              oppnaTrassel();
+              under.appendChild(gataFalt(inne));
+              prata(inne, [['pyssel', 'Snyggt. Nu får vi se om ni klarar brevet också.']]);
+              return;
             }
-            return;
-          }
-          n = 0;
-          Array.prototype.forEach.call(lamps, function (l) { l.classList.remove('tand'); l.style.background = ''; l.style.color = ''; });
-          skaka(gron.dorr);
-          kommentar(inne, 'pyssel', fel());
+            n = 0;
+            tryckt = [];
+            Array.prototype.forEach.call(lamps, function (l) { l.classList.remove('tand'); l.style.background = ''; l.style.color = ''; });
+            skaka(gron.dorr);
+            kommentar(inne, 'pyssel', fel());
+          }, 450);
         });
         knappar.appendChild(b);
       });
