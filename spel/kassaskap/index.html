@@ -1328,14 +1328,16 @@
       }
       pynta(inne, scen, g);
     }
-    if (s.sett.gran) { visa(); return; }
+    // Granen syns direkt, barnbarnen pratar framför den första gången.
+    visa();
+    if (s.sett.gran) return;
     prata(inne, [
       ['pyssel', 'Morfars gran var så tråkig att vi pyntade om den. Sen ångrade vi oss och rev av allt.'],
       ['trassel', 'Klassiskt.'],
       ['pyssel', lagText('{A}, bara du får se hur granen ska se ut. Visa den inte för någon, beskriv den med ord.', lag)],
       ['trassel', lagText('{B}, du har lådan med pynt. Du får lyssna och fråga, men aldrig titta på {A}s skärm.', lag)],
       ['pyssel', 'Gör den exakt likadan.']
-    ], function () { s.sett.gran = true; spara(); visa(); });
+    ], function () { s.sett.gran = true; spara(); });
   }
 
   // Den som pyntar väljer form och färg i lådan och trycker på en plats. Samma sak en gång till tar bort den.
@@ -1397,7 +1399,7 @@
       s.granKlar = true;
       spara();
       las();
-      prata(inne, [['pyssel', 'Okej, wow. Exakt som vi gjorde den. Kolla hur pyntet lyser.']]);
+      prata(inne, [['pyssel', 'Okej, wow. Exakt som vi gjorde den. Kolla hur pyntet lyser!']]);
     }
     if (s.granKlar) las();
     else if (stammerGranen()) blevKlar();   // t.ex. efter Pynta rätt i testläget
