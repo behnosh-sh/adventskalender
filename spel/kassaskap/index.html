@@ -243,8 +243,25 @@
   /* ===== Inuti: platshållare för akt 2 och 3 ===== */
   .scen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 16px; text-align: center; }
   .smadorrar { display: flex; gap: 14px; }
-  .hylla { display: flex; gap: 8px; padding-bottom: 10px; border-bottom: 6px solid #6B4E3A; }
   .plats { width: 58px; height: 58px; border: 2px dashed rgba(255,255,255,.3); border-radius: 8px; }
+
+  /* ===== Akt 3: tomtens paket ===== */
+  .paketscen { justify-content: flex-start; gap: 12px; padding-top: 14px; }
+  .pakethylla { display: flex; gap: 6px; padding: 0 4px 8px; border-bottom: 6px solid #6B4E3A; width: 100%; max-width: 330px; justify-content: space-between; box-sizing: border-box; }
+  .paketplats { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 25%; }
+  .paketplats .ask { width: 100%; max-width: 72px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .paketplats .ask svg { display: block; width: 100%; height: auto; }
+  .paketplats .ask:focus-visible { outline: 2px solid #FFD66B; outline-offset: 2px; border-radius: 6px; }
+  .namnlapp { min-width: 64px; max-width: 100%; padding: 5px 4px; border-radius: 6px; border: 1px solid #D8C8A8; background: #FBF6EC; color: #3A3127; font: 600 13px/1.1 inherit; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .namnlapp.tom { color: #A89A84; }
+  .listbit {
+    width: 100%; max-width: 300px; box-sizing: border-box; padding: 16px 16px 20px; text-align: left;
+    background: #FBF6EC; color: #3A2F25; transform: rotate(-1.5deg);
+    font: 500 21px/1.25 Caveat, "Segoe Print", cursive;
+    clip-path: polygon(0 4%, 9% 0, 21% 3%, 34% 0, 47% 4%, 60% 1%, 73% 4%, 86% 0, 100% 3%, 100% 96%, 90% 100%, 77% 97%, 63% 100%, 50% 96%, 37% 100%, 24% 97%, 11% 100%, 0 97%);
+  }
+  .listbit p { margin: 0 0 6px; }
+  .listbit p:last-child { margin: 0; }
   .platshallare { margin: 0; font-size: 14px; color: var(--himmel-dampad); }
 
   /* ===== Akt 2: Pyssels dörr och granen ===== */
@@ -513,9 +530,20 @@
         pynt: ['stjarna:guld', 'kula:rod', 'klocka:bla', 'kapp:silver', '', 'kula:guld',
           'klocka:rod', 'stjarna:silver', '', 'kula:bla', '', 'kapp:rod', 'klocka:guld', 'stjarna:bla', ''],
         blink: ['guld', 'rod', 'silver', 'bla']
+      },
+      // Tomtens paket: plats 1 till 4 från vänster, 'namn:bandfärg'. bitar = listbiten på telefon {A}, {B}, {C}, {D} (tre ledtrådar var).
+      // Kontrollerat med kodlaset/sok.py: exakt en lösning, och varje bit behövs.
+      paket: {
+        svar: 'Daniel:rod Josefin:guld Behnosh:bla Joel:gron',
+        bitar: [
+          ['Det röda bandet sitter i en kant.', 'Behnoshs paket har inte rött band.', 'Det blå bandet sitter inte på Joels paket.'],
+          ['Paketet med guldband står bredvid Daniels paket.', 'Josefins paket har inte blått band.', 'Joels paket har inte rött band.'],
+          ['Guldbandet sitter inte på ett paket i kanten.', 'Joels paket står i en kant.', 'Daniels paket har inte grönt band.'],
+          ['Daniels paket står inte längst till höger.', 'Behnoshs och Daniels paket står inte bredvid varandra.', 'Paketet med blått band står bredvid paketet med guldband.']
+        ]
       }
     },
-    riktig: { kod: null, ord: null, siffror: null, gran: null, brev: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
+    riktig: { kod: null, ord: null, siffror: null, gran: null, brev: null, paket: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
   };
 
   // ===== Tillstånd =====
@@ -1829,7 +1857,135 @@
     steg();
   }
 
-  // Det som syns inne i skåpet. Akt 3 är en platshållare tills den byggs.
+  // ===== Akt 3: tomtens fyra paket =====
+  // Fyra platser på hyllan. Tryck på paketet = byt bandfärg, tryck på lappen = byt namn.
+  // Varje telefon har sin bit av tomtens lista (tre ledtrådar), bara alla fyra tillsammans ger en lösning.
+  var BAND_FARG = {
+    rod: { namn: 'Rött', fyll: '#E5484D', kant: '#A92D33' },
+    gron: { namn: 'Grönt', fyll: '#3FB66B', kant: '#237A45' },
+    bla: { namn: 'Blått', fyll: '#4C9EEB', kant: '#2B6DB0' },
+    guld: { namn: 'Guld', fyll: '#F5C451', kant: '#B98A1E' }
+  };
+  var PAKET_LAS = 10;   // sekunder som knappen är grå efter fel uppställning
+  function paketSvg(farg) {
+    var b = farg ? BAND_FARG[farg] : { fyll: '#EFE7DA', kant: '#BFB3A0' };
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 60 66');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML =
+      '<rect x="6" y="26" width="48" height="38" rx="3" fill="#B98B5E" stroke="#7E5A39" stroke-width="2"/>' +
+      '<rect x="3" y="18" width="54" height="12" rx="3" fill="#C99A6B" stroke="#7E5A39" stroke-width="2"/>' +
+      '<rect x="25" y="18" width="10" height="46" fill="' + b.fyll + '" stroke="' + b.kant + '" stroke-width="1.5"/>' +
+      '<ellipse cx="20" cy="12" rx="10" ry="6.5" transform="rotate(-18 20 12)" fill="' + b.fyll + '" stroke="' + b.kant + '" stroke-width="1.5"/>' +
+      '<ellipse cx="40" cy="12" rx="10" ry="6.5" transform="rotate(18 40 12)" fill="' + b.fyll + '" stroke="' + b.kant + '" stroke-width="1.5"/>' +
+      '<circle cx="30" cy="15" r="4.5" fill="' + b.fyll + '" stroke="' + b.kant + '" stroke-width="1.5"/>';
+    return svg;
+  }
+  function ritaAkt3(inne, scen) {
+    inne.parentNode.classList.add('hog');
+    scen.classList.add('paketscen');
+    var g = svar().paket;
+    var hylla = el('div', 'pakethylla');
+    scen.appendChild(hylla);
+    if (!g) {
+      for (var i = 0; i < 4; i++) hylla.appendChild(el('div', 'plats'));
+      scen.appendChild(el('p', 'platshallare', 'Paketgåtan är inte klar än.'));
+      return;
+    }
+    if (s.sett.akt3) { visaPaket(); return; }
+    prata(inne, [
+      ['pyssel', 'Öhm… Trassel? Berätta du.'],
+      ['trassel', 'Okej, så… vi kanske råkade blanda ihop morfars paket.'],
+      ['pyssel', 'Och riva hans lista.'],
+      ['trassel', 'I fyra bitar. Ni har en bit var nu.'],
+      ['pyssel', 'Han får inte veta. Ställ paketen rätt innan han kommer tillbaka, snälla!']
+    ], function () { s.sett.akt3 = true; spara(); visaPaket(); });
+
+    function visaPaket() {
+      hamtaLag().then(function (lag) {
+        var namn = lag.slice().sort(function (a, b) { return a.localeCompare(b, 'sv'); });
+        var farger = Object.keys(BAND_FARG);
+        if (!s.paket) s.paket = [{}, {}, {}, {}];
+        var lagg = el('button', 'knapp gul', 'Lägg under granen');
+        lagg.type = 'button';
+        lagg.style.width = 'auto';
+        function nasta(lista, nu) { return lista[(lista.indexOf(nu) + 1) % lista.length]; }
+        function kvar() { return Math.max(0, Math.ceil(((s.paketLastTill || 0) - Date.now()) / 1000)); }
+        var timer = null;
+        function uppdatera() {
+          var k = kvar();
+          var fyllt = s.paket.every(function (p) { return p.n && p.f; });
+          lagg.hidden = !fyllt;
+          lagg.disabled = k > 0;
+          lagg.textContent = k > 0 ? '⏳ ' + k : 'Lägg under granen';
+          if (k === 0) { clearInterval(timer); timer = null; }
+        }
+        function startaTimer() { clearInterval(timer); if (kvar() > 0) timer = setInterval(function () { if (!lagg.isConnected) { clearInterval(timer); return; } uppdatera(); }, 250); }
+        s.paket.forEach(function (p, i) {
+          var plats = el('div', 'paketplats');
+          var ask = el('button', 'ask');
+          ask.type = 'button';
+          var lapp = el('button', 'namnlapp');
+          lapp.type = 'button';
+          function ritaPlats() {
+            ask.textContent = '';
+            ask.appendChild(paketSvg(p.f));
+            ask.setAttribute('aria-label', 'Paket ' + (i + 1) + ', ' + (p.f ? BAND_FARG[p.f].namn.toLowerCase() + ' band' : 'inget band'));
+            lapp.textContent = p.n || '?';
+            lapp.classList.toggle('tom', !p.n);
+            lapp.setAttribute('aria-label', 'Namnlapp på paket ' + (i + 1) + ': ' + (p.n || 'tom'));
+          }
+          ask.addEventListener('click', function () { p.f = p.f ? nasta(farger, p.f) : farger[0]; spara(); ritaPlats(); uppdatera(); });
+          lapp.addEventListener('click', function () { p.n = p.n ? nasta(namn, p.n) : namn[0]; spara(); ritaPlats(); uppdatera(); });
+          ritaPlats();
+          plats.appendChild(ask);
+          plats.appendChild(lapp);
+          hylla.appendChild(plats);
+        });
+        scen.appendChild(lagg);
+        scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
+        var bit = el('div', 'listbit');
+        bit.setAttribute('aria-label', 'Din bit av tomtens lista');
+        var roll = Math.max(0, minRoll(lag));
+        (g.bitar[roll] || []).forEach(function (rad) { bit.appendChild(el('p', null, rad)); });
+        scen.appendChild(bit);
+
+        var fel = roterande([
+          ['pyssel', 'Nej, nej, det var inte så!'],
+          ['trassel', 'Morfar kommer märka det där direkt.'],
+          ['pyssel', 'Läs listan igen. Alla bitar.'],
+          ['trassel', 'Jag hör hans steg i trappan…'],
+          ['pyssel', 'Ni är nära. Tror jag. Kanske.']
+        ]);
+        lagg.addEventListener('click', function () {
+          if (kvar() > 0) return;
+          var gissning = s.paket.map(function (p) { return p.n + ':' + p.f; }).join(' ');
+          if (stammer(gissning, g.svar)) {
+            lagg.hidden = true;
+            prata(inne, [
+              ['tomten', 'Ho ho… Pyssel? Trassel? Har de knäckt ert hemliga språk? Och ställt mina paket rätt? Ni måste ha gjort det lättare för dem!'],
+              ['pyssel', 'Nä?'],
+              ['trassel', 'Nä.'],
+              ['tomten', 'Hm. Det har inte ens jag klarat. Då förtjänar ni det som ligger i paketen.']
+            ], function () { s.steg = 'oppet'; spara(); ritaInne(inne); });
+            return;
+          }
+          s.paketLastTill = Date.now() + PAKET_LAS * 1000;
+          spara();
+          skaka(hylla);
+          var f = fel();
+          kommentar(inne, f[0], f[1]);
+          uppdatera();
+          startaTimer();
+        });
+        uppdatera();
+        startaTimer();
+      });
+    }
+  }
+
+  // Det som syns inne i skåpet.
   function ritaInne(inne) {
     inne.textContent = '';
     var scen = el('div', 'scen');
@@ -1837,36 +1993,7 @@
 
     if (s.steg === 'akt2') { ritaAkt2(inne, scen); return; }
 
-    if (s.steg === 'akt3') {
-      var hylla = el('div', 'hylla');
-      for (var i = 0; i < 4; i++) hylla.appendChild(el('div', 'plats'));
-      scen.appendChild(hylla);
-      var visaPaket = function () {
-        if (test) scen.appendChild(el('p', 'platshallare', 'Här kommer paketgåtan.'));
-        var lagg = el('button', 'knapp gul', 'Lägg under granen');
-        lagg.type = 'button';
-        lagg.style.width = 'auto';
-        lagg.hidden = !test;   // utan paketgåtan finns inget att lägga ännu
-        lagg.addEventListener('click', function () {
-          prata(inne, [
-            ['tomten', 'Ho ho… Pyssel? Trassel? Har de knäckt ert hemliga språk? Och ställt mina paket rätt? Ni måste ha gjort det lättare för dem!'],
-            ['pyssel', 'Nä?'],
-            ['trassel', 'Nä.'],
-            ['tomten', 'Hm. Det har inte ens jag klarat. Då förtjänar ni det som ligger i paketen.']
-          ], function () { s.steg = 'oppet'; spara(); ritaInne(inne); });
-        });
-        scen.appendChild(lagg);
-      };
-      if (s.sett.akt3) { visaPaket(); return; }
-      prata(inne, [
-        ['pyssel', 'Öhm… Trassel? Berätta du.'],
-        ['trassel', 'Okej, så… vi kanske råkade blanda ihop morfars paket.'],
-        ['pyssel', 'Och riva hans lista.'],
-        ['trassel', 'I fyra bitar. Ni har en bit var nu.'],
-        ['pyssel', 'Han får inte veta. Ställ paketen rätt innan han kommer tillbaka, snälla!']
-      ], function () { s.sett.akt3 = true; spara(); visaPaket(); });
-      return;
-    }
+    if (s.steg === 'akt3') { ritaAkt3(inne, scen); return; }
 
     if (s.steg === 'oppet') {
       inne.textContent = '';
@@ -2153,7 +2280,32 @@
     });
     var ex = $('exempel');
     ex.textContent = '';
-    ex.hidden = s.steg !== 'oppet' && s.steg !== 'las' && s.steg !== 'akt2';
+    ex.hidden = s.steg !== 'oppet' && s.steg !== 'las' && s.steg !== 'akt2' && s.steg !== 'akt3';
+    if (s.steg === 'akt3') {
+      ex.appendChild(el('span', null, 'Min listbit:'));
+      [0, 1, 2, 3].forEach(function (n) {
+        var b = el('button', (s.testRoll || 0) === n ? 'nu' : null, String(n + 1));
+        b.type = 'button';
+        b.addEventListener('click', function () { s.testRoll = n; spara(); rita(); });
+        ex.appendChild(b);
+      });
+      var pRad = el('div', 'hopp');
+      pRad.style.marginTop = '8px';
+      pRad.appendChild(el('span', null, 'Paketen:'));
+      var stall = el('button', null, 'Ställ rätt');
+      stall.type = 'button';
+      stall.addEventListener('click', function () {
+        s.paket = SVAR.test.paket.svar.split(' ').map(function (x) { var d = x.split(':'); return { n: d[0], f: d[1] }; });
+        s.paketLastTill = 0; s.sett.akt3 = true; spara(); rita();
+      });
+      var tom = el('button', null, 'Töm hyllan');
+      tom.type = 'button';
+      tom.addEventListener('click', function () { s.paket = null; s.paketLastTill = 0; spara(); rita(); });
+      pRad.appendChild(stall);
+      pRad.appendChild(tom);
+      ex.appendChild(pRad);
+      return;
+    }
     if (s.steg === 'akt2') {
       ex.appendChild(el('span', null, 'Min roll:'));
       ['Ser granen', 'Pyntar', 'Brevet', 'Nyckelboken'].forEach(function (t, n) {
