@@ -346,7 +346,7 @@
   .pyntlada .fargklick { width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(0,0,0,.2); }
   .granscen .tips { margin: 0; font-size: 14px; color: var(--himmel-dampad); max-width: 300px; }
 
-  /* Ett textfält med "Fel" direkt under, så att tangentbordet inte döljer det. */
+  /* Ett textfält. Vid fel svar skakar raden och textbubblan säger resten (inget "Fel"). */
   .falt { width: 100%; max-width: 300px; text-align: left; }
   .falt .rad { display: flex; gap: 8px; }
   .falt input {
@@ -361,7 +361,6 @@
   }
   .falt input:focus { outline: none; border-color: var(--glod); }
   .falt .knapp { flex: none; width: auto; margin: 0; padding: 10px 16px; }
-  .falt .fel { min-height: 1.3em; margin: 6px 2px 0; color: #FFB4A6; font-weight: 600; font-size: 14px; }
 
   /* ===== Pratbubblor ===== */
   .prat {
@@ -619,7 +618,7 @@
     return function () { var r = lista[n % lista.length]; n++; return r; };
   }
 
-  // Ett textfält med "Fel" direkt under rutan. prova(text) ska returnera true om det stämde.
+  // Ett textfält. prova(text) ska returnera true om det stämde, vid fel skakar raden (repliken kommer från prova).
   function falt(etikett, prova) {
     var ruta = el('form', 'falt');
     var id = 'falt-' + Math.random().toString(36).slice(2, 8);
@@ -636,19 +635,14 @@
     inmatning.spellcheck = false;
     var knapp = el('button', 'knapp', 'Prova');
     knapp.type = 'submit';
-    var fel = el('p', 'fel');
-    fel.setAttribute('aria-live', 'polite');
     rad.appendChild(inmatning);
     rad.appendChild(knapp);
     ruta.appendChild(lbl);
     ruta.appendChild(rad);
-    ruta.appendChild(fel);
-    inmatning.addEventListener('input', function () { fel.textContent = ''; });
     ruta.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!inmatning.value.trim()) return;
       if (prova(inmatning.value)) return;
-      fel.textContent = 'Fel';
       skaka(rad);
       inmatning.select();
     });
