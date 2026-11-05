@@ -243,24 +243,73 @@
   /* ===== Inuti: platshållare för akt 2 och 3 ===== */
   .scen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 16px; text-align: center; }
   .smadorrar { display: flex; gap: 14px; }
-  .smadorr { width: 92px; height: 130px; border-radius: 10px; border: 3px solid; background: rgba(255,255,255,.04); display: grid; place-items: center; font-size: 30px; }
-  .smadorr.lila { border-color: #B58CFF; }
-  .smadorr.gron { border-color: #6FD49A; }
   .hylla { display: flex; gap: 8px; padding-bottom: 10px; border-bottom: 6px solid #6B4E3A; }
   .plats { width: 58px; height: 58px; border: 2px dashed rgba(255,255,255,.3); border-radius: 8px; }
   .platshallare { margin: 0; font-size: 14px; color: var(--himmel-dampad); }
 
   /* ===== Akt 2: Pyssels dörr och granen ===== */
-  .smadorr { font: inherit; font-size: 30px; color: inherit; padding: 0; }
-  .smadorr:disabled { cursor: default; opacity: 1; }
+  .dorrplats { position: relative; width: 118px; height: 168px; perspective: 420px; }
+  .dorrplats .bakom {
+    position: absolute; inset: 0; border-radius: 10px; border: 0; padding: 0;
+    background: radial-gradient(ellipse at 50% 45%, #3B3020, #120E08 85%); box-shadow: inset 0 4px 14px rgba(0,0,0,.7);
+    font-size: 40px; display: grid; place-items: center; color: inherit;
+  }
+  .dorrplats .bakom:disabled { cursor: default; }
+  .dorrplats .bakom:not(:disabled) { cursor: pointer; animation: lysBakom 2.4s ease-in-out infinite; }
+  @keyframes lysBakom { 50% { box-shadow: inset 0 4px 14px rgba(0,0,0,.7), 0 0 18px rgba(255,214,107,.45); } }
+  .smadorr {
+    position: absolute; inset: 0; border-radius: 10px; border: 3px solid;
+    transform-origin: left center; transition: transform .9s cubic-bezier(.3,.7,.3,1);
+    box-shadow: 0 4px 0 rgba(0,0,0,.35);
+  }
+  .smadorr.lila { border-color: #B58CFF; background: linear-gradient(160deg, #5A4185, #3A2A5C); }
+  .smadorr.gron { border-color: #6FD49A; background: linear-gradient(160deg, #2F6E4D, #1D4A33); }
+  .smadorr .skylt {
+    position: absolute; top: 9px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+    padding: 2px 9px; border-radius: 999px; background: rgba(0,0,0,.3); font-size: 13px; font-weight: 600; color: #F4F1EA;
+  }
+  .smadorr .fylling {
+    position: absolute; inset: 38px 13px 14px; border-radius: 6px;
+    border: 2px solid rgba(255,255,255,.16); box-shadow: inset 0 0 0 4px rgba(0,0,0,.12);
+    display: flex; align-items: flex-start; justify-content: center; padding-top: 12px;
+  }
+  .smadorr .handtag {
+    position: absolute; right: 8px; top: 54%; width: 13px; height: 13px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #FFE9A8, #C9952E 60%, #7C5A17); box-shadow: 0 2px 0 rgba(0,0,0,.35);
+  }
+  .smadorr[role="button"] { cursor: pointer; }
   .smadorr.glant {
-    cursor: pointer; transform-origin: left center; transform: perspective(320px) rotateY(-22deg);
-    background: linear-gradient(90deg, rgba(181,140,255,.16), rgba(181,140,255,.05));
-    box-shadow: 10px 0 18px -4px rgba(255,214,107,.55);
+    transform: rotateY(-24deg);
+    box-shadow: 10px 0 18px -4px rgba(255,214,107,.55), 0 4px 0 rgba(0,0,0,.35);
     animation: glant 2.6s ease-in-out infinite;
   }
-  @keyframes glant { 50% { transform: perspective(320px) rotateY(-30deg); box-shadow: 14px 0 22px -2px rgba(255,214,107,.7); } }
-  .smadorr.glant::after { content: '🎄'; font-size: 26px; opacity: .85; }
+  @keyframes glant { 50% { transform: rotateY(-32deg); box-shadow: 14px 0 22px -2px rgba(255,214,107,.7), 0 4px 0 rgba(0,0,0,.35); } }
+  .smadorr.oppen { transform: rotateY(-105deg); pointer-events: none; }
+  /* Trassels dörr sitter på höger gångjärn, så att den öppnas utåt och inte över Pyssels. */
+  .smadorr.gron { transform-origin: right center; }
+  .smadorr.gron .handtag { right: auto; left: 8px; }
+  .smadorr.gron.oppen { transform: rotateY(100deg); }
+  .lampor { display: flex; gap: 6px; }
+  .liten-lampa { width: 14px; height: 14px; border-radius: 50%; background: #11151C; box-shadow: inset 0 2px 3px rgba(0,0,0,.6), 0 0 0 1.5px rgba(255,255,255,.18); transition: background .2s, box-shadow .2s; }
+  .liten-lampa.tand { box-shadow: 0 0 8px currentColor, 0 0 14px currentColor; }
+  .akt2-under { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+  .fargknappar { display: flex; gap: 12px; }
+  .fargknapp { width: 48px; height: 48px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); cursor: pointer; padding: 0; box-shadow: inset -5px -6px 0 rgba(0,0,0,.18), inset 5px 5px 0 rgba(255,255,255,.3), 0 3px 0 rgba(0,0,0,.35); }
+  .fargknapp:active { transform: translateY(2px); box-shadow: inset -5px -6px 0 rgba(0,0,0,.18), inset 5px 5px 0 rgba(255,255,255,.3), 0 1px 0 rgba(0,0,0,.35); }
+  .nyckel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 6px; width: 100%; max-width: 330px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,.06); }
+  .nyckel .par { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 15px; }
+  .nyckel .sym { font-size: 20px; }
+  .kodbrev { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; width: 100%; max-width: 340px; padding: 12px 8px; border-radius: 12px; background: #F4EBDC; color: #3B2E25; }
+  .kodbrev .ord { display: flex; gap: 2px; }
+  .kodbrev .tecken { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 28px; }
+  .kodbrev .sym { font-size: 20px; line-height: 1.2; }
+  .kodbrev input {
+    width: 26px; height: 30px; box-sizing: border-box; padding: 0; text-align: center;
+    border: 0; border-bottom: 2px solid #8A6A55; background: rgba(255,255,255,.55); border-radius: 4px 4px 0 0;
+    font: 700 17px var(--text-typsnitt); color: #3B2E25; text-transform: uppercase;
+  }
+  .kodbrev input:focus { outline: 2px solid #E5484D; outline-offset: 1px; }
+  .brevscen .falt { margin-top: 4px; }
   .granscen { justify-content: flex-start; gap: 10px; padding-top: 12px; }
   .granscen .bakat { align-self: flex-start; background: none; border: 0; color: var(--himmel-dampad); font: inherit; font-size: 15px; padding: 4px 2px; cursor: pointer; }
   .hemligt { margin: 0; font-weight: 600; color: #FFD66B; }
@@ -396,7 +445,7 @@
   <h1>Tomtens kassaskåp <span class="ovning" id="testmarke" hidden>Testläge</span></h1>
 
   <div class="testruta" id="testruta" hidden>
-    <p>Exempelkod till sifferlåset: <b id="testKod"></b>. Exempelord för akt 2: <b id="testOrd"></b>.</p>
+    <p>Exempelkod till sifferlåset: <b id="testKod"></b>. Exempelord för akt 2: <b id="testOrd"></b>. Exempelfärger: <b id="testFarg"></b>.</p>
     <div class="hopp" id="hopp"></div>
     <div class="hopp" id="exempel" style="margin-top:8px"></div>
   </div>
@@ -440,6 +489,7 @@
   var SVAR = {
     test: {
       kod: '3816', ord: 'GRAN',
+      brev: 'JAG HAR NÅLAR MEN SYR ALDRIG',
       // Pyssels gran: femton platser, rad för rad uppifrån (1, 2, 3, 4, 5), 'form:färg'. blink = ordningen kulorna lyser i när granen stämmer.
       gran: {
         pynt: ['stjarna:guld', 'kula:rod', 'klocka:bla', 'kapp:silver', '', 'kula:guld',
@@ -447,7 +497,7 @@
         blink: ['guld', 'rod', 'silver', 'bla']
       }
     },
-    riktig: { kod: null, ord: null, siffror: null, gran: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
+    riktig: { kod: null, ord: null, siffror: null, gran: null, brev: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
   };
 
   // ===== Tillstånd =====
@@ -1239,43 +1289,83 @@
     inne.parentNode.classList.remove('hog');
     stoppaBlink();
     var dorrar = el('div', 'smadorrar');
-    var lila = el('button', 'smadorr lila', '🔒');
-    lila.type = 'button';
-    lila.disabled = true;
-    lila.setAttribute('aria-label', 'Pyssels dörr, låst');
-    var gron = el('div', 'smadorr gron', '🔒');
-    gron.setAttribute('aria-label', 'Trassels dörr, låst');
-    dorrar.appendChild(lila);
-    dorrar.appendChild(gron);
+    var lila = smaDorr('lila', '👩‍🎤 Pyssel', '🎄');
+    var gron = smaDorr('gron', '🧑‍🎤 Trassel', '📜');
+    var lampor = el('div', 'lampor');
+    for (var i = 0; i < 4; i++) lampor.appendChild(el('span', 'liten-lampa'));
+    gron.fylling.appendChild(lampor);
+    dorrar.appendChild(lila.plats);
+    dorrar.appendChild(gron.plats);
     scen.appendChild(dorrar);
-    var under = el('div');
+    var under = el('div', 'akt2-under');
     scen.appendChild(under);
 
     function visaDorrar(lag) {
       var roll = minRoll(lag);
       if (roll === 0 || roll === 1) {
-        lila.disabled = false;
-        lila.textContent = '';
-        lila.classList.add('glant');
-        lila.setAttribute('aria-label', 'Pyssels dörr, på glänt. Tryck för att öppna.');
-        lila.addEventListener('click', function () { oppnaGran(inne, lag, roll); });
+        lila.dorr.classList.add('glant');
+        lila.oppnas(function () { oppnaGran(inne, lag, roll); }, 'Pyssels dörr, på glänt. Tryck för att öppna.');
         if (s.vy === 'gran' && s.sett.gran) { oppnaGran(inne, lag, roll); return; }
       }
-      if (test) under.appendChild(el('p', 'platshallare', 'Här kommer färglåset och brevet.'));
-      var trassel = roterande(['Haha. Nej.', 'Fel. Men kreativt.', 'Pyssel, de har inte knäckt koden än.', 'Morfar hade gissat samma sak.', 'Läs gåtan en gång till. Långsamt.']);
-      under.appendChild(falt('Gåtans svar', function (text) {
-        if (stammer(text, svar().ord)) {
-          prata(inne, [['trassel', 'Va?! Det har ingen klarat förut. Okej. Ni är bättre än vi trodde.']], function () {
-            s.steg = 'akt3';
-            spara();
-            ritaInne(inne);
-          });
-          return true;
-        }
-        kommentar(inne, 'trassel', trassel());
-        return false;
-      }));
+      if (s.fargKlar) {
+        oppnaTrassel();
+        if (s.vy === 'brev') { oppnaBrev(inne, lag, roll); return; }
+        under.appendChild(gataFalt(inne));
+        return;
+      }
+      farglas(lag);
     }
+    function oppnaTrassel() {
+      gron.dorr.classList.add('oppen');
+      gron.oppnas(null, null);
+      gron.bakom.disabled = false;
+      gron.bakom.setAttribute('aria-label', 'Trassels brev');
+      gron.bakom.addEventListener('click', function () { hamtaLag().then(function (lag) { oppnaBrev(inne, lag, minRoll(lag)); }); });
+    }
+
+    // Trassels färglås: färgerna i blinkordningen, varje rätt tryck tänder nästa lampa, fel = alla slocknar.
+    function farglas(lag) {
+      var g = svar().gran;
+      if (!g) { under.appendChild(el('p', 'platshallare', 'Färglåset är inte klart än.')); return; }
+      var n = 0;
+      var fel = roterande(['Nej. Bara nej.', 'Inte ens nära.', 'Trassel, de håller på att trycka på måfå.', 'Har ni ens tittat på granen?', 'Ok, jag hämtar popcorn.', 'Det är fyra färger. Fyra. Ni klarar det.']);
+      var knappar = el('div', 'fargknappar');
+      knappar.setAttribute('aria-label', 'Färglåset på Trassels dörr');
+      Object.keys(PYNT_FARG).forEach(function (f) {
+        var b = el('button', 'fargknapp');
+        b.type = 'button';
+        b.setAttribute('aria-label', PYNT_FARG[f].namn);
+        b.style.background = PYNT_FARG[f].fyll;
+        b.addEventListener('click', function () {
+          var lamps = lampor.children;
+          if (f === g.blink[n]) {
+            lamps[n].style.background = PYNT_FARG[f].fyll;
+            lamps[n].style.color = PYNT_FARG[f].fyll;
+            lamps[n].classList.add('tand');
+            n++;
+            if (n === g.blink.length) {
+              s.fargKlar = true;
+              spara();
+              knappar.remove();
+              setTimeout(function () {
+                prata(inne, [['pyssel', 'Snyggt. En dörr kvar.']], function () {
+                  oppnaTrassel();
+                  under.appendChild(gataFalt(inne));
+                });
+              }, 500);
+            }
+            return;
+          }
+          n = 0;
+          Array.prototype.forEach.call(lamps, function (l) { l.classList.remove('tand'); l.style.background = ''; l.style.color = ''; });
+          skaka(gron.dorr);
+          kommentar(inne, 'pyssel', fel());
+        });
+        knappar.appendChild(b);
+      });
+      under.appendChild(knappar);
+    }
+
     function efterIntro() {
       hamtaLag().then(function (lag) {
         if (s.sett.lag) { visaDorrar(lag); return; }
@@ -1300,6 +1390,138 @@
       ['pyssel', 'Vi har byggt två egna dörrar. Ingen av dem går att öppna ensam, det har vi sett till.'],
       ['trassel', 'Morfar har ingen aning.']
     ], function () { s.sett.akt2 = true; spara(); efterIntro(); });
+  }
+
+  // En liten skåpdörr med namnskylt, fylling och handtag. Bakom den ligger det som dörren gömmer.
+  function smaDorr(farg, namn, bakom) {
+    var plats = el('div', 'dorrplats');
+    var bak = el('button', 'bakom', bakom);
+    bak.type = 'button';
+    bak.disabled = true;
+    bak.setAttribute('aria-hidden', 'true');
+    var dorr = el('div', 'smadorr ' + farg);
+    dorr.setAttribute('aria-label', namn.replace(/^\S+ /, '') + 's dörr, stängd');
+    dorr.appendChild(el('span', 'skylt', namn));
+    var fylling = el('span', 'fylling');
+    dorr.appendChild(fylling);
+    dorr.appendChild(el('span', 'handtag'));
+    plats.appendChild(bak);
+    plats.appendChild(dorr);
+    return {
+      plats: plats, dorr: dorr, fylling: fylling, bakom: bak,
+      oppnas: function (klick, etikett) {
+        bak.removeAttribute('aria-hidden');
+        if (!klick) { dorr.setAttribute('aria-hidden', 'true'); return; }
+        dorr.setAttribute('role', 'button');
+        dorr.tabIndex = 0;
+        dorr.setAttribute('aria-label', etikett);
+        dorr.addEventListener('click', klick);
+        dorr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); klick(); } });
+      }
+    };
+  }
+
+  // Fältet för gåtans svar. Rätt svar fäller undan dörrarna och tar en till akt 3.
+  function gataFalt(inne) {
+    var trassel = roterande(['Haha. Nej.', 'Fel. Men kreativt.', 'Pyssel, de har inte knäckt koden än.', 'Morfar hade gissat samma sak.', 'Läs gåtan en gång till. Långsamt.']);
+    return falt('Gåtans svar', function (text) {
+      if (stammer(text, svar().ord)) {
+        prata(inne, [['trassel', 'Va?! Det har ingen klarat förut. Okej. Ni är bättre än vi trodde.']], function () {
+          s.steg = 'akt3';
+          s.vy = null;
+          spara();
+          ritaInne(inne);
+        });
+        return true;
+      }
+      kommentar(inne, 'trassel', trassel());
+      return false;
+    });
+  }
+
+  // Trassels brev på barnbarnens hemliga språk: en julsymbol per bokstav.
+  // {C} har nyckeln A–L, {D} har M–Ö. Skriver man en bokstav under en symbol fylls alla likadana symboler i.
+  var KOD_TECKEN = {
+    A: '🎄', B: '⭐', C: '🔔', D: '🎁', E: '❄️', F: '🦌', G: '🕯️', H: '🧦', I: '🍪', J: '⛄', K: '🎀', L: '🍬',
+    M: '🛷', N: '🧣', O: '🍭', P: '🧤', Q: '🌟', R: '🍊', S: '🎶', T: '🥛', U: '🔥', V: '🏠', W: '🌙', X: '🧸',
+    Y: '🎺', Z: '🌰', 'Å': '🍎', 'Ä': '🦉', 'Ö': '🧁'
+  };
+  var ALFABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ';
+  function oppnaBrev(inne, lag, roll) {
+    inne.textContent = '';
+    pratRuta = null;
+    inne.parentNode.classList.add('hog');
+    s.vy = 'brev';
+    spara();
+    var scen = el('div', 'scen granscen brevscen');
+    inne.appendChild(scen);
+    var bakat = el('button', 'bakat', '← Dörrarna');
+    bakat.type = 'button';
+    bakat.addEventListener('click', function () { s.vy = null; spara(); ritaInne(inne); });
+    scen.appendChild(bakat);
+    var text = svar().brev;
+    if (!text) { scen.appendChild(el('p', 'platshallare', 'Brevet är inte klart än.')); return; }
+
+    if (roll === 2 || roll === 3) {
+      scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
+      var halva = roll === 2 ? ALFABET.slice(0, 12) : ALFABET.slice(12);
+      var nyckel = el('div', 'nyckel');
+      nyckel.setAttribute('aria-label', 'Din halva av nyckeln, ' + halva.charAt(0) + ' till ' + halva.charAt(halva.length - 1));
+      halva.split('').forEach(function (b) {
+        var rad = el('span', 'par');
+        rad.appendChild(el('span', 'sym', KOD_TECKEN[b]));
+        rad.appendChild(el('b', null, b));
+        nyckel.appendChild(rad);
+      });
+      scen.appendChild(nyckel);
+    }
+
+    if (!s.brevNyckel) s.brevNyckel = {};
+    var brev = el('div', 'kodbrev');
+    brev.setAttribute('aria-label', 'Trassels brev');
+    var rutor = [];
+    text.split(' ').forEach(function (ord) {
+      var o = el('span', 'ord');
+      Array.from(ord).forEach(function (b) {
+        var sym = KOD_TECKEN[b];
+        if (!sym) { o.appendChild(el('span', 'tecken', b)); return; }
+        var t = el('label', 'tecken');
+        t.appendChild(el('span', 'sym', sym));
+        var ruta = el('input');
+        ruta.maxLength = 2;
+        ruta.autocomplete = 'off';
+        ruta.autocapitalize = 'characters';
+        ruta.spellcheck = false;
+        ruta.dataset.sym = sym;
+        ruta.value = s.brevNyckel[sym] || '';
+        ruta.setAttribute('aria-label', 'Bokstav för ' + sym);
+        ruta.addEventListener('input', function () {
+          var v = stada(ruta.value).replace(/[^A-ZÅÄÖ]/g, '');
+          v = v.slice(-1);
+          s.brevNyckel[sym] = v;
+          spara();
+          rutor.forEach(function (r) { if (r.dataset.sym === sym) r.value = v; });
+          if (!v) return;
+          var i = rutor.indexOf(ruta);
+          for (var j = i + 1; j < rutor.length; j++) if (!rutor[j].value) { rutor[j].focus(); return; }
+          ruta.blur();
+        });
+        ruta.addEventListener('focus', function () { ruta.select(); });
+        rutor.push(ruta);
+        t.appendChild(ruta);
+        o.appendChild(t);
+      });
+      brev.appendChild(o);
+    });
+    scen.appendChild(brev);
+    scen.appendChild(gataFalt(inne));
+
+    if (s.sett.brev) return;
+    prata(inne, [
+      ['trassel', 'Bakom min dörr ligger ett brev på vårt hemliga språk. Vi uppfann det för att morfar inte skulle kunna läsa våra lappar.'],
+      ['pyssel', 'Han har fortfarande inte knäckt det.'],
+      ['trassel', lagText('{C} och {D}, ni har var sin halva av nyckeln. Ni får läsa upp för varandra, men ingen visar sin skärm.', lag)]
+    ], function () { s.sett.brev = true; spara(); });
   }
 
   // Pyssels gran bakom den lila dörren. roll 0 ser den hemliga granen, roll 1 pyntar.
@@ -1828,6 +2050,7 @@
     if (!test) return;
     $('testKod').textContent = SVAR.test.kod.split('').join(' ');
     $('testOrd').textContent = SVAR.test.ord;
+    $('testFarg').textContent = SVAR.test.gran.blink.map(function (f) { return PYNT_FARG[f].namn.toLowerCase(); }).join(', ');
     var hopp = $('hopp');
     hopp.textContent = '';
     STEG.forEach(function (namn) {
@@ -1849,8 +2072,8 @@
     ex.hidden = s.steg !== 'oppet' && s.steg !== 'las' && s.steg !== 'akt2';
     if (s.steg === 'akt2') {
       ex.appendChild(el('span', null, 'Min roll:'));
-      ['Ser granen', 'Pyntar', 'Trassels lag'].forEach(function (t, n) {
-        var roll = n === 2 ? 2 : n;
+      ['Ser granen', 'Pyntar', 'Nyckel A–L', 'Nyckel M–Ö'].forEach(function (t, n) {
+        var roll = n;
         var b = el('button', (s.testRoll || 0) === roll ? 'nu' : null, t);
         b.type = 'button';
         b.addEventListener('click', function () { s.testRoll = roll; spara(); rita(); });
@@ -1870,6 +2093,18 @@
       granRad.appendChild(ratt);
       granRad.appendChild(rensa);
       ex.appendChild(granRad);
+      var trRad = el('div', 'hopp');
+      trRad.style.marginTop = '8px';
+      trRad.appendChild(el('span', null, 'Trassels dörr:'));
+      var oppna = el('button', null, 'Öppna färglåset');
+      oppna.type = 'button';
+      oppna.addEventListener('click', function () { s.fargKlar = true; s.vy = null; s.sett.akt2 = s.sett.lag = true; spara(); rita(); });
+      var stang = el('button', null, 'Stäng och töm brevet');
+      stang.type = 'button';
+      stang.addEventListener('click', function () { s.fargKlar = false; s.brevNyckel = {}; s.vy = null; s.sett.brev = false; spara(); rita(); });
+      trRad.appendChild(oppna);
+      trRad.appendChild(stang);
+      ex.appendChild(trRad);
       return;
     }
     if (s.steg === 'las') {
