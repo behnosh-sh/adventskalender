@@ -297,15 +297,27 @@
   .fargknappar { display: grid; grid-template-columns: repeat(2, 36px); gap: 8px; }
   .fargknapp { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); cursor: pointer; padding: 0; box-shadow: inset -5px -6px 0 rgba(0,0,0,.18), inset 5px 5px 0 rgba(255,255,255,.3), 0 3px 0 rgba(0,0,0,.35); }
   .fargknapp:active { transform: translateY(2px); box-shadow: inset -5px -6px 0 rgba(0,0,0,.18), inset 5px 5px 0 rgba(255,255,255,.3), 0 1px 0 rgba(0,0,0,.35); }
-  .bladder { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 8px; }
-  .bladder-sida { min-height: 112px; display: flex; align-items: center; justify-content: center; }
-  .bladder-rad { display: flex; align-items: center; justify-content: space-between; }
-  .bladder .pil { width: 52px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #F4F1EA; font-size: 26px; line-height: 1; cursor: pointer; }
-  .bladder .sidnr { color: var(--himmel-dampad); font-size: 15px; }
-  .nyckelsida { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 10px 14px; border-radius: 12px; background: #F4EBDC; color: #3B2E25; }
-  .nyckelsida .par { display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 20px; }
-  .nyckelsida .sym { font-size: 30px; }
-  .kodbrev { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; width: 100%; padding: 16px 8px; border-radius: 12px; background: #F4EBDC; color: #3B2E25; }
+  .bladder { width: 100%; max-width: 340px; position: relative; }
+  .bladder-papper { display: flex; flex-direction: column; gap: 4px; background: #F4EBDC; color: #3B2E25; }
+  .bladder-sida { min-height: 150px; display: flex; align-items: center; justify-content: center; padding: 14px 10px 0; }
+  .bladder-rad { display: flex; align-items: center; justify-content: space-between; padding: 0 6px 6px; }
+  .bladder .pil { width: 48px; height: 44px; border: 0; background: none; color: #8A6A55; font-size: 34px; line-height: 1; cursor: pointer; padding: 0; }
+  .bladder .pil:active { color: #3B2E25; }
+  .bladder .sidnr { color: #8A6A55; font-size: 14px; font-style: italic; }
+  /* Nyckelboken: en liten journal med läderpärm, sömmar vid ryggen och linjerat papper. */
+  .bladder.bok { padding: 9px 9px 9px 22px; border-radius: 6px 14px 14px 6px; background: linear-gradient(90deg, #4E3828, #6B4E3A 14%, #6B4E3A); box-shadow: 0 4px 0 rgba(0,0,0,.35); }
+  .bladder.bok::before { content: ''; position: absolute; left: 8px; top: 14px; bottom: 14px; width: 3px; background: repeating-linear-gradient(to bottom, #E8D9BF 0 7px, transparent 7px 15px); }
+  .bladder.bok .bladder-papper {
+    border-radius: 2px 8px 8px 2px;
+    background: repeating-linear-gradient(to bottom, #F4EBDC 0 33px, #E2D3BA 33px 34px), #F4EBDC;
+    box-shadow: inset 10px 0 12px -10px rgba(0,0,0,.45), 3px 3px 0 #E2D3BA, 5px 5px 0 #D2C2A6;
+  }
+  /* Brevet: brevpapper med en julig kant upptill. */
+  .bladder.brevpapper .bladder-papper { border-radius: 6px; border-top: 6px solid transparent; border-image: repeating-linear-gradient(90deg, #C8373D 0 14px, #F4EBDC 14px 20px, #2F6E4D 20px 34px, #F4EBDC 34px 40px) 6; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+  .nyckelsida { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+  .nyckelsida .par { display: flex; align-items: center; justify-content: center; gap: 14px; height: 34px; font-size: 20px; }
+  .nyckelsida .sym { font-size: 28px; }
+  .kodbrev { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; width: 100%; padding: 6px 0; }
   .kodbrev .tecken { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 40px; }
   .kodbrev .sym { font-size: 30px; line-height: 1.2; }
   .helt-brev { margin: 0; font-size: 15px; color: #F4F1EA; max-width: 330px; }
@@ -1449,13 +1461,14 @@
 
   // Trassels brev på barnbarnens hemliga språk: en julsymbol per bokstav.
   // {C} har brevet (ett ord per sida), {D} har nyckelboken (fem symboler per sida, blandad ordning).
-  // Fem par symboler liknar varandra, och paren ligger på olika sidor i nyckelboken.
+  // Fem par symboler liknar varandra (🎄 🌲, ⭐ 🌟, ⛄ ☃️, 🧦 🧤, 🍬 🍭), och paren ligger på olika sidor i nyckelboken.
+  // Q, W, X och Z är borttagna (för ovanliga), lägg till dem om det riktiga brevet behöver dem.
   var KOD_TECKEN = {
-    A: '🎄', Q: '🌲', E: '⭐', W: '🌟', N: '⛄', X: '☃️', R: '🧦', Z: '🧤', S: '🍬', 'Ä': '🍭',
-    B: '🌙', C: '🍊', D: '🎁', F: '🧸', G: '🕯️', H: '🦌', I: '🍪', J: '🎺', K: '🧁', L: '🔔',
-    M: '🛷', O: '🎀', P: '🦉', T: '🥛', U: '🌰', V: '🏠', Y: '🎈', 'Å': '🍎', 'Ö': '🧣'
+    A: '🎄', J: '🌲', E: '⭐', P: '🌟', N: '⛄', V: '☃️', R: '🧦', Y: '🧤', S: '🍬', 'Ä': '🍭',
+    B: '🌙', C: '🍊', D: '🎁', F: '🧸', G: '🕯️', H: '🦌', I: '🍪', K: '🧁', L: '🔔',
+    M: '🛷', O: '🎀', T: '🥛', U: '🌰', 'Å': '🍎', 'Ö': '🧣'
   };
-  var NYCKELBOK = ['ACRBP', 'EMQIV', 'NDZTJ', 'SLWHF', 'XOÄGU', 'KYÅÖ'];
+  var NYCKELBOK = ['ACRBK', 'EMJIU', 'NDYTF', 'SLPHÅ', 'VOÄGÖ'];
   function oppnaBrev(inne, lag, roll) {
     inne.textContent = '';
     pratRuta = null;
@@ -1485,8 +1498,9 @@
   }
 
   // Bläddrar med ‹ och ›. sida(n) ritar sida n i ruta. Sidan sparas i s[nyckel].
-  function bladdra(scen, antal, nyckel, namn, sida) {
-    var bok = el('div', 'bladder');
+  function bladdra(scen, antal, nyckel, namn, sida, typ) {
+    var bok = el('div', 'bladder ' + typ);
+    var papper = el('div', 'bladder-papper');
     var ruta = el('div', 'bladder-sida');
     var rad = el('div', 'bladder-rad');
     var bak = el('button', 'pil', '‹');
@@ -1498,8 +1512,9 @@
     rad.appendChild(bak);
     rad.appendChild(nr);
     rad.appendChild(fram);
-    bok.appendChild(ruta);
-    bok.appendChild(rad);
+    papper.appendChild(ruta);
+    papper.appendChild(rad);
+    bok.appendChild(papper);
     scen.appendChild(bok);
     function visa(n) {
       n = (n + antal) % antal;
@@ -1559,7 +1574,7 @@
         kodbrev.appendChild(t);
       });
       ruta.appendChild(kodbrev);
-    });
+    }, 'brevpapper');
     scen.appendChild(helt);
     ritaHelt();
   }
@@ -1575,7 +1590,7 @@
         sida.appendChild(par);
       });
       ruta.appendChild(sida);
-    });
+    }, 'bok');
   }
 
   // Pyssels gran bakom den lila dörren. roll 0 ser den hemliga granen, roll 1 pyntar.
