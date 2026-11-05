@@ -296,17 +296,22 @@
   .fargknappar { display: flex; gap: 12px; }
   .fargknapp { width: 48px; height: 48px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); cursor: pointer; padding: 0; box-shadow: inset -5px -6px 0 rgba(0,0,0,.18), inset 5px 5px 0 rgba(255,255,255,.3), 0 3px 0 rgba(0,0,0,.35); }
   .fargknapp:active { transform: translateY(2px); box-shadow: inset -5px -6px 0 rgba(0,0,0,.18), inset 5px 5px 0 rgba(255,255,255,.3), 0 1px 0 rgba(0,0,0,.35); }
-  .nyckel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 6px; width: 100%; max-width: 330px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,.06); }
-  .nyckel .par { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 15px; }
-  .nyckel .sym { font-size: 20px; }
-  .kodbrev { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; width: 100%; max-width: 340px; padding: 12px 8px; border-radius: 12px; background: #F4EBDC; color: #3B2E25; }
-  .kodbrev .ord { display: flex; gap: 2px; }
-  .kodbrev .tecken { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 28px; }
-  .kodbrev .sym { font-size: 20px; line-height: 1.2; }
+  .bladder { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 8px; }
+  .bladder-sida { min-height: 112px; display: flex; align-items: center; justify-content: center; }
+  .bladder-rad { display: flex; align-items: center; justify-content: space-between; }
+  .bladder .pil { width: 52px; height: 44px; border-radius: 12px; border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #F4F1EA; font-size: 26px; line-height: 1; cursor: pointer; }
+  .bladder .sidnr { color: var(--himmel-dampad); font-size: 15px; }
+  .nyckelsida { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 10px 14px; border-radius: 12px; background: #F4EBDC; color: #3B2E25; }
+  .nyckelsida .par { display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 20px; }
+  .nyckelsida .sym { font-size: 30px; }
+  .kodbrev { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; width: 100%; padding: 16px 8px; border-radius: 12px; background: #F4EBDC; color: #3B2E25; }
+  .kodbrev .tecken { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 40px; }
+  .kodbrev .sym { font-size: 30px; line-height: 1.2; }
+  .helt-brev { margin: 0; font-size: 15px; color: #F4F1EA; max-width: 330px; }
   .kodbrev input {
-    width: 26px; height: 30px; box-sizing: border-box; padding: 0; text-align: center;
+    width: 34px; height: 38px; box-sizing: border-box; padding: 0; text-align: center;
     border: 0; border-bottom: 2px solid #8A6A55; background: rgba(255,255,255,.55); border-radius: 4px 4px 0 0;
-    font: 700 17px var(--text-typsnitt); color: #3B2E25; text-transform: uppercase;
+    font: 700 20px var(--text-typsnitt); color: #3B2E25; text-transform: uppercase;
   }
   .kodbrev input:focus { outline: 2px solid #E5484D; outline-offset: 1px; }
   .brevscen .falt { margin-top: 4px; }
@@ -1440,13 +1445,14 @@
   }
 
   // Trassels brev på barnbarnens hemliga språk: en julsymbol per bokstav.
-  // {C} har nyckeln A–L, {D} har M–Ö. Skriver man en bokstav under en symbol fylls alla likadana symboler i.
+  // {C} har brevet (ett ord per sida), {D} har nyckelboken (fem symboler per sida, blandad ordning).
+  // Fem par symboler liknar varandra, och paren ligger på olika sidor i nyckelboken.
   var KOD_TECKEN = {
-    A: '🎄', B: '⭐', C: '🔔', D: '🎁', E: '❄️', F: '🦌', G: '🕯️', H: '🧦', I: '🍪', J: '⛄', K: '🎀', L: '🍬',
-    M: '🛷', N: '🧣', O: '🍭', P: '🧤', Q: '🌟', R: '🍊', S: '🎶', T: '🥛', U: '🔥', V: '🏠', W: '🌙', X: '🧸',
-    Y: '🎺', Z: '🌰', 'Å': '🍎', 'Ä': '🦉', 'Ö': '🧁'
+    A: '🎄', Q: '🌲', E: '⭐', W: '🌟', N: '⛄', X: '☃️', R: '🧦', Z: '🧤', S: '🍬', 'Ä': '🍭',
+    B: '🌙', C: '🍊', D: '🎁', F: '🧸', G: '🕯️', H: '🦌', I: '🍪', J: '🎺', K: '🧁', L: '🔔',
+    M: '🛷', O: '🎀', P: '🦉', T: '🥛', U: '🌰', V: '🏠', Y: '🎈', 'Å': '🍎', 'Ö': '🧣'
   };
-  var ALFABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ';
+  var NYCKELBOK = ['ACRBP', 'EMQIV', 'NDZTJ', 'SLWHF', 'XOÄGU', 'KYÅÖ'];
   function oppnaBrev(inne, lag, roll) {
     inne.textContent = '';
     pratRuta = null;
@@ -1462,66 +1468,111 @@
     var text = svar().brev;
     if (!text) { scen.appendChild(el('p', 'platshallare', 'Brevet är inte klart än.')); return; }
 
-    if (roll === 2 || roll === 3) {
-      scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
-      var halva = roll === 2 ? ALFABET.slice(0, 12) : ALFABET.slice(12);
-      var nyckel = el('div', 'nyckel');
-      nyckel.setAttribute('aria-label', 'Din halva av nyckeln, ' + halva.charAt(0) + ' till ' + halva.charAt(halva.length - 1));
-      halva.split('').forEach(function (b) {
-        var rad = el('span', 'par');
-        rad.appendChild(el('span', 'sym', KOD_TECKEN[b]));
-        rad.appendChild(el('b', null, b));
-        nyckel.appendChild(rad);
-      });
-      scen.appendChild(nyckel);
-    }
-
-    if (!s.brevNyckel) s.brevNyckel = {};
-    var brev = el('div', 'kodbrev');
-    brev.setAttribute('aria-label', 'Trassels brev');
-    var rutor = [];
-    text.split(' ').forEach(function (ord) {
-      var o = el('span', 'ord');
-      Array.from(ord).forEach(function (b) {
-        var sym = KOD_TECKEN[b];
-        if (!sym) { o.appendChild(el('span', 'tecken', b)); return; }
-        var t = el('label', 'tecken');
-        t.appendChild(el('span', 'sym', sym));
-        var ruta = el('input');
-        ruta.maxLength = 2;
-        ruta.autocomplete = 'off';
-        ruta.autocapitalize = 'characters';
-        ruta.spellcheck = false;
-        ruta.dataset.sym = sym;
-        ruta.value = s.brevNyckel[sym] || '';
-        ruta.setAttribute('aria-label', 'Bokstav för ' + sym);
-        ruta.addEventListener('input', function () {
-          var v = stada(ruta.value).replace(/[^A-ZÅÄÖ]/g, '');
-          v = v.slice(-1);
-          s.brevNyckel[sym] = v;
-          spara();
-          rutor.forEach(function (r) { if (r.dataset.sym === sym) r.value = v; });
-          if (!v) return;
-          var i = rutor.indexOf(ruta);
-          for (var j = i + 1; j < rutor.length; j++) if (!rutor[j].value) { rutor[j].focus(); return; }
-          ruta.blur();
-        });
-        ruta.addEventListener('focus', function () { ruta.select(); });
-        rutor.push(ruta);
-        t.appendChild(ruta);
-        o.appendChild(t);
-      });
-      brev.appendChild(o);
-    });
-    scen.appendChild(brev);
+    if (roll === 2) ritaBrevet(scen, text);
+    else if (roll === 3) ritaNyckelboken(scen);
+    else scen.appendChild(el('p', 'platshallare', lagText('Brevet är till {C} och {D}. Ni andra får bara titta på.', lag)));
     scen.appendChild(gataFalt(inne));
 
     if (s.sett.brev) return;
     prata(inne, [
       ['trassel', 'Bakom min dörr ligger ett brev på vårt hemliga språk. Vi uppfann det för att morfar inte skulle kunna läsa våra lappar.'],
       ['pyssel', 'Han har fortfarande inte knäckt det.'],
-      ['trassel', lagText('{C} och {D}, ni har var sin halva av nyckeln. Ni får läsa upp för varandra, men ingen visar sin skärm.', lag)]
+      ['trassel', lagText('{C}, du har brevet. {D}, du har nyckeln. Ni får läsa upp för varandra, men ingen visar sin skärm.', lag)]
     ], function () { s.sett.brev = true; spara(); });
+  }
+
+  // Bläddrar med ‹ och ›. sida(n) ritar sida n i ruta. Sidan sparas i s[nyckel].
+  function bladdra(scen, antal, nyckel, namn, sida) {
+    var bok = el('div', 'bladder');
+    var ruta = el('div', 'bladder-sida');
+    var rad = el('div', 'bladder-rad');
+    var bak = el('button', 'pil', '‹');
+    var fram = el('button', 'pil', '›');
+    var nr = el('span', 'sidnr');
+    bak.type = fram.type = 'button';
+    bak.setAttribute('aria-label', 'Förra');
+    fram.setAttribute('aria-label', 'Nästa');
+    rad.appendChild(bak);
+    rad.appendChild(nr);
+    rad.appendChild(fram);
+    bok.appendChild(ruta);
+    bok.appendChild(rad);
+    scen.appendChild(bok);
+    function visa(n) {
+      n = (n + antal) % antal;
+      s[nyckel] = n;
+      spara();
+      ruta.textContent = '';
+      sida(n, ruta);
+      nr.textContent = namn + ' ' + (n + 1) + ' av ' + antal;
+    }
+    bak.addEventListener('click', function () { visa((s[nyckel] || 0) - 1); });
+    fram.addEventListener('click', function () { visa((s[nyckel] || 0) + 1); });
+    visa(s[nyckel] || 0);
+  }
+
+  function ritaBrevet(scen, text) {
+    scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
+    if (!s.brevSvar) s.brevSvar = {};
+    var ord = [], pos = 0;
+    text.split(' ').forEach(function (o) { ord.push({ start: pos, tecken: Array.from(o) }); pos += Array.from(o).length; });
+    var helt = el('p', 'helt-brev');
+    function ritaHelt() {
+      var klart = ord.every(function (o) { return o.tecken.every(function (b, i) { return !KOD_TECKEN[b] || s.brevSvar[o.start + i]; }); });
+      helt.hidden = !klart;
+      helt.textContent = klart ? 'Det du har skrivit: ' + ord.map(function (o) {
+        return o.tecken.map(function (b, i) { return KOD_TECKEN[b] ? s.brevSvar[o.start + i] : b; }).join('');
+      }).join(' ') : '';
+    }
+    bladdra(scen, ord.length, 'brevSida', 'Ord', function (n, ruta) {
+      var o = ord[n];
+      var kodbrev = el('div', 'kodbrev');
+      var rutor = [];
+      o.tecken.forEach(function (b, i) {
+        var sym = KOD_TECKEN[b];
+        if (!sym) { kodbrev.appendChild(el('span', 'tecken', b)); return; }
+        var t = el('label', 'tecken');
+        t.appendChild(el('span', 'sym', sym));
+        var inp = el('input');
+        inp.maxLength = 2;
+        inp.autocomplete = 'off';
+        inp.autocapitalize = 'characters';
+        inp.spellcheck = false;
+        inp.value = s.brevSvar[o.start + i] || '';
+        inp.setAttribute('aria-label', 'Bokstav ' + (i + 1));
+        inp.addEventListener('input', function () {
+          var v = stada(inp.value).replace(/[^A-ZÅÄÖ]/g, '').slice(-1);
+          inp.value = v;
+          s.brevSvar[o.start + i] = v;
+          spara();
+          ritaHelt();
+          if (!v) return;
+          var j = rutor.indexOf(inp) + 1;
+          if (j < rutor.length) rutor[j].focus(); else inp.blur();
+        });
+        inp.addEventListener('focus', function () { inp.select(); });
+        rutor.push(inp);
+        t.appendChild(inp);
+        kodbrev.appendChild(t);
+      });
+      ruta.appendChild(kodbrev);
+    });
+    scen.appendChild(helt);
+    ritaHelt();
+  }
+
+  function ritaNyckelboken(scen) {
+    scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
+    bladdra(scen, NYCKELBOK.length, 'nyckelSida', 'Sida', function (n, ruta) {
+      var sida = el('div', 'nyckelsida');
+      Array.from(NYCKELBOK[n]).forEach(function (b) {
+        var par = el('span', 'par');
+        par.appendChild(el('span', 'sym', KOD_TECKEN[b]));
+        par.appendChild(el('b', null, b));
+        sida.appendChild(par);
+      });
+      ruta.appendChild(sida);
+    });
   }
 
   // Pyssels gran bakom den lila dörren. roll 0 ser den hemliga granen, roll 1 pyntar.
@@ -2072,7 +2123,7 @@
     ex.hidden = s.steg !== 'oppet' && s.steg !== 'las' && s.steg !== 'akt2';
     if (s.steg === 'akt2') {
       ex.appendChild(el('span', null, 'Min roll:'));
-      ['Ser granen', 'Pyntar', 'Nyckel A–L', 'Nyckel M–Ö'].forEach(function (t, n) {
+      ['Ser granen', 'Pyntar', 'Brevet', 'Nyckelboken'].forEach(function (t, n) {
         var roll = n;
         var b = el('button', (s.testRoll || 0) === roll ? 'nu' : null, t);
         b.type = 'button';
@@ -2101,7 +2152,7 @@
       oppna.addEventListener('click', function () { s.fargKlar = true; s.vy = null; s.sett.akt2 = s.sett.lag = true; spara(); rita(); });
       var stang = el('button', null, 'Stäng och töm brevet');
       stang.type = 'button';
-      stang.addEventListener('click', function () { s.fargKlar = false; s.brevNyckel = {}; s.vy = null; s.sett.brev = false; spara(); rita(); });
+      stang.addEventListener('click', function () { s.fargKlar = false; s.brevSvar = {}; s.brevSida = 0; s.nyckelSida = 0; s.vy = null; s.sett.brev = false; spara(); rita(); });
       trRad.appendChild(oppna);
       trRad.appendChild(stang);
       ex.appendChild(trRad);
