@@ -278,6 +278,7 @@
   .matris .cell.botten { border-bottom: 2px solid #3A2F25; }
   .matris .cell.ja { color: #237A45; }
   .matris .cell.nej { color: #A92D33; }
+  .matris .cell.kanske { color: #B98A1E; }
   .matris .tomrum { grid-column: span 4; }
   .matrisblad .sudda { display: block; margin: 12px auto 0; padding: 6px 14px; border-radius: 999px; border: 1px solid #CDBFA6; background: none; color: #7A6A55; font: 600 13px/1 inherit; cursor: pointer; }
   .platshallare { margin: 0; font-size: 14px; color: var(--himmel-dampad); }
@@ -1920,7 +1921,7 @@
       '<circle cx="30" cy="15" r="4.5" fill="' + b.fyll + '" stroke="' + b.kant + '" stroke-width="1.5"/>';
     return svg;
   }
-  // Anteckningsboken: namn mot plats och band, och band mot plats. Tryck = ✕, igen = ✓, igen = tomt.
+  // Anteckningsboken: namn mot plats och band, och band mot plats. Tryck = ✕, igen = ✓, igen = ?, igen = tomt.
   // Inget fylls i automatiskt. Varje telefon har sin egen, och den sparas.
   function ritaAnteckningar(skap, namn, farger) {
     var gammal = skap.parentNode.querySelector('.anteckningar');
@@ -1937,7 +1938,7 @@
 
     var blad = el('div', 'matrisblad');
     var m = el('div', 'matris');
-    var MARK = { 1: '✕', 2: '✓' };
+    var MARK = { 1: '✕', 2: '✓', 3: '?' };
     function cell(nyckel, klasser, etikett) {
       var c = el('button', 'cell ' + klasser);
       c.type = 'button';
@@ -1946,10 +1947,11 @@
         c.textContent = MARK[v] || '';
         c.classList.toggle('nej', v === 1);
         c.classList.toggle('ja', v === 2);
-        c.setAttribute('aria-label', etikett + ': ' + (v === 2 ? 'ja' : v === 1 ? 'nej' : 'tom'));
+        c.classList.toggle('kanske', v === 3);
+        c.setAttribute('aria-label', etikett + ': ' + (v === 2 ? 'ja' : v === 1 ? 'nej' : v === 3 ? 'kanske' : 'tom'));
       }
       c.addEventListener('click', function () {
-        var v = ((s.matris[nyckel] || 0) + 1) % 3;
+        var v = ((s.matris[nyckel] || 0) + 1) % 4;
         if (v) s.matris[nyckel] = v; else delete s.matris[nyckel];
         spara();
         visa();
