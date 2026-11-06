@@ -58,6 +58,12 @@
     display: grid; place-items: center;
     font-size: 24px;
   }
+  /* Trassels förseglade brev, för dem som inte har brevet eller nyckelboken. */
+  .forseglat { position: relative; width: min(70vw, 260px); aspect-ratio: 3 / 2; border-radius: 10px; background: linear-gradient(#F3E7CF, #E2D1B0); box-shadow: 0 6px 0 rgba(0,0,0,.3); transform: rotate(-2deg); }
+  .forseglat::before { content: ""; position: absolute; inset: 0 0 35% 0; background: linear-gradient(#E9DBBE, #D8C49E); clip-path: polygon(0 0, 100% 0, 50% 100%); border-radius: 10px 10px 0 0; }
+  .forseglat .adress { position: absolute; left: 0; right: 0; bottom: 12px; text-align: center; color: #3B2E25; font-weight: 700; font-size: 15px; }
+  .forseglat .sigill { top: 58%; width: 44px; height: 44px; font-size: 20px; font-weight: 800; color: #DDF5E6; }
+  .sigill.gront { background: radial-gradient(circle at 40% 35%, #4FBF7E, #1D6B40 70%); }
   .vantar { min-height: 1.4em; margin: 0; color: var(--himmel-dampad); font-size: 14px; }
 
   .brev {
@@ -1577,7 +1583,16 @@
 
     if (roll === 2) ritaBrevet(scen, text);
     else if (roll === 3) ritaNyckelboken(scen);
-    else scen.appendChild(el('p', 'platshallare', lagText('Brevet är till {C} och {D}. Ni andra får bara titta på.', lag)));
+    else {
+      // De som inte har brevet ser det förseglat, med Trassels gröna sigill.
+      var forseglat = el('div', 'forseglat');
+      forseglat.setAttribute('role', 'img');
+      forseglat.setAttribute('aria-label', lagText('Ett förseglat brev till {C} och {D}', lag));
+      forseglat.appendChild(el('span', 'adress', lagText('Till {C} och {D}', lag)));
+      forseglat.appendChild(el('span', 'sigill gront', 'T'));
+      scen.appendChild(forseglat);
+      scen.appendChild(el('p', 'platshallare', 'Ni andra får bara titta på.'));
+    }
     scen.appendChild(gataFalt(inne));
 
     if (s.sett.brev) return;
