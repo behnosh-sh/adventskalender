@@ -262,6 +262,24 @@
   }
   .listbit p { margin: 0 0 6px; }
   .listbit p:last-child { margin: 0; }
+  /* Anteckningsboken under skåpet: en matris som i logikpussel, man fyller i själv. */
+  .anteckningar { max-width: 420px; margin: 0 auto 16px; }
+  .anteckningar > .knapp { width: auto; display: block; margin: 0 auto; }
+  .matrisblad { margin-top: 10px; padding: 12px 10px 14px; border-radius: 6px 12px 12px 6px; background: #FBF6EC; color: #3A2F25; box-shadow: inset 8px 0 0 #8A5A3B, 0 4px 0 rgba(0,0,0,.35); }
+  .matris { display: grid; grid-template-columns: 62px repeat(8, minmax(0, 1fr)); max-width: 360px; margin: 0 auto; padding-left: 6px; }
+  .matris .rubrik { font: 700 13px/1 inherit; text-align: center; color: #7A6A55; padding: 0 0 4px; }
+  .matris .huvud { display: flex; align-items: center; justify-content: center; height: 26px; font-weight: 700; font-size: 14px; }
+  .matris .rad-namn { display: flex; align-items: center; font-size: 13px; font-weight: 600; padding-right: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .matris .prick { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.25); }
+  .matris .cell { aspect-ratio: 1; border: 0; border-right: 1px solid #CDBFA6; border-bottom: 1px solid #CDBFA6; background: #fff; padding: 0; font-size: 17px; font-weight: 800; line-height: 1; cursor: pointer; color: #3A2F25; }
+  .matris .cell.forst { border-left: 2px solid #3A2F25; }
+  .matris .cell.grans { border-right: 2px solid #3A2F25; }
+  .matris .cell.topp { border-top: 2px solid #3A2F25; }
+  .matris .cell.botten { border-bottom: 2px solid #3A2F25; }
+  .matris .cell.ja { color: #237A45; }
+  .matris .cell.nej { color: #A92D33; }
+  .matris .tomrum { grid-column: span 4; }
+  .matrisblad .sudda { display: block; margin: 12px auto 0; padding: 6px 14px; border-radius: 999px; border: 1px solid #CDBFA6; background: none; color: #7A6A55; font: 600 13px/1 inherit; cursor: pointer; }
   .platshallare { margin: 0; font-size: 14px; color: var(--himmel-dampad); }
 
   /* ===== Akt 2: Pyssels dörr och granen ===== */
@@ -1902,6 +1920,78 @@
       '<circle cx="30" cy="15" r="4.5" fill="' + b.fyll + '" stroke="' + b.kant + '" stroke-width="1.5"/>';
     return svg;
   }
+  // Anteckningsboken: namn mot plats och band, och band mot plats. Tryck = ✕, igen = ✓, igen = tomt.
+  // Inget fylls i automatiskt. Varje telefon har sin egen, och den sparas.
+  function ritaAnteckningar(skap, namn, farger) {
+    var gammal = skap.parentNode.querySelector('.anteckningar');
+    if (gammal) gammal.remove();
+    if (!s.matris) s.matris = {};
+    var ruta = el('div', 'anteckningar');
+    var knapp = el('button', 'knapp', s.matrisOppen ? '📓 Stäng anteckningarna' : '📓 Anteckningar');
+    knapp.type = 'button';
+    knapp.setAttribute('aria-expanded', s.matrisOppen ? 'true' : 'false');
+    knapp.addEventListener('click', function () { s.matrisOppen = !s.matrisOppen; spara(); ritaAnteckningar(skap, namn, farger); });
+    ruta.appendChild(knapp);
+    skap.parentNode.insertBefore(ruta, skap.nextSibling);
+    if (!s.matrisOppen) return;
+
+    var blad = el('div', 'matrisblad');
+    var m = el('div', 'matris');
+    var MARK = { 1: '✕', 2: '✓' };
+    function cell(nyckel, klasser, etikett) {
+      var c = el('button', 'cell ' + klasser);
+      c.type = 'button';
+      function visa() {
+        var v = s.matris[nyckel] || 0;
+        c.textContent = MARK[v] || '';
+        c.classList.toggle('nej', v === 1);
+        c.classList.toggle('ja', v === 2);
+        c.setAttribute('aria-label', etikett + ': ' + (v === 2 ? 'ja' : v === 1 ? 'nej' : 'tom'));
+      }
+      c.addEventListener('click', function () {
+        var v = ((s.matris[nyckel] || 0) + 1) % 3;
+        if (v) s.matris[nyckel] = v; else delete s.matris[nyckel];
+        spara();
+        visa();
+      });
+      visa();
+      return c;
+    }
+    function prick(f) { var p = el('span', 'prick'); p.style.background = BAND_FARG[f].fyll; p.setAttribute('aria-label', BAND_FARG[f].namn); return p; }
+    function huvud(innehall) { var h = el('div', 'huvud'); if (typeof innehall === 'string') h.textContent = innehall; else h.appendChild(innehall); return h; }
+
+    m.appendChild(el('div'));
+    var r1 = el('div', 'rubrik', 'Plats'); r1.style.gridColumn = 'span 4'; m.appendChild(r1);
+    var r2 = el('div', 'rubrik', 'Band'); r2.style.gridColumn = 'span 4'; m.appendChild(r2);
+    m.appendChild(el('div'));
+    [1, 2, 3, 4].forEach(function (j) { m.appendChild(huvud(String(j))); });
+    farger.forEach(function (f) { m.appendChild(huvud(prick(f))); });
+    namn.forEach(function (n, i) {
+      m.appendChild(el('div', 'rad-namn', n));
+      for (var j = 0; j < 4; j++) {
+        m.appendChild(cell('n' + i + 'p' + j, (j === 0 ? 'forst ' : '') + (j === 3 ? 'grans ' : '') + (i === 0 ? 'topp ' : '') + (i === 3 ? 'botten' : ''), n + ', plats ' + (j + 1)));
+      }
+      farger.forEach(function (f, k) {
+        m.appendChild(cell('n' + i + 'f' + f, (k === 3 ? 'grans ' : '') + (i === 0 ? 'topp ' : '') + (i === 3 ? 'botten' : ''), n + ', ' + BAND_FARG[f].namn.toLowerCase() + ' band'));
+      });
+    });
+    farger.forEach(function (f, k) {
+      var rn = el('div', 'rad-namn');
+      rn.appendChild(prick(f));
+      m.appendChild(rn);
+      for (var j = 0; j < 4; j++) {
+        m.appendChild(cell('f' + f + 'p' + j, (j === 0 ? 'forst ' : '') + (j === 3 ? 'grans ' : '') + (k === 3 ? 'botten' : ''), BAND_FARG[f].namn + ' band, plats ' + (j + 1)));
+      }
+      m.appendChild(el('div', 'tomrum'));
+    });
+    blad.appendChild(m);
+    var sudda = el('button', 'sudda', 'Sudda allt');
+    sudda.type = 'button';
+    sudda.addEventListener('click', function () { s.matris = {}; spara(); ritaAnteckningar(skap, namn, farger); });
+    blad.appendChild(sudda);
+    ruta.appendChild(blad);
+  }
+
   function ritaAkt3(inne, scen) {
     inne.parentNode.classList.add('hog');
     scen.classList.add('paketscen');
@@ -1970,6 +2060,7 @@
         var roll = Math.max(0, minRoll(lag));
         (g.bitar[roll] || []).forEach(function (rad) { bit.appendChild(el('p', null, rad)); });
         scen.appendChild(bit);
+        ritaAnteckningar(inne.parentNode, namn, farger);
 
         var fel = roterande([
           ['pyssel', 'Nej, nej, det var inte så!'],
@@ -2008,6 +2099,8 @@
   // Det som syns inne i skåpet.
   function ritaInne(inne) {
     inne.textContent = '';
+    var bok = inne.parentNode.parentNode && inne.parentNode.parentNode.querySelector('.anteckningar');
+    if (bok) bok.remove();
     var scen = el('div', 'scen');
     inne.appendChild(scen);
 
