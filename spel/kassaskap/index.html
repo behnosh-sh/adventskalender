@@ -307,6 +307,10 @@
   .smadorr.gron .handtag { right: auto; left: 6px; }
   .smadorr.gron .fylling { left: 24px; right: 10px; }
   .smadorr.gron.oppen { transform: rotateY(100deg); }
+  /* Trassels dörr har gångjärnet till höger, så den glider upp åt andra hållet. */
+  .smadorr.gron.glant { transform: rotateY(24deg); box-shadow: -10px 0 18px -4px rgba(255,214,107,.55), 0 4px 0 rgba(0,0,0,.35); animation-name: glant-h; }
+  .smadorr.gron.glant.oppen { transform: rotateY(100deg); animation: none; }
+  @keyframes glant-h { 50% { transform: rotateY(32deg); box-shadow: -14px 0 22px -2px rgba(255,214,107,.7), 0 4px 0 rgba(0,0,0,.35); } }
   .lampor { display: flex; gap: 6px; }
   .liten-lampa { width: 14px; height: 14px; border-radius: 50%; background: #11151C; box-shadow: inset 0 2px 3px rgba(0,0,0,.6), 0 0 0 1.5px rgba(255,255,255,.18); transition: background .2s, box-shadow .2s; }
   .liten-lampa.tand { box-shadow: 0 0 8px currentColor, 0 0 14px currentColor; }
@@ -1358,9 +1362,23 @@
       }
       farglas(lag);
     }
+    // Rätt färgkod låser upp: dörren glider upp på glänt, precis som Pyssels. Ett tryck öppnar den helt.
     function oppnaTrassel() {
+      if (!s.trasselOppen) {
+        gron.dorr.classList.add('glant');
+        gron.oppnas(function () {
+          if (s.trasselOppen) return;
+          s.trasselOppen = true;
+          spara();
+          oppnaTrassel();
+        }, 'Trassels dörr, på glänt. Tryck för att öppna.');
+        return;
+      }
       gron.dorr.classList.add('oppen');
-      gron.oppnas(null, null);
+      gron.dorr.removeAttribute('role');
+      gron.dorr.tabIndex = -1;
+      gron.dorr.setAttribute('aria-hidden', 'true');
+      gron.bakom.removeAttribute('aria-hidden');
       gron.bakom.disabled = false;
       gron.bakom.setAttribute('aria-label', 'Trassels brev');
       gron.bakom.addEventListener('click', function () { hamtaLag().then(function (lag) { oppnaBrev(inne, lag, minRoll(lag)); }); });
@@ -2339,7 +2357,7 @@
       oppna.addEventListener('click', function () { s.fargKlar = true; s.vy = null; s.sett.akt2 = s.sett.lag = true; spara(); rita(); });
       var stang = el('button', null, 'Stäng och töm brevet');
       stang.type = 'button';
-      stang.addEventListener('click', function () { s.fargKlar = false; s.brevSvar = {}; s.brevSida = 0; s.nyckelSida = 0; s.vy = null; s.sett.brev = false; spara(); rita(); });
+      stang.addEventListener('click', function () { s.fargKlar = false; s.trasselOppen = false; s.brevSvar = {}; s.brevSida = 0; s.nyckelSida = 0; s.vy = null; s.sett.brev = false; spara(); rita(); });
       trRad.appendChild(oppna);
       trRad.appendChild(stang);
       ex.appendChild(trRad);
