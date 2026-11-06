@@ -446,6 +446,13 @@
   .figur.tyst { opacity: .4; transform: scale(.88); }
   .figur.tomten { border-color: #E5484D; animation: upp .3s ease-out; }
   .prat .vanster { flex: none; display: flex; flex-direction: column; gap: 6px; }
+  /* Barnbarnen tittar fram i nederkanten när det finns en knuff att få. */
+  .tittar { position: absolute; left: 0; right: 0; bottom: 0; height: 0; z-index: 4; }
+  .titta { position: absolute; bottom: -14px; width: 52px; height: 52px; padding: 0; border-radius: 50%; border: 3px solid; background: #14233F; font-size: 28px; line-height: 1; display: grid; place-items: center; cursor: pointer; box-shadow: 0 0 14px rgba(255,214,107,.45); animation: titta 2.6s ease-in-out infinite; }
+  .titta.pyssel { left: 12px; border-color: #B58CFF; }
+  .titta.trassel { right: 12px; border-color: #6FD49A; animation-delay: .6s; }
+  @keyframes titta { 0%, 100% { transform: translateY(16px) rotate(-6deg); } 35%, 65% { transform: translateY(-4px) rotate(4deg); } }
+  .paketplats.pekad .ask svg { filter: drop-shadow(0 0 6px #FFD66B) drop-shadow(0 0 12px #FFD66B); }
   .figur.pyssel { border-color: #B58CFF; }
   .figur.trassel { border-color: #6FD49A; }
   /* Bubblan har den pratandes färg och en liten pil mot den som pratar. */
@@ -573,8 +580,11 @@
       },
       // Tomtens paket: plats 1 till 4 från vänster, 'namn:bandfärg'. bitar = listbiten på telefon {A}, {B}, {C}, {D} (tre ledtrådar var).
       // Kontrollerat med kodlaset/sok.py: exakt en lösning, och varje bit behövs.
+      // Gåtans knuffar: ledtråd, tydligare ledtråd, antal bokstäver och första bokstaven.
+      gataKnuffar: ['Det är en gåta. Vad har nålar men syr aldrig?', 'Den står i stugan i december.', 'Svaret har fyra bokstäver och börjar på G.'],
       paket: {
         svar: 'Daniel:rod Josefin:guld Behnosh:bla Joel:gron',
+        pekar: [[1, 'Josefin', 'guld'], [3, 'Joel', 'gron']],   // knuff 2 och 3: [plats, namn, band]
         bitar: [
           ['Det röda bandet sitter i en kant.', 'Behnoshs paket har inte rött band.', 'Det blå bandet sitter inte på Joels paket.'],
           ['Paketet med guldband står bredvid Daniels paket.', 'Josefins paket har inte blått band.', 'Joels paket har inte rött band.'],
@@ -583,7 +593,7 @@
         ]
       }
     },
-    riktig: { kod: null, ord: null, siffror: null, gran: null, brev: null, paket: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
+    riktig: { kod: null, ord: null, siffror: null, gran: null, brev: null, gataKnuffar: null, paket: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
   };
 
   // ===== Tillstånd =====
@@ -678,6 +688,60 @@
     yta.appendChild(ruta);
     pratRuta = ruta;
     setTimeout(function () { if (pratRuta === ruta) { ruta.remove(); pratRuta = null; } }, 2600);
+  }
+
+  // ===== Knuffar (om man fastnar) =====
+  // Efter en stund utan att steget är klart, eller efter 5 fel, tittar ett barnbarn fram i skåpets nederkant.
+  // Tryck = nästa knuff. Tiden räknas från när steget började eller från förra knuffen, och sparas.
+  // k: { vem: 'pyssel' | 'trassel' | 'bada', forsta: minuter, mellan: minuter, nivaer: [replik eller funktion], klar: funktion }
+  var KNUFF_MIN = 60000, KNUFF_FEL = 5;
+  var knuffKoll = null, aktivKnuff = null;
+  function stoppaKnuff() {
+    clearInterval(knuffKoll);
+    knuffKoll = null;
+    if (aktivKnuff && aktivKnuff.fig) aktivKnuff.fig.remove();
+    aktivKnuff = null;
+  }
+  function knuff(inne, id, k) {
+    stoppaKnuff();
+    k.nivaer = k.nivaer.filter(Boolean);
+    if (!k.nivaer.length) return;
+    if (!s.knuff) s.knuff = {};
+    if (!s.knuff[id]) { s.knuff[id] = { niva: 0, sedan: Date.now(), fel: 0 }; spara(); }
+    var a = aktivKnuff = { id: id, fig: null };
+    function koll() {
+      var st = s.knuff && s.knuff[id];
+      if (aktivKnuff !== a || !inne.isConnected || !st) { if (aktivKnuff === a) stoppaKnuff(); return; }
+      if (st.niva >= k.nivaer.length || (k.klar && k.klar())) { if (a.fig) { a.fig.remove(); a.fig = null; } return; }
+      if (a.fig) return;
+      if (Date.now() - st.sedan < (st.niva === 0 ? k.forsta : k.mellan) * KNUFF_MIN && st.fel < KNUFF_FEL) return;
+      var fig = a.fig = el('div', 'tittar');
+      (k.vem === 'bada' ? ['pyssel', 'trassel'] : [k.vem]).forEach(function (vem) {
+        var b = el('button', 'titta ' + vem, FIGURER[vem].emoji);
+        b.type = 'button';
+        b.setAttribute('aria-label', FIGURER[vem].namn + ' tittar fram. Tryck för en knuff.');
+        b.addEventListener('click', function () {
+          var n = st.niva;
+          fig.remove();
+          a.fig = null;
+          st.niva++;
+          st.sedan = Date.now();
+          st.fel = 0;
+          spara();
+          var steg = k.nivaer[n];
+          var rep = typeof steg === 'function' ? steg() : steg;
+          if (rep) prata(inne, Array.isArray(rep[0]) ? rep : [rep]);
+        });
+        fig.appendChild(b);
+      });
+      inne.appendChild(fig);
+    }
+    koll();
+    knuffKoll = setInterval(koll, 1000);
+  }
+  function knuffFel() {
+    var st = aktivKnuff && s.knuff && s.knuff[aktivKnuff.id];
+    if (st) { st.fel++; spara(); }
   }
 
   // Fel-repliker byts för varje fel och börjar om när de är slut.
@@ -1392,9 +1456,19 @@
         oppnaTrassel();
         if (s.vy === 'brev') { oppnaBrev(inne, lag, roll); return; }
         under.appendChild(gataFalt(inne));
+        brevKnuff(inne, lag, roll);
         return;
       }
       farglas(lag);
+      knuff(inne, 'farg', {
+        vem: 'pyssel', forsta: 3, mellan: 3,
+        klar: function () { return s.fargKlar; },
+        nivaer: [
+          ['pyssel', 'Min gran är inte bara snygg, vet ni.'],
+          ['pyssel', lagText('När granen är rätt pyntad lyser den. Titta på {B}s telefon.', lag)],
+          ['pyssel', 'Fyra färger, en i taget, i den ordning de lyser.']
+        ]
+      });
     }
     // Rätt färgkod låser upp: dörren glider upp på glänt, precis som Pyssels. Ett tryck öppnar den helt.
     function oppnaTrassel() {
@@ -1472,6 +1546,7 @@
             spara();
             visaVanta();
             skaka(gron.dorr);
+            knuffFel();
             kommentar(inne, 'pyssel', fel());
           }, 450);
         });
@@ -1550,6 +1625,7 @@
         });
         return true;
       }
+      knuffFel();
       kommentar(inne, 'trassel', trassel());
       return false;
     });
@@ -1594,6 +1670,7 @@
       scen.appendChild(el('p', 'platshallare', 'Ni andra får bara titta på.'));
     }
     scen.appendChild(gataFalt(inne));
+    brevKnuff(inne, lag, roll);
 
     if (s.sett.brev) return;
     prata(inne, [
@@ -1601,6 +1678,48 @@
       ['pyssel', 'Han har fortfarande inte knäckt det.'],
       ['trassel', lagText('{C}, du har brevet. {D}, du har nyckeln. Ni får läsa upp för varandra, men ingen visar sin skärm.', lag)]
     ], function () { s.sett.brev = true; spara(); });
+  }
+
+  // Knuffar bakom Trassels dörr. {C} och {D} får först hjälp med brevet och sedan med gåtan,
+  // de andra får bara gåtans knuffar (de kommer senare, eftersom brevet tar en stund).
+  var LIKNAR = [['A', 'M'], ['E', 'P'], ['N', 'V'], ['R', 'U'], ['S', 'Ä']];
+  function brevKnuff(inne, lag, roll) {
+    var text = svar().brev, gk = svar().gataKnuffar || [];
+    if (!text) return;
+    var gata = gk.map(function (t) { return ['trassel', t]; });
+    if (roll !== 2 && roll !== 3) { knuff(inne, 'gata', { vem: 'trassel', forsta: 6, mellan: 3, nivaer: gata }); return; }
+    var ord = text.split(' ');
+    knuff(inne, 'brev', {
+      vem: 'trassel', forsta: 3, mellan: 3,
+      nivaer: [
+        ['trassel', lagText('Ni behöver inte gissa. {D}, bläddra och läs symbolerna för {C}.', lag)],
+        function () {
+          var par = LIKNAR.filter(function (p) { return text.indexOf(p[0]) !== -1 || text.indexOf(p[1]) !== -1; })[0];
+          if (!par) return ['trassel', 'Varje symbol är en bokstav. Samma symbol, samma bokstav.'];
+          var x = text.indexOf(par[0]) !== -1 ? par[0] : par[1], y = x === par[0] ? par[1] : par[0];
+          return ['trassel', KOD_TECKEN[x] + ' betyder ' + x + '. Och ' + KOD_TECKEN[y] + ' är inte samma sak, kolla noga.'];
+        },
+        function () {
+          // Ett ord fylls i: det första som inte stämmer på brevets telefon.
+          var pos = 0, nr = 0;
+          if (roll === 2) {
+            if (!s.brevSvar) s.brevSvar = {};
+            for (var i = 0; i < ord.length; i++) {
+              var b = Array.from(ord[i]);
+              var ratt = b.every(function (c, j) { return !KOD_TECKEN[c] || s.brevSvar[pos + j] === c; });
+              if (!ratt) { nr = i; break; }
+              pos += b.length;
+              if (i === ord.length - 1) { nr = 0; pos = 0; }
+            }
+            Array.from(ord[nr]).forEach(function (c, j) { if (KOD_TECKEN[c]) s.brevSvar[pos + j] = c; });
+            s.brevSida = nr;
+            spara();
+            oppnaBrev(inne, lag, roll);
+          }
+          return ['trassel', 'Okej då. Ord ' + (nr + 1) + ' är ' + ord[nr] + '.'];
+        }
+      ].concat(gata)
+    });
   }
 
   // Bläddrar med ‹ och ›. sida(n) ritar sida n i ruta. Sidan sparas i s[nyckel].
@@ -1727,6 +1846,22 @@
     }
     // Granen syns direkt, barnbarnen pratar framför den första gången.
     visa();
+    if (g) knuff(inne, 'gran', {
+      vem: 'pyssel', forsta: 3, mellan: 3,
+      klar: function () { return s.granKlar; },
+      nivaer: [
+        ['pyssel', lagText('{A}, beskriv granen rad för rad, uppifrån. {B}, fråga om allt du är osäker på.', lag)],
+        ['pyssel', 'Både formen och färgen måste stämma. En röd kula är inte en röd stjärna.'],
+        function () {
+          if (roll === 1 && s.gran) {
+            var fel = s.gran.filter(function (p, j) { return p !== g.pynt[j]; }).length;
+            return ['pyssel', fel === 1 ? 'En plats är fel just nu. Bara en!' : fel + ' platser är fel just nu.'];
+          }
+          var antal = g.pynt.filter(Boolean).length;
+          return ['pyssel', lagText('Granen har ' + antal + ' saker. Räkna dem tillsammans med {B}.', lag)];
+        }
+      ]
+    });
     if (s.sett.gran) return;
     prata(inne, [
       ['pyssel', 'Morfars gran var så tråkig att vi pyntade om den. Sen ångrade vi oss och rev av allt.'],
@@ -2120,18 +2255,37 @@
           spara();
           skaka(hylla);
           var f = fel();
+          knuffFel();
           kommentar(inne, f[0], f[1]);
           uppdatera();
           startaTimer();
         });
         uppdatera();
         startaTimer();
+        pekade();
+        knuff(inne, 'paket', {
+          vem: 'bada', forsta: 10, mellan: 5,
+          nivaer: [['pyssel', 'Börja med det som är säkert. Vem står i en kant?']].concat((g.pekar || []).map(function (p) {
+            return function () {
+              s.paket[p[0]] = { n: p[1], f: p[2] };
+              s.paketPekat = (s.paketPekat || []).concat([p[0]]);
+              spara();
+              ritaInne(inne);
+              return ['trassel', 'Psst. Det där paketet som lyser står rätt. Vi lovar.'];
+            };
+          }))
+        });
+        // Paket som barnbarnen har pekat ut lyser, så att man ser vilka som är säkra.
+        function pekade() {
+          (s.paketPekat || []).forEach(function (i) { var pl = hylla.children[i]; if (pl) pl.classList.add('pekad'); });
+        }
       });
     }
   }
 
   // Det som syns inne i skåpet.
   function ritaInne(inne) {
+    stoppaKnuff();
     inne.textContent = '';
     inne.parentNode.classList.remove('akt3');
     var scen = el('div', 'scen');
@@ -2400,6 +2554,21 @@
   }
 
   // ===== Testläget =====
+  // Knuff nu: barnbarnet tittar fram direkt i steget man står i, i stället för att man väntar.
+  function knuffRad() {
+    var rad = el('div', 'hopp');
+    rad.style.marginTop = '8px';
+    rad.appendChild(el('span', null, 'Knuffar:'));
+    var nu = el('button', null, 'Knuff nu');
+    nu.type = 'button';
+    nu.addEventListener('click', function () { var st = aktivKnuff && s.knuff && s.knuff[aktivKnuff.id]; if (st) { st.sedan = 0; spara(); } });
+    var noll = el('button', null, 'Nollställ knuffarna');
+    noll.type = 'button';
+    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; spara(); rita(); });
+    rad.appendChild(nu);
+    rad.appendChild(noll);
+    return rad;
+  }
   function ritaTest() {
     $('testmarke').hidden = !test;
     $('testruta').hidden = !test;
@@ -2446,10 +2615,11 @@
       });
       var tom = el('button', null, 'Töm hyllan');
       tom.type = 'button';
-      tom.addEventListener('click', function () { s.paket = null; s.paketLastTill = 0; spara(); rita(); });
+      tom.addEventListener('click', function () { s.paket = null; s.paketPekat = null; s.paketLastTill = 0; spara(); rita(); });
       pRad.appendChild(stall);
       pRad.appendChild(tom);
       ex.appendChild(pRad);
+      ex.appendChild(knuffRad());
       return;
     }
     if (s.steg === 'akt2') {
@@ -2487,6 +2657,7 @@
       trRad.appendChild(oppna);
       trRad.appendChild(stang);
       ex.appendChild(trRad);
+      ex.appendChild(knuffRad());
       return;
     }
     if (s.steg === 'las') {
@@ -2534,6 +2705,7 @@
     pratRuta = null;
     stoppaFraga();
     stoppaBlink();
+    stoppaKnuff();
     if (s.steg === 'kuvert') ritaKuvert(yta);
     else ritaSkap(yta);
     ritaTest();
