@@ -263,10 +263,19 @@
   .listbit p { margin: 0 0 6px; }
   .listbit p:last-child { margin: 0; }
   /* Anteckningsboken under skåpet: en matris som i logikpussel, man fyller i själv. */
-  .anteckningar { max-width: 420px; margin: 0 auto 16px; }
-  .anteckningar > .knapp { width: auto; display: block; margin: 0 auto; }
-  .matrisblad { margin-top: 10px; padding: 12px 10px 14px; border-radius: 6px 12px 12px 6px; background: #FBF6EC; color: #3A2F25; box-shadow: inset 8px 0 0 #8A5A3B, 0 4px 0 rgba(0,0,0,.35); }
-  .matris { display: grid; grid-template-columns: 62px repeat(8, minmax(0, 1fr)); max-width: 360px; margin: 0 auto; padding-left: 6px; }
+  /* I akt 3 växer skåpet med innehållet, så att inget tomrum blir kvar och journalen ligger längst ner. */
+  .skap.akt3 { aspect-ratio: auto; height: auto; }
+  .skap.akt3 .inne { position: relative; inset: auto; margin: 14px; min-height: 380px; }
+  .skap.akt3 .scen { position: relative; inset: auto; padding-bottom: 18px; }
+  .anteckningar { width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
+  .liten-journal { width: 132px; height: 84px; padding: 0 0 0 16px; border: 0; border-radius: 5px 12px 12px 5px; cursor: pointer; position: relative;
+    background: linear-gradient(90deg, #4E3828, #6B4E3A 14%, #6B4E3A); box-shadow: 0 4px 0 rgba(0,0,0,.35), inset -3px 0 0 rgba(0,0,0,.18); transform: rotate(-3deg); }
+  .liten-journal::before { content: ''; position: absolute; left: 7px; top: 9px; bottom: 9px; width: 3px; background: repeating-linear-gradient(to bottom, #E8D9BF 0 6px, transparent 6px 12px); }
+  .liten-journal .etikett { display: inline-block; padding: 4px 10px; border-radius: 3px; background: #FBF6EC; color: #3A2F25; font: 700 18px/1 Caveat, "Segoe Print", cursive; }
+  .anteckningar.oppen { padding: 9px 9px 9px 22px; border-radius: 6px 14px 14px 6px; box-sizing: border-box; background: linear-gradient(90deg, #4E3828, #6B4E3A 14%, #6B4E3A); box-shadow: 0 4px 0 rgba(0,0,0,.35); }
+  .anteckningar .stang { position: absolute; top: 2px; right: 4px; z-index: 1; width: 30px; height: 30px; border: 0; border-radius: 50%; background: #6B4E3A; color: #FBF6EC; font-size: 22px; line-height: 1; cursor: pointer; }
+  .matrisblad { width: 100%; box-sizing: border-box; padding: 26px 6px 12px; border-radius: 3px 8px 8px 3px; background: #FBF6EC; color: #3A2F25; }
+  .matris { display: grid; grid-template-columns: 58px repeat(8, minmax(0, 1fr)); max-width: 360px; margin: 0 auto; }
   .matris .rubrik { font: 700 13px/1 inherit; text-align: center; color: #7A6A55; padding: 0 0 4px; }
   .matris .huvud { display: flex; align-items: center; justify-content: center; height: 26px; font-weight: 700; font-size: 14px; }
   .matris .rad-namn { display: flex; align-items: center; font-size: 13px; font-weight: 600; padding-right: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1923,18 +1932,26 @@
   }
   // Anteckningsboken: namn mot plats och band, och band mot plats. Tryck = ✕, igen = ✓, igen = ?, igen = tomt.
   // Inget fylls i automatiskt. Varje telefon har sin egen, och den sparas.
-  function ritaAnteckningar(skap, namn, farger) {
-    var gammal = skap.parentNode.querySelector('.anteckningar');
-    if (gammal) gammal.remove();
+  // Den ligger som en liten journal längst ner i skåpet. Tryck = den öppnas, × = den stängs.
+  function ritaAnteckningar(scen, namn, farger, gammal) {
     if (!s.matris) s.matris = {};
-    var ruta = el('div', 'anteckningar');
-    var knapp = el('button', 'knapp', s.matrisOppen ? '📓 Stäng anteckningarna' : '📓 Anteckningar');
-    knapp.type = 'button';
-    knapp.setAttribute('aria-expanded', s.matrisOppen ? 'true' : 'false');
-    knapp.addEventListener('click', function () { s.matrisOppen = !s.matrisOppen; spara(); ritaAnteckningar(skap, namn, farger); });
-    ruta.appendChild(knapp);
-    skap.parentNode.insertBefore(ruta, skap.nextSibling);
-    if (!s.matrisOppen) return;
+    var ruta = el('div', 'anteckningar' + (s.matrisOppen ? ' oppen' : ''));
+    if (gammal) scen.replaceChild(ruta, gammal); else scen.appendChild(ruta);
+    function vaxla() { s.matrisOppen = !s.matrisOppen; spara(); ritaAnteckningar(scen, namn, farger, ruta); }
+    if (!s.matrisOppen) {
+      var bok = el('button', 'liten-journal');
+      bok.type = 'button';
+      bok.setAttribute('aria-label', 'Anteckningar, tryck för att öppna');
+      bok.appendChild(el('span', 'etikett', 'Anteckningar'));
+      bok.addEventListener('click', vaxla);
+      ruta.appendChild(bok);
+      return;
+    }
+    var stang = el('button', 'stang', '×');
+    stang.type = 'button';
+    stang.setAttribute('aria-label', 'Stäng anteckningarna');
+    stang.addEventListener('click', vaxla);
+    ruta.appendChild(stang);
 
     var blad = el('div', 'matrisblad');
     var m = el('div', 'matris');
@@ -1989,13 +2006,13 @@
     blad.appendChild(m);
     var sudda = el('button', 'sudda', 'Sudda allt');
     sudda.type = 'button';
-    sudda.addEventListener('click', function () { s.matris = {}; spara(); ritaAnteckningar(skap, namn, farger); });
+    sudda.addEventListener('click', function () { s.matris = {}; spara(); ritaAnteckningar(scen, namn, farger, ruta); });
     blad.appendChild(sudda);
     ruta.appendChild(blad);
   }
 
   function ritaAkt3(inne, scen) {
-    inne.parentNode.classList.add('hog');
+    inne.parentNode.classList.add('akt3');
     scen.classList.add('paketscen');
     var g = svar().paket;
     var hylla = el('div', 'pakethylla');
@@ -2062,7 +2079,7 @@
         var roll = Math.max(0, minRoll(lag));
         (g.bitar[roll] || []).forEach(function (rad) { bit.appendChild(el('p', null, rad)); });
         scen.appendChild(bit);
-        ritaAnteckningar(inne.parentNode, namn, farger);
+        ritaAnteckningar(scen, namn, farger);
 
         var fel = roterande([
           ['pyssel', 'Nej, nej, det var inte så!'],
@@ -2101,8 +2118,7 @@
   // Det som syns inne i skåpet.
   function ritaInne(inne) {
     inne.textContent = '';
-    var bok = inne.parentNode.parentNode && inne.parentNode.parentNode.querySelector('.anteckningar');
-    if (bok) bok.remove();
+    inne.parentNode.classList.remove('akt3');
     var scen = el('div', 'scen');
     inne.appendChild(scen);
 
