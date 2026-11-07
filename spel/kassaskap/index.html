@@ -2060,7 +2060,12 @@
         var tips = ['Min gran är inte bara snygg, vet ni. Titta noga på den.', 'Den blinkar i fyra färger, en i taget. Säg dem högt för de andra.'];
         var n = Math.min(s.fargTips || 0, tips.length);
         function nasta() { s.fargTips = n + 1; spara(); ritaHjalp(); }
-        if (n === 0) return visaHjalp(hjalp, 'pyssel', 'Granen är klar! Fastnat?', [['Ge ett tips', nasta]]);
+        if (n === 0) {
+          // Frågan dyker upp först 10 sekunder efter att granen blev klar.
+          var vanta = (s.granKlarTid || 0) + 10000 - Date.now();
+          if (vanta > 0) { hjalp.textContent = ''; setTimeout(function () { if (hjalp.isConnected) ritaHjalp(); }, vanta + 50); return; }
+          return visaHjalp(hjalp, 'pyssel', 'Fastnat?', [['Ge ett tips', nasta]]);
+        }
         return visaHjalp(hjalp, 'pyssel', tips[n - 1], n < tips.length ? [['Ett tips till', nasta]] : []);
       }
       var j = s.granHjalp;
@@ -2105,6 +2110,7 @@
 
     function blevKlar() {
       s.granKlar = true;
+      s.granKlarTid = Date.now();
       s.granHjalp = null;
       spara();
       ritaHjalp();
