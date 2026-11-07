@@ -1807,7 +1807,7 @@
       scen.querySelectorAll('.kodbrev .tecken').forEach(function (tk) { tk.classList.toggle('fel-blink', j != null && +tk.dataset.pos === j); });
       function fixa() { s.brevSvar[j] = platt[j]; spara(); oppnaBrev(inne, lag, roll); }
       if (Date.now() < brevSnyggt) return visaHjalp(horn, 'trassel', 'Snyggt!');
-      if (j == null && forstaFel() < 0) return gataHjalp(horn, rita, 'Brevet stämmer.');
+      if (j == null && forstaFel() < 0) return gataHjalp(horn, rita);
       if (j == null) {
         return visaHjalp(horn, 'trassel', 'Behöver ni hjälp?', [['Visa ett fel', function () {
           var f = forstaFel();
@@ -1829,14 +1829,16 @@
     }
     return rita;
   }
-  // Gåtans ledtrådar, en i taget när man trycker. Sist kan man få se svaret.
-  function gataHjalp(horn, rita, forst) {
+  // Gåtans ledtrådar, en i taget när man trycker. Först bara "Fastnat?",
+  // sen att brevet stämmer och om de vill ha tips. Sist kan man få se svaret.
+  function gataHjalp(horn, rita) {
     var gk = svar().gataKnuffar || [], n = s.gataLedtrad || 0;
     if (!svar().ord) { horn.textContent = ''; return; }
     function nasta() { s.gataLedtrad = n + 1; spara(); rita(); }
-    if (n > gk.length) return visaHjalp(horn, 'trassel', 'Svaret är ' + svar().ord + '.');
-    if (n === 0) return visaHjalp(horn, 'trassel', (forst ? forst + ' ' : '') + 'Fastnat på gåtan?', [[gk.length ? 'Ge ett tips' : 'Visa svaret', nasta]]);
-    visaHjalp(horn, 'trassel', gk[n - 1], [[n < gk.length ? 'Ett tips till' : 'Visa svaret', nasta]]);
+    if (n === 0) return visaHjalp(horn, 'trassel', 'Fastnat?', [['Ja', nasta]]);
+    if (n === 1) return visaHjalp(horn, 'trassel', 'Brevet stämmer. Vill ni ha ett tips om gåtan?', [[gk.length ? 'Ge ett tips' : 'Visa svaret', nasta]]);
+    if (n > gk.length + 1) return visaHjalp(horn, 'trassel', 'Svaret är ' + svar().ord + '.');
+    visaHjalp(horn, 'trassel', gk[n - 2], [[n - 1 < gk.length ? 'Ett tips till' : 'Visa svaret', nasta]]);
   }
 
   // Bläddrar med ‹ och ›. sida(n) ritar sida n i ruta. Sidan sparas i s[nyckel].
