@@ -258,7 +258,7 @@
   .paketplats .ask { width: 100%; max-width: 72px; padding: 0; border: 0; background: none; cursor: pointer; }
   .paketplats .ask svg { display: block; width: 100%; height: auto; }
   .paketplats .ask:focus-visible { outline: 2px solid #FFD66B; outline-offset: 2px; border-radius: 6px; }
-  .namnlapp { min-width: 64px; max-width: 100%; padding: 5px 4px; border-radius: 6px; border: 1px solid #D8C8A8; background: #FBF6EC; color: #3A3127; font: 600 13px/1.1 inherit; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .namnlapp { min-width: 64px; max-width: 100%; padding: 5px 4px; border-radius: 6px; border: 1px solid #D8C8A8; background: #FBF6EC; color: #3A3127; font: 600 13px/1.1 var(--text-typsnitt); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .namnlapp.tom { color: #A89A84; }
   .listbit {
     width: 100%; max-width: 300px; box-sizing: border-box; padding: 16px 16px 20px; text-align: left;
@@ -282,7 +282,7 @@
   .anteckningar .stang { position: absolute; top: 2px; right: 4px; z-index: 1; width: 30px; height: 30px; border: 0; border-radius: 50%; background: #6B4E3A; color: #FBF6EC; font-size: 22px; line-height: 1; cursor: pointer; }
   .matrisblad { width: 100%; box-sizing: border-box; padding: 26px 6px 12px; border-radius: 3px 8px 8px 3px; background: #FBF6EC; color: #3A2F25; }
   .matris { display: grid; grid-template-columns: 58px repeat(8, minmax(0, 1fr)); max-width: 360px; margin: 0 auto; }
-  .matris .rubrik { font: 700 13px/1 inherit; text-align: center; color: #7A6A55; padding: 0 0 4px; }
+  .matris .rubrik { font: 700 13px/1 var(--text-typsnitt); text-align: center; color: #7A6A55; padding: 0 0 4px; }
   .matris .huvud { display: flex; align-items: center; justify-content: center; height: 26px; font-weight: 700; font-size: 14px; }
   .matris .rad-namn { display: flex; align-items: center; font-size: 13px; font-weight: 600; padding-right: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .matris .prick { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.25); }
@@ -295,7 +295,7 @@
   .matris .cell.nej { color: #A92D33; }
   .matris .cell.kanske { color: #B98A1E; }
   .matris .tomrum { grid-column: span 4; }
-  .matrisblad .sudda { display: block; margin: 12px auto 0; padding: 6px 14px; border-radius: 999px; border: 1px solid #CDBFA6; background: none; color: #7A6A55; font: 600 13px/1 inherit; cursor: pointer; }
+  .matrisblad .sudda { display: block; margin: 12px auto 0; padding: 6px 14px; border-radius: 999px; border: 1px solid #CDBFA6; background: none; color: #7A6A55; font: 600 13px/1 var(--text-typsnitt); cursor: pointer; }
   .platshallare { margin: 0; font-size: 14px; color: var(--himmel-dampad); }
 
   /* ===== Akt 2: Pyssels dörr och granen ===== */
@@ -452,6 +452,13 @@
   .titta.pyssel { left: 12px; border-color: #B58CFF; }
   .titta.trassel { right: 12px; border-color: #6FD49A; animation-delay: .6s; }
   @keyframes titta { 0%, 100% { transform: translateY(16px) rotate(-6deg); } 35%, 65% { transform: translateY(-4px) rotate(4deg); } }
+  .titta-fraga { position: absolute; left: 72px; bottom: 14px; max-width: 200px; padding: 8px 12px; border: 0; border-radius: 14px 14px 14px 4px; background: #EADFFF; color: #2A2233; font: 600 14px/1.25 var(--text-typsnitt); text-align: left; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.3); animation: upp .3s ease-out; }
+  /* Vid granen står Pyssel uppe i högra hörnet, bredvid ← Dörrarna, så att hon inte skymmer lådan. */
+  .tittar.granhjalp { top: 8px; right: 8px; bottom: auto; left: auto; height: auto; display: flex; flex-direction: row-reverse; align-items: center; gap: 6px; }
+  .granhjalp .titta { position: static; width: 42px; height: 42px; font-size: 23px; animation: none; }
+  .granhjalp .titta-fraga { position: static; max-width: 122px; padding: 7px 10px; font-size: 13px; border-radius: 14px 4px 14px 14px; }
+  .gran-svg .plats.fel-blink circle:first-child { fill: rgba(229,72,77,.3); stroke: #FF6B6B; stroke-width: 3; animation: felblink 1s ease-in-out infinite; }
+  @keyframes felblink { 50% { fill: rgba(229,72,77,.05); stroke-opacity: .2; } }
   .paketplats.pekad .ask svg { filter: drop-shadow(0 0 6px #FFD66B) drop-shadow(0 0 12px #FFD66B); }
   .figur.pyssel { border-color: #B58CFF; }
   .figur.trassel { border-color: #6FD49A; }
@@ -1846,8 +1853,9 @@
     }
     // Granen syns direkt, barnbarnen pratar framför den första gången.
     visa();
-    if (g) knuff(inne, 'gran', {
-      vem: 'pyssel', forsta: 3, mellan: 3,
+    // Pyntaren har Pyssels hjälp direkt (se pynta). Den som ser den hemliga granen får knuffar i text.
+    if (g && roll === 0) knuff(inne, 'gran', {
+      vem: 'pyssel', forsta: 1, mellan: 1,
       klar: function () { return s.granKlar; },
       nivaer: [
         ['pyssel', lagText('{A}, beskriv granen rad för rad, uppifrån. {B}, fråga om allt du är osäker på.', lag)],
@@ -1884,6 +1892,7 @@
       gran.satt(i, s.gran[i]);
       spara();
       if (stammerGranen()) blevKlar();
+      ritaHjalp();
     });
     gran.setAttribute('aria-label', 'Granen du pyntar');
     scen.appendChild(gran);
@@ -1927,9 +1936,69 @@
       gran.classList.add('las');
       startaBlink(gran, g.blink);
     }
+    // Pyssels hjälp: hon står framme hela tiden och frågar om man vill ha en ledtråd.
+    // 1) en plats som är fel blinkar, 2) hon säger vad som är fel, 3) hon fixar den. Blir platsen rätt slutar den blinka.
+    var hjalp = el('div', 'tittar granhjalp');
+    inne.appendChild(hjalp);
+    function forstaFel() { for (var j = 0; j < g.pynt.length; j++) if (s.gran[j] !== g.pynt[j]) return j; return -1; }
+    function vadArFel(j) {
+      var nu = s.gran[j], ratt = g.pynt[j];
+      if (!ratt) return 'Den ska vara tom.';
+      if (!nu) return 'Här saknas något.';
+      var a = nu.split(':'), b = ratt.split(':');
+      if (a[0] !== b[0] && a[1] !== b[1]) return 'Fel form och fel färg.';
+      return a[0] !== b[0] ? 'Rätt färg, men fel form.' : 'Rätt form, men fel färg.';
+    }
+    function ritaHjalp() {
+      hjalp.textContent = '';
+      gran.querySelectorAll('.plats').forEach(function (pl) { pl.classList.remove('fel-blink'); });
+      if (s.granKlar) return;
+      var j = s.granHjalp;
+      if (j != null && s.gran[j] === g.pynt[j]) { j = s.granHjalp = null; s.granHjalpSteg = 0; spara(); }
+      if (j != null) gran.querySelectorAll('.plats')[j].classList.add('fel-blink');
+      var fraga = j == null ? 'Vill du ha en ledtråd?' : (s.granHjalpSteg ? 'Ska jag fixa den?' : 'Vill du veta vad som är fel?');
+      function tryck() {
+        if (j == null) {
+          var f = forstaFel();
+          if (f < 0) return;
+          s.granHjalp = f;
+          s.granHjalpSteg = 0;
+          spara();
+          ritaHjalp();
+          kommentar(inne, 'pyssel', 'Kolla den här.');
+        } else if (!s.granHjalpSteg) {
+          s.granHjalpSteg = 1;
+          spara();
+          ritaHjalp();
+          kommentar(inne, 'pyssel', vadArFel(j));
+        } else {
+          s.gran[j] = g.pynt[j];
+          gran.satt(j, s.gran[j]);
+          s.granHjalp = null;
+          s.granHjalpSteg = 0;
+          spara();
+          if (stammerGranen()) { blevKlar(); return; }
+          ritaHjalp();
+          kommentar(inne, 'pyssel', 'Så där.');
+        }
+      }
+      var fig = el('button', 'titta pyssel', FIGURER.pyssel.emoji);
+      fig.type = 'button';
+      fig.setAttribute('aria-label', 'Pyssel: ' + fraga);
+      var bubbla = el('button', 'titta-fraga', fraga);
+      bubbla.type = 'button';
+      fig.addEventListener('click', tryck);
+      bubbla.addEventListener('click', tryck);
+      hjalp.appendChild(fig);
+      hjalp.appendChild(bubbla);
+    }
+    ritaHjalp();
+
     function blevKlar() {
       s.granKlar = true;
+      s.granHjalp = null;
       spara();
+      ritaHjalp();
       las();
       prata(inne, [['pyssel', 'Okej, wow. Exakt som vi gjorde den. Kolla vad fint det lyser!']]);
     }
@@ -2641,7 +2710,7 @@
       });
       var rensa = el('button', null, 'Rensa granen');
       rensa.type = 'button';
-      rensa.addEventListener('click', function () { s.gran = null; s.granKlar = false; spara(); rita(); });
+      rensa.addEventListener('click', function () { s.gran = null; s.granKlar = false; s.granHjalp = null; s.granHjalpSteg = 0; spara(); rita(); });
       granRad.appendChild(ratt);
       granRad.appendChild(rensa);
       ex.appendChild(granRad);
