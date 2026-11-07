@@ -389,6 +389,10 @@
   }
   .kodbrev input:focus { outline: 2px solid #E5484D; outline-offset: 1px; }
   .brevscen .falt { margin-top: 4px; }
+  .topprad { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; }
+  .tittar.granhjalp.iflode { position: static; flex-direction: row-reverse; align-items: flex-start; gap: 6px; }
+  .granhjalp.iflode .titta-fraga { max-width: 190px; padding-top: 2px; }
+  .granhjalp.iflode .titta-fraga .val { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; column-gap: 10px; }
   .granscen { justify-content: flex-start; gap: 10px; padding-top: 12px; }
   .granscen .bakat { align-self: flex-start; background: none; border: 0; color: var(--himmel-dampad); font: inherit; font-size: 15px; padding: 4px 2px; cursor: pointer; }
   .hemligt { margin: 0; font-weight: 600; color: #FFD66B; }
@@ -463,6 +467,11 @@
   .granhjalp .titta-fraga .val { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
   .granhjalp .titta-fraga .val button { padding: 2px 0; border: 0; background: none; color: #CDB8FF; text-decoration: underline; text-underline-offset: 2px; font: 600 12px/1.2 var(--text-typsnitt); cursor: pointer; }
   .gran-svg .plats.fel-blink circle:first-child { fill: rgba(229,72,77,.3); stroke: #FF6B6B; stroke-width: 3; animation: felblink 1s ease-in-out infinite; }
+  .kodbrev .tecken.fel-blink input { border-color: #FF6B6B; box-shadow: 0 0 0 3px rgba(229,72,77,.45); animation: felblinkRuta 1s ease-in-out infinite; }
+  @keyframes felblinkRuta { 50% { box-shadow: 0 0 0 3px rgba(229,72,77,.05); } }
+  .granhjalp .titta.trassel { border-color: #6FD49A; }
+  .granhjalp:has(.trassel) .titta-fraga .val button { color: #9BE8BC; }
+  .granhjalp .titta-fraga { max-width: 150px; }
   @keyframes felblink { 50% { fill: rgba(229,72,77,.05); stroke-opacity: .2; } }
   .paketplats.pekad .ask svg { filter: drop-shadow(0 0 6px #FFD66B) drop-shadow(0 0 12px #FFD66B); }
   .figur.pyssel { border-color: #B58CFF; }
@@ -700,6 +709,29 @@
     yta.appendChild(ruta);
     pratRuta = ruta;
     setTimeout(function () { if (pratRuta === ruta) { ruta.remove(); pratRuta = null; } }, 2600);
+  }
+
+  // ===== Hjälpen i högra hörnet =====
+  // En liten figur med kort text under sig, och valen som länkar. val: [[text, funktion], ...]
+  function visaHjalp(horn, vem, text, val) {
+    horn.textContent = '';
+    var fig = el('div', 'titta ' + vem, FIGURER[vem].emoji);
+    fig.setAttribute('aria-hidden', 'true');
+    var bubbla = el('div', 'titta-fraga');
+    bubbla.setAttribute('aria-live', 'polite');
+    bubbla.appendChild(el('span', 'text', text));
+    if (val && val.length) {
+      var rad = el('span', 'val');
+      val.forEach(function (v) {
+        var b = el('button', null, v[0]);
+        b.type = 'button';
+        b.addEventListener('click', v[1]);
+        rad.appendChild(b);
+      });
+      bubbla.appendChild(rad);
+    }
+    horn.appendChild(fig);
+    horn.appendChild(bubbla);
   }
 
   // ===== Knuffar (om man fastnar) =====
@@ -1467,8 +1499,14 @@
       if (s.fargKlar) {
         oppnaTrassel();
         if (s.vy === 'brev') { oppnaBrev(inne, lag, roll); return; }
+        stoppaKnuff();
+        if (roll !== 2) {
+          var horn = el('div', 'tittar granhjalp iflode');
+          horn.style.alignSelf = 'flex-end';
+          under.appendChild(horn);
+          (function gata() { gataHjalp(horn, gata); })();
+        }
         under.appendChild(gataFalt(inne));
-        brevKnuff(inne, lag, roll);
         return;
       }
       farglas(lag);
@@ -1660,16 +1698,23 @@
     inne.parentNode.classList.add('hog');
     s.vy = 'brev';
     spara();
+    stoppaKnuff();
     var scen = el('div', 'scen granscen brevscen');
     inne.appendChild(scen);
     var bakat = el('button', 'bakat', '← Dörrarna');
     bakat.type = 'button';
     bakat.addEventListener('click', function () { s.vy = null; spara(); ritaInne(inne); });
-    scen.appendChild(bakat);
+    // Överst: tillbaka till vänster, Trassels hjälp till höger (i flödet, så den inte täcker brevet).
+    var topp = el('div', 'topprad');
+    topp.appendChild(bakat);
+    scen.appendChild(topp);
     var text = svar().brev;
     if (!text) { scen.appendChild(el('p', 'platshallare', 'Brevet är inte klart än.')); return; }
 
-    if (roll === 2) ritaBrevet(scen, text);
+    var horn = el('div', 'tittar granhjalp iflode');
+    topp.appendChild(horn);
+    var hjalp = roll === 2 ? brevHjalp(inne, lag, roll, horn, scen, text) : function gata() { gataHjalp(horn, gata); };
+    if (roll === 2) ritaBrevet(scen, text, hjalp);
     else if (roll === 3) ritaNyckelboken(scen);
     else {
       // De som inte har brevet ser det förseglat, med Trassels gröna sigill.
@@ -1682,7 +1727,7 @@
       scen.appendChild(el('p', 'platshallare', 'Ni andra får bara titta på.'));
     }
     scen.appendChild(gataFalt(inne));
-    brevKnuff(inne, lag, roll);
+    hjalp();
 
     if (s.sett.brev) return;
     prata(inne, [
@@ -1692,46 +1737,67 @@
     ], function () { s.sett.brev = true; spara(); });
   }
 
-  // Knuffar bakom Trassels dörr. {C} och {D} får först hjälp med brevet och sedan med gåtan,
-  // de andra får bara gåtans knuffar (de kommer senare, eftersom brevet tar en stund).
+  // Trassels hjälp i högra hörnet bakom hans dörr (som Pyssels vid granen).
+  // Brevets telefon: ett fel blinkar, Trassel säger vad som är fel och kan fixa det. När brevet stämmer: gåtans hjälp.
+  // Nyckelbokens telefon och de andra: bara gåtans hjälp (de ser inte vad som skrivs i brevet).
   var LIKNAR = [['A', 'M'], ['E', 'P'], ['N', 'V'], ['R', 'U'], ['S', 'Ä']];
-  function brevKnuff(inne, lag, roll) {
-    var text = svar().brev, gk = svar().gataKnuffar || [];
-    if (!text) return;
-    var gata = gk.map(function (t) { return ['trassel', t]; });
-    if (roll !== 2 && roll !== 3) { knuff(inne, 'gata', { vem: 'trassel', forsta: 6, mellan: 3, nivaer: gata }); return; }
+  var brevSnyggt = 0;
+  function brevHjalp(inne, lag, roll, horn, scen, text) {
     var ord = text.split(' ');
-    knuff(inne, 'brev', {
-      vem: 'trassel', forsta: 3, mellan: 3,
-      nivaer: [
-        ['trassel', lagText('Ni behöver inte gissa. {D}, bläddra och läs symbolerna för {C}.', lag)],
-        function () {
-          var par = LIKNAR.filter(function (p) { return text.indexOf(p[0]) !== -1 || text.indexOf(p[1]) !== -1; })[0];
-          if (!par) return ['trassel', 'Varje symbol är en bokstav. Samma symbol, samma bokstav.'];
-          var x = text.indexOf(par[0]) !== -1 ? par[0] : par[1], y = x === par[0] ? par[1] : par[0];
-          return ['trassel', KOD_TECKEN[x] + ' betyder ' + x + '. Och ' + KOD_TECKEN[y] + ' är inte samma sak, kolla noga.'];
-        },
-        function () {
-          // Ett ord fylls i: det första som inte stämmer på brevets telefon.
-          var pos = 0, nr = 0;
-          if (roll === 2) {
-            if (!s.brevSvar) s.brevSvar = {};
-            for (var i = 0; i < ord.length; i++) {
-              var b = Array.from(ord[i]);
-              var ratt = b.every(function (c, j) { return !KOD_TECKEN[c] || s.brevSvar[pos + j] === c; });
-              if (!ratt) { nr = i; break; }
-              pos += b.length;
-              if (i === ord.length - 1) { nr = 0; pos = 0; }
-            }
-            Array.from(ord[nr]).forEach(function (c, j) { if (KOD_TECKEN[c]) s.brevSvar[pos + j] = c; });
-            s.brevSida = nr;
-            spara();
-            oppnaBrev(inne, lag, roll);
-          }
-          return ['trassel', 'Okej då. Ord ' + (nr + 1) + ' är ' + ord[nr] + '.'];
-        }
-      ].concat(gata)
-    });
+    var platt = Array.from(ord.join(''));
+    function forstaFel() { for (var i = 0; i < platt.length; i++) if (KOD_TECKEN[platt[i]] && s.brevSvar[i] !== platt[i]) return i; return -1; }
+    function ordAv(i) { var pos = 0; for (var n = 0; n < ord.length; n++) { pos += Array.from(ord[n]).length; if (i < pos) return n; } return 0; }
+    function vadArFel(i) {
+      var nu = s.brevSvar[i], ratt = platt[i], sym = KOD_TECKEN[ratt];
+      if (!nu) return lagText('Den är tom. Be {D} leta upp ' + sym + '.', lag);
+      var lik = LIKNAR.some(function (p) { return p.indexOf(nu) !== -1 && p.indexOf(ratt) !== -1; });
+      if (lik) return 'Det är ' + sym + ', inte ' + KOD_TECKEN[nu] + '. Kolla noga.';
+      return lagText('Fel bokstav. Be {D} kolla ' + sym + ' igen.', lag);
+    }
+    function rita() {
+      if (!horn.isConnected) return;
+      if (!s.brevSvar) s.brevSvar = {};
+      var j = s.brevHjalp;
+      if (j != null && s.brevSvar[j] === platt[j]) {
+        j = s.brevHjalp = null;
+        s.brevHjalpSteg = 0;
+        spara();
+        brevSnyggt = Date.now() + 1600;
+        setTimeout(rita, 1650);
+      }
+      scen.querySelectorAll('.kodbrev .tecken').forEach(function (tk) { tk.classList.toggle('fel-blink', j != null && +tk.dataset.pos === j); });
+      function fixa() { s.brevSvar[j] = platt[j]; spara(); oppnaBrev(inne, lag, roll); }
+      if (Date.now() < brevSnyggt) return visaHjalp(horn, 'trassel', 'Snyggt!');
+      if (j == null && forstaFel() < 0) return gataHjalp(horn, rita, 'Brevet stämmer.');
+      if (j == null) {
+        return visaHjalp(horn, 'trassel', 'Behöver ni hjälp?', [['Visa ett fel', function () {
+          var f = forstaFel();
+          if (f < 0) return;
+          s.brevHjalp = f;
+          s.brevHjalpSteg = 0;
+          s.brevSida = ordAv(f);
+          spara();
+          oppnaBrev(inne, lag, roll);
+        }]]);
+      }
+      if (!s.brevHjalpSteg) {
+        return visaHjalp(horn, 'trassel', 'Kolla den som blinkar.', [
+          ['Vad är fel?', function () { s.brevHjalpSteg = 1; spara(); rita(); }],
+          ['Fixa den', fixa]
+        ]);
+      }
+      visaHjalp(horn, 'trassel', vadArFel(j), [['Fixa den', fixa]]);
+    }
+    return rita;
+  }
+  // Gåtans ledtrådar, en i taget när man trycker. Sist kan man få se svaret.
+  function gataHjalp(horn, rita, forst) {
+    var gk = svar().gataKnuffar || [], n = s.gataLedtrad || 0;
+    if (!svar().ord) { horn.textContent = ''; return; }
+    function nasta() { s.gataLedtrad = n + 1; spara(); rita(); }
+    if (n > gk.length) return visaHjalp(horn, 'trassel', 'Svaret är ' + svar().ord + '.');
+    if (n === 0) return visaHjalp(horn, 'trassel', (forst ? forst + ' ' : '') + 'Fastnat på gåtan?', [[gk.length ? 'En ledtråd' : 'Visa svaret', nasta]]);
+    visaHjalp(horn, 'trassel', gk[n - 1], [[n < gk.length ? 'En ledtråd till' : 'Visa svaret', nasta]]);
   }
 
   // Bläddrar med ‹ och ›. sida(n) ritar sida n i ruta. Sidan sparas i s[nyckel].
@@ -1766,7 +1832,7 @@
     visa(s[nyckel] || 0);
   }
 
-  function ritaBrevet(scen, text) {
+  function ritaBrevet(scen, text, hjalp) {
     scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
     if (!s.brevSvar) s.brevSvar = {};
     var ord = [], pos = 0;
@@ -1787,6 +1853,8 @@
         var sym = KOD_TECKEN[b];
         if (!sym) { kodbrev.appendChild(el('span', 'tecken', b)); return; }
         var t = el('label', 'tecken');
+        t.dataset.pos = o.start + i;
+        if (s.brevHjalp === o.start + i) t.classList.add('fel-blink');
         t.appendChild(el('span', 'sym', sym));
         var inp = el('input');
         inp.maxLength = 2;
@@ -1801,6 +1869,7 @@
           s.brevSvar[o.start + i] = v;
           spara();
           ritaHelt();
+          hjalp();
           if (!v) return;
           var j = rutor.indexOf(inp) + 1;
           if (j < rutor.length) rutor[j].focus(); else inp.blur();
@@ -1980,23 +2049,7 @@
         text = vadArFel(j);
         val.push(['Fixa den', fixa]);
       }
-      var fig = el('div', 'titta pyssel', FIGURER.pyssel.emoji);
-      fig.setAttribute('aria-hidden', 'true');
-      var bubbla = el('div', 'titta-fraga');
-      bubbla.setAttribute('aria-live', 'polite');
-      bubbla.appendChild(el('span', 'text', text));
-      if (val.length) {
-        var rad = el('span', 'val');
-        val.forEach(function (v) {
-          var b = el('button', null, v[0]);
-          b.type = 'button';
-          b.addEventListener('click', v[1]);
-          rad.appendChild(b);
-        });
-        bubbla.appendChild(rad);
-      }
-      hjalp.appendChild(fig);
-      hjalp.appendChild(bubbla);
+      visaHjalp(hjalp, 'pyssel', text, val);
     }
     ritaHjalp();
 
@@ -2639,7 +2692,7 @@
     nu.addEventListener('click', function () { var st = aktivKnuff && s.knuff && s.knuff[aktivKnuff.id]; if (st) { st.sedan = 0; spara(); } });
     var noll = el('button', null, 'Nollställ knuffarna');
     noll.type = 'button';
-    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; spara(); rita(); });
+    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; spara(); rita(); });
     rad.appendChild(nu);
     rad.appendChild(noll);
     return rad;
