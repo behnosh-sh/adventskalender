@@ -2538,6 +2538,8 @@
   // Det som syns inne i skåpet.
   function ritaInne(inne) {
     stoppaKnuff();
+    // Mästarprovets kuvert hör till sifferlåset och följer inte med in i skåpet.
+    document.querySelectorAll('.svarskuvert').forEach(function (k) { k.parentNode.removeChild(k); });
     inne.textContent = '';
     inne.parentNode.classList.remove('akt3');
     var scen = el('div', 'scen');
