@@ -119,6 +119,9 @@
     gap: 22px;
   }
   .dorr.oppen { transform: rotateY(-108deg); pointer-events: none; }
+  /* Dörrens baksida är slät: allt på framsidan tonas bort ungefär när dörren passerar 90 grader. */
+  .dorr.oppen > * { opacity: 0; transition: opacity .12s .55s; }
+  .smadorr.oppen > * { opacity: 0; transition: opacity .12s .3s; }
   .dorr.ryck { animation: skaka .3s ease-in-out; }
   /* Nitar i hörnen. */
   .nit { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #9AA7BD; box-shadow: inset 0 -1px 0 rgba(0,0,0,.3); }
