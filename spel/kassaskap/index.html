@@ -1554,16 +1554,24 @@
         under.appendChild(gataFalt(inne));
         return;
       }
+      // Färglåsets tips: Pyssel vid dörrarna, ett tips i taget när man trycker (inga tidsstyrda knuffar).
+      // Syns bara här vid dörrarna, aldrig inne vid granen.
+      stoppaKnuff();
+      var tips = [
+        'Min gran är inte bara snygg, vet ni.',
+        lagText('När granen är rätt pyntad lyser den. Titta på {B}s telefon.', lag),
+        'Fyra färger, en i taget, i den ordning de lyser.'
+      ];
+      var horn = el('div', 'tittar granhjalp iflode');
+      horn.style.alignSelf = 'flex-end';
+      under.appendChild(horn);
+      (function ritaTips() {
+        var n = Math.min(s.fargTips || 0, tips.length);
+        function nasta() { s.fargTips = n + 1; spara(); ritaTips(); }
+        if (n === 0) return visaHjalp(horn, 'pyssel', 'Fastnat på färglåset?', [['Ge ett tips', nasta]]);
+        visaHjalp(horn, 'pyssel', tips[n - 1], n < tips.length ? [['Ett tips till', nasta]] : []);
+      })();
       farglas(lag);
-      knuff(inne, 'farg', {
-        vem: 'pyssel', forsta: 3, mellan: 3,
-        klar: function () { return s.fargKlar; },
-        nivaer: [
-          ['pyssel', 'Min gran är inte bara snygg, vet ni.'],
-          ['pyssel', lagText('När granen är rätt pyntad lyser den. Titta på {B}s telefon.', lag)],
-          ['pyssel', 'Fyra färger, en i taget, i den ordning de lyser.']
-        ]
-      });
     }
     // Rätt färgkod låser upp: dörren glider upp på glänt, precis som Pyssels. Ett tryck öppnar den helt.
     function oppnaTrassel() {
@@ -2812,14 +2820,10 @@
   function knuffRad() {
     var rad = el('div', 'hopp');
     rad.style.marginTop = '8px';
-    rad.appendChild(el('span', null, 'Knuffar:'));
-    var nu = el('button', null, 'Knuff nu');
-    nu.type = 'button';
-    nu.addEventListener('click', function () { var st = aktivKnuff && s.knuff && s.knuff[aktivKnuff.id]; if (st) { st.sedan = 0; spara(); } });
-    var noll = el('button', null, 'Nollställ knuffarna');
+    rad.appendChild(el('span', null, 'Hjälpen:'));
+    var noll = el('button', null, 'Nollställ hjälpen');
     noll.type = 'button';
-    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; s.matrisHjalp = null; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; spara(); rita(); });
-    rad.appendChild(nu);
+    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; s.matrisHjalp = null; s.fargTips = 0; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; s.granHjalp = null; s.granHjalpSteg = 0; spara(); rita(); });
     rad.appendChild(noll);
     return rad;
   }
