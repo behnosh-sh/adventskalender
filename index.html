@@ -160,6 +160,14 @@
     lank.addEventListener('click', klick.bind(null, n));
   }
 
+  // Syns inte dagens lucka helt (webbläsarens fält tar plats), scrolla så att den hamnar mitt på skärmen.
+  if (idag) addEventListener('load', function () {
+    if (scrollY > 0) return;   // tillbaka från en lucka: låt sidan stå kvar
+    var r = granar[idag].lank.getBoundingClientRect(), h = innerHeight;
+    if (r.top >= 0 && r.bottom <= h) return;
+    scrollTo({ top: Math.max(0, scrollY + r.top + r.height / 2 - h / 2), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
+
   // Ritar granen: hel med snötopp och nummer, eller ljusgrön och "vänd" om den är öppnad.
   function ritaGran(n) {
     var g = granar[n], x0 = g.x0, y = g.y;
