@@ -2530,12 +2530,20 @@
           var gissning = s.paket.map(function (p) { return p.n + ':' + p.f; }).join(' ');
           if (stammer(gissning, g.svar)) {
             lagg.hidden = true;
+            // Anteckningarna stängs och hjälpen försvinner, så att tomten syns ordentligt.
+            s.matrisOppen = false;
+            spara();
+            var hj = scen.querySelector('.granhjalp');
+            if (hj) hj.remove();
+            ritaAnteckningar(scen, namn, farger, scen.querySelector('.anteckningar'));
             prata(inne, [
               ['tomten', 'Ho ho… Pyssel? Trassel? Har de knäckt ert hemliga språk? Och ställt mina paket rätt? Ni måste ha gjort det lättare för dem!'],
               ['pyssel', 'Nä?'],
               ['trassel', 'Nä.'],
               ['tomten', 'Hm. Det har inte ens jag klarat. Då förtjänar ni det som ligger i paketen.']
             ], function () { s.steg = 'oppet'; spara(); ritaInne(inne); });
+            var pr = inne.querySelector('.prat');
+            if (pr && pr.scrollIntoView) pr.scrollIntoView({ block: 'center', behavior: 'smooth' });
             return;
           }
           s.paketLastTill = Date.now() + PAKET_LAS * 1000;
