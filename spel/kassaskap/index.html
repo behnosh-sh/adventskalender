@@ -2376,7 +2376,7 @@
     function varfor(k) {
       var o = ordning.filter(function (x) { return x.k === k; })[0];
       if (o) return o.varfor;
-      return sant(k) ? 'Den här stämmer faktiskt. Läs alla bitar igen.' : 'Det finns redan en ✓ i samma rad eller kolumn.';
+      return sant(k) ? 'Den här stämmer faktiskt. Läs alla lappar igen.' : 'Det finns redan en ✓ i samma rad eller kolumn.';
     }
     function alltFel() { return Object.keys(s.matris || {}).filter(function (k) { var v = s.matris[k]; return (v === 1 || v === 2) && v !== ratt(k); }); }
     function nastaTom() { var o = ordning.filter(function (x) { return (s.matris || {})[x.k] !== ratt(x.k); })[0]; return o ? o.k : null; }
@@ -2422,8 +2422,8 @@
       if (j != null) {
         var fel = s.matrisHjalpTyp === 'fel';
         if (!s.matrisHjalpSteg) {
-          return visaHjalp(horn, 'bada', fel ? 'Kolla rutan som blinkar.' : 'Vad ska stå i rutan som blinkar?', [
-            ['Varför?', function () { s.matrisHjalpSteg = 1; spara(); rita(); }],
+          return visaHjalp(horn, 'bada', fel ? 'Kolla rutan som blinkar.' : 'Rutan som blinkar går att lösa med era lappar.', [
+            [fel ? 'Vad är fel?' : 'Hur?', function () { s.matrisHjalpSteg = 1; spara(); rita(); }],
             ['Fixa den', fixa]
           ]);
         }
