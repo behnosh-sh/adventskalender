@@ -2412,6 +2412,13 @@
         rita();
       }
       if (Date.now() < matrisSnyggt) return visaHjalp(horn, 'bada', 'Snyggt!');
+      if (!s.paketFastnat) {
+        // Först bara "Fastnat?", och det dyker upp 10 sekunder efter att man kom in till paketen.
+        if (!s.paketStart) { s.paketStart = Date.now(); spara(); }
+        var vanta = s.paketStart + 10000 - Date.now();
+        if (vanta > 0) { horn.textContent = ''; setTimeout(function () { if (horn.isConnected) rita(); }, vanta + 50); return; }
+        return visaHjalp(horn, 'bada', 'Fastnat?', [['Ja', function () { s.paketFastnat = true; spara(); rita(); }]]);
+      }
       if (j != null) {
         var fel = s.matrisHjalpTyp === 'fel';
         if (!s.matrisHjalpSteg) {
@@ -2827,7 +2834,7 @@
     rad.appendChild(el('span', null, 'Hjälpen:'));
     var noll = el('button', null, 'Nollställ hjälpen');
     noll.type = 'button';
-    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; s.matrisHjalp = null; s.fargTips = 0; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; s.granHjalp = null; s.granHjalpSteg = 0; spara(); rita(); });
+    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; s.matrisHjalp = null; s.fargTips = 0; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; s.granHjalp = null; s.granHjalpSteg = 0; s.paketFastnat = false; s.paketStart = 0; spara(); rita(); });
     rad.appendChild(noll);
     return rad;
   }
