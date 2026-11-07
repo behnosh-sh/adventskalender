@@ -1148,10 +1148,11 @@
 
   // ===== Mästarprovet =====
   // Spelen som kan bli mästarprov, efter dag. varde jämförs som i spelets egen tavla.
-  // mal(varde) ger målet i ord, sank(varde) ger ett 40 % lättare mål, nar(varde, mal) säger om rundan räcker.
+  // malText(varde) ger målet i ord, kort(varde) målet kort för spelets mätare, sank(varde) ger ett 40 % lättare mål, nar(varde, mal) säger om rundan räcker.
   var PROV_SPEL = {
     1: {
       namn: 'Snake', sokvag: '../snake/',
+      kort: function (v) { return String(Math.floor(v / 10000)); },
       langd: function (v) { return Math.floor(v / 10000); },
       malText: function (v) { return 'Snake. Minst längd ' + Math.floor(v / 10000) + '.'; },
       sank: function (v) { return Math.max(4, Math.ceil(Math.floor(v / 10000) * 0.6)) * 10000; },
@@ -1162,6 +1163,7 @@
     },
     17: {
       namn: 'Memory', sokvag: '../memory/',
+      kort: function (v) { return '≤ ' + Math.floor(v / 100000); },
       malText: function (v) { return 'Memory. Högst ' + Math.floor(v / 100000) + ' drag.'; },
       sank: function (v) { return Math.floor(Math.floor(v / 100000) * 1.4) * 100000 + 99999; },
       nar: function (v, mal) { return Math.floor(v / 100000) <= Math.floor(mal / 100000); },
@@ -1171,6 +1173,7 @@
     },
     8: {
       namn: 'Perfekt cirkel', sokvag: '../perfekt-cirkel/',
+      kort: function (v) { return (v / 10).toFixed(1).replace('.', ',') + ' %'; },
       malText: function (v) { return 'Perfekt cirkel. Minst ' + (v / 10).toFixed(1).replace('.', ',') + ' %.'; },
       sank: function (v) { return Math.round(v * 0.6); },
       nar: function (v, mal) { return v >= mal; },
@@ -1181,6 +1184,7 @@
     15: {
       // värdet är poäng + 1000, poängen kan vara negativ
       namn: 'Snöflingefångaren', sokvag: '../snoflingor/',
+      kort: function (v) { var p = v - 1000; return p < 0 ? '−' + (-p) : String(p); },
       malText: function (v) { var p = v - 1000; return 'Snöflingefångaren. Minst ' + (p < 0 ? '−' + (-p) : p) + ' poäng.'; },
       sank: function (v) { var p = v - 1000; return Math.floor(p - Math.abs(p) * 0.4) + 1000; },
       nar: function (v, mal) { return v >= mal; },
@@ -1190,6 +1194,7 @@
     },
     22: {
       namn: 'Simon säger', sokvag: '../simon/',
+      kort: function (v) { return String(Math.floor(v / 10000)); },
       malText: function (v) { return 'Simon säger. Minst längd ' + Math.floor(v / 10000) + '.'; },
       sank: function (v) { return Math.max(2, Math.ceil(Math.floor(v / 10000) * 0.6)) * 10000; },
       nar: function (v, mal) { return Math.floor(v / 10000) >= Math.floor(mal / 10000); },
@@ -1199,6 +1204,7 @@
     },
     23: {
       namn: 'Flygande tomten', sokvag: '../flygande-tomten/',
+      kort: function (v) { return String(Math.floor(v / 1000)); },
       malText: function (v) { var n = Math.floor(v / 1000); return 'Flygande tomten. Minst ' + n + (n === 1 ? ' skorsten.' : ' skorstenar.'); },
       sank: function (v) { return Math.max(1, Math.ceil(Math.floor(v / 1000) * 0.6)) * 1000; },
       nar: function (v, mal) { return Math.floor(v / 1000) >= Math.floor(mal / 1000); },
@@ -1209,6 +1215,7 @@
     14: {
       // värdet är tiden i tiondelar × 10 000 + drag, tiden jämförs i hela sekunder som den visas
       namn: 'Femtonspel', sokvag: '../femton/',
+      kort: function (v) { return '≤ ' + Advent.formateraTid(this.sek(v)); },
       sek: function (v) { return Math.round(Math.floor(v / 10000) / 10); },
       malText: function (v) { return 'Femtonspel. Högst ' + Advent.formateraTid(this.sek(v)) + '.'; },
       sank: function (v) { return Math.round(this.sek(v) * 1.4) * 10 * 10000 + 9999; },
@@ -1220,6 +1227,7 @@
     12: {
       // värdet är den sammanlagda tiden för de tre banorna i tiondelar
       namn: 'Labyrinten', sokvag: '../labyrint/',
+      kort: function (v) { return '≤ ' + Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10); },
       malText: function (v) { return 'Labyrinten. Högst ' + Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10) + '.'; },
       sank: function (v) { return Math.round(v * 1.4); },
       nar: function (v, mal) { return v <= mal; },
@@ -1230,6 +1238,7 @@
     10: {
       // värdet är tiden i sekunder med en decimal, samma bana som den 10 december; en mina är en missad runda
       namn: 'Minesweeper', sokvag: '../minesweeper/',
+      kort: function (v) { return '≤ ' + v.toFixed(1).replace('.', ','); },
       malText: function (v) { return 'Minesweeper. Högst ' + v.toFixed(1).replace('.', ',') + ' s.'; },
       sank: function (v) { return Math.round(v * 14) / 10; },
       nar: function (v, mal) { return Math.round(v * 10) <= Math.round(mal * 10); },
@@ -1382,7 +1391,9 @@
     hjalp.hidden = true;
     var ram = el('iframe');
     ram.title = spel.namn;
-    ram.src = spel.sokvag + '?dag=' + p.dag + '&prov=1';
+    // Målet skickas med till spelet, som visar det i en egen ruta bland mätarna (js/prov.js).
+    function adress() { return spel.sokvag + '?dag=' + p.dag + '&prov=1&mal=' + encodeURIComponent(spel.kort(p.mal)); }
+    ram.src = adress();
     yta.appendChild(topp);
     yta.appendChild(hjalp);
     yta.appendChild(ram);
@@ -1432,7 +1443,7 @@
           p.mal = spel.sank(p.varde);
           spara();
           mal.textContent = spel.malText(p.mal);
-          ram.src = ram.src;
+          ram.src = adress();
           ritaHjalp();
         });
         rad.appendChild(sank);
