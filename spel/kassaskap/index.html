@@ -1539,12 +1539,6 @@
         oppnaTrassel();
         if (s.vy === 'brev') { oppnaBrev(inne, lag, roll); return; }
         stoppaKnuff();
-        if (roll !== 2) {
-          var horn = el('div', 'tittar granhjalp iflode');
-          horn.style.alignSelf = 'flex-end';
-          under.appendChild(horn);
-          (function gata() { gataHjalp(horn, gata); })();
-        }
         under.appendChild(gataFalt(inne));
         return;
       }
@@ -1752,7 +1746,8 @@
 
     var horn = el('div', 'tittar granhjalp iflode');
     topp.appendChild(horn);
-    var hjalp = roll === 2 ? brevHjalp(inne, lag, roll, horn, scen, text) : function gata() { gataHjalp(horn, gata); };
+    // Bara brevets telefon får hjälp (och gåtans ledtrådar först när brevet stämmer), annars kan man hoppa över brevet.
+    var hjalp = roll === 2 ? brevHjalp(inne, lag, roll, horn, scen, text) : function () {};
     if (roll === 2) ritaBrevet(scen, text, hjalp);
     else if (roll === 3) ritaNyckelboken(scen);
     else {
@@ -1778,7 +1773,7 @@
 
   // Trassels hjälp i högra hörnet bakom hans dörr (som Pyssels vid granen).
   // Brevets telefon: ett fel blinkar, Trassel säger vad som är fel och kan fixa det. När brevet stämmer: gåtans hjälp.
-  // Nyckelbokens telefon och de andra: bara gåtans hjälp (de ser inte vad som skrivs i brevet).
+  // Nyckelbokens telefon och de andra: ingen hjälp alls (Behnosh 2026-11-07), så att ingen kan hoppa över brevet.
   var LIKNAR = [['A', 'M'], ['E', 'P'], ['N', 'V'], ['R', 'U'], ['S', 'Ä']];
   var brevSnyggt = 0;
   function brevHjalp(inne, lag, roll, horn, scen, text) {
