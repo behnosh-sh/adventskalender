@@ -457,9 +457,13 @@
   @keyframes titta { 0%, 100% { transform: translateY(16px) rotate(-6deg); } 35%, 65% { transform: translateY(-4px) rotate(4deg); } }
   .titta-fraga { position: absolute; left: 72px; bottom: 14px; max-width: 200px; padding: 8px 12px; border: 0; border-radius: 14px 14px 14px 4px; background: #EADFFF; color: #2A2233; font: 600 14px/1.25 var(--text-typsnitt); text-align: left; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.3); animation: upp .3s ease-out; }
   /* Vid granen står Pyssel uppe i högra hörnet, bredvid ← Dörrarna, så att hon inte skymmer lådan. */
-  .tittar.granhjalp { top: 8px; right: 8px; bottom: auto; left: auto; height: auto; display: flex; flex-direction: row-reverse; align-items: center; gap: 6px; }
+  .tittar.granhjalp { top: 8px; right: 8px; bottom: auto; left: auto; height: auto; display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 6px; }
   .granhjalp .titta { position: static; width: 42px; height: 42px; font-size: 23px; animation: none; }
-  .granhjalp .titta-fraga { position: static; max-width: 122px; padding: 7px 10px; font-size: 13px; border-radius: 14px 4px 14px 14px; }
+  .granhjalp .titta { cursor: default; }
+  .granhjalp .titta-fraga { position: static; max-width: 200px; padding: 6px 10px 8px; font-size: 13.5px; border-radius: 14px 4px 14px 14px; cursor: default; display: flex; flex-direction: column; gap: 2px; }
+  .granhjalp .titta-fraga .vem { font-size: 12px; font-weight: 600; color: #5E5168; }
+  .granhjalp .titta-fraga .val { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+  .granhjalp .titta-fraga .val button { padding: 5px 9px; border: 0; border-radius: 999px; background: #7B5BC4; color: #fff; font: 600 12.5px/1.1 var(--text-typsnitt); cursor: pointer; }
   .gran-svg .plats.fel-blink circle:first-child { fill: rgba(229,72,77,.3); stroke: #FF6B6B; stroke-width: 3; animation: felblink 1s ease-in-out infinite; }
   @keyframes felblink { 50% { fill: rgba(229,72,77,.05); stroke-opacity: .2; } }
   .paketplats.pekad .ask svg { filter: drop-shadow(0 0 6px #FFD66B) drop-shadow(0 0 12px #FFD66B); }
@@ -1936,46 +1940,64 @@
       if (a[0] !== b[0] && a[1] !== b[1]) return 'Fel form och fel färg.';
       return a[0] !== b[0] ? 'Rätt färg, men fel form.' : 'Rätt form, men fel färg.';
     }
+    // Allt Pyssel säger om ledtrådar står i bubblan uppe i högra hörnet, med val att trycka på.
+    var snyggt = false;
     function ritaHjalp() {
       hjalp.textContent = '';
       gran.querySelectorAll('.plats').forEach(function (pl) { pl.classList.remove('fel-blink'); });
       if (s.granKlar) return;
       var j = s.granHjalp;
-      if (j != null && s.gran[j] === g.pynt[j]) { j = s.granHjalp = null; s.granHjalpSteg = 0; spara(); }
+      if (j != null && s.gran[j] === g.pynt[j]) {
+        j = s.granHjalp = null;
+        s.granHjalpSteg = 0;
+        spara();
+        snyggt = true;
+        setTimeout(function () { snyggt = false; if (hjalp.isConnected) ritaHjalp(); }, 1600);
+      }
       if (j != null) gran.querySelectorAll('.plats')[j].classList.add('fel-blink');
-      var fraga = j == null ? 'Vill du ha en ledtråd?' : (s.granHjalpSteg ? 'Ska jag fixa den?' : 'Vill du veta vad som är fel?');
-      function tryck() {
-        if (j == null) {
+      var text, val = [];
+      function fixa() {
+        s.gran[j] = g.pynt[j];
+        gran.satt(j, s.gran[j]);
+        spara();
+        if (stammerGranen()) { blevKlar(); return; }
+        ritaHjalp();
+      }
+      if (snyggt) text = 'Snyggt!';
+      else if (j == null) {
+        text = 'Behöver ni hjälp?';
+        val.push(['Visa ett fel', function () {
           var f = forstaFel();
           if (f < 0) return;
           s.granHjalp = f;
           s.granHjalpSteg = 0;
           spara();
           ritaHjalp();
-          kommentar(inne, 'pyssel', 'Kolla den här.');
-        } else if (!s.granHjalpSteg) {
-          s.granHjalpSteg = 1;
-          spara();
-          ritaHjalp();
-          kommentar(inne, 'pyssel', vadArFel(j));
-        } else {
-          s.gran[j] = g.pynt[j];
-          gran.satt(j, s.gran[j]);
-          s.granHjalp = null;
-          s.granHjalpSteg = 0;
-          spara();
-          if (stammerGranen()) { blevKlar(); return; }
-          ritaHjalp();
-          kommentar(inne, 'pyssel', 'Så där.');
-        }
+        }]);
+      } else if (!s.granHjalpSteg) {
+        text = 'Kolla den som blinkar.';
+        val.push(['Vad är fel?', function () { s.granHjalpSteg = 1; spara(); ritaHjalp(); }]);
+        val.push(['Fixa den', fixa]);
+      } else {
+        text = vadArFel(j);
+        val.push(['Fixa den', fixa]);
       }
-      var fig = el('button', 'titta pyssel', FIGURER.pyssel.emoji);
-      fig.type = 'button';
-      fig.setAttribute('aria-label', 'Pyssel: ' + fraga);
-      var bubbla = el('button', 'titta-fraga', fraga);
-      bubbla.type = 'button';
-      fig.addEventListener('click', tryck);
-      bubbla.addEventListener('click', tryck);
+      var fig = el('div', 'titta pyssel', FIGURER.pyssel.emoji);
+      fig.setAttribute('aria-hidden', 'true');
+      var bubbla = el('div', 'titta-fraga');
+      bubbla.setAttribute('aria-live', 'polite');
+      bubbla.appendChild(el('span', 'vem', 'Pyssel'));
+      bubbla.appendChild(el('span', 'text', text));
+      if (val.length) {
+        var rad = el('span', 'val');
+        val.forEach(function (v) {
+          var b = el('button', null, v[0]);
+          b.type = 'button';
+          b.addEventListener('click', v[1]);
+          rad.appendChild(b);
+        });
+        bubbla.appendChild(rad);
+      }
       hjalp.appendChild(fig);
       hjalp.appendChild(bubbla);
     }
