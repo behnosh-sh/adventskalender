@@ -1853,23 +1853,7 @@
     }
     // Granen syns direkt, barnbarnen pratar framför den första gången.
     visa();
-    // Pyntaren har Pyssels hjälp direkt (se pynta). Den som ser den hemliga granen får knuffar i text.
-    if (g && roll === 0) knuff(inne, 'gran', {
-      vem: 'pyssel', forsta: 1, mellan: 1,
-      klar: function () { return s.granKlar; },
-      nivaer: [
-        ['pyssel', lagText('{A}, beskriv granen rad för rad, uppifrån. {B}, fråga om allt du är osäker på.', lag)],
-        ['pyssel', 'Både formen och färgen måste stämma. En röd kula är inte en röd stjärna.'],
-        function () {
-          if (roll === 1 && s.gran) {
-            var fel = s.gran.filter(function (p, j) { return p !== g.pynt[j]; }).length;
-            return ['pyssel', fel === 1 ? 'En plats är fel just nu. Bara en!' : fel + ' platser är fel just nu.'];
-          }
-          var antal = g.pynt.filter(Boolean).length;
-          return ['pyssel', lagText('Granen har ' + antal + ' saker. Räkna dem tillsammans med {B}.', lag)];
-        }
-      ]
-    });
+    // Pyntaren har Pyssels hjälp direkt (se pynta). Den som ser den hemliga granen får ingen hjälp (Behnosh 2026-11-07).
     if (s.sett.gran) return;
     prata(inne, [
       ['pyssel', 'Morfars gran var så tråkig att vi pyntade om den. Sen ångrade vi oss och rev av allt.'],
