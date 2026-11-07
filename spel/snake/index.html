@@ -117,7 +117,7 @@
       <li>Du har 3 försök och det längsta räknas. Alla får kulorna på samma ställen i samma ordning. Vid lika vinner den som var snabbast till sin längd.</li>
       <li>Guld från längd 40, silver från 28, brons från 18.</li>
     </ol>
-    <p class="liten">Klockan startar när du sveper första gången. Laddar du om sidan mitt i ett försök räknas försöket som slut.</p>
+    <p class="liten">Klockan startar när du trycker eller sveper första gången. Laddar du om sidan mitt i ett försök räknas försöket som slut.</p>
   </details>
 
   <div class="knappar">
@@ -330,7 +330,7 @@
   var bana = $('bana');
   var nere = null;
   bana.addEventListener('pointerdown', function (e) {
-    nere = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    nere = { x: e.clientX, y: e.clientY, id: e.pointerId, svepte: false };
     try { bana.setPointerCapture(e.pointerId); } catch (fel) { /* ignorera */ }
   });
   bana.addEventListener('pointermove', function (e) {
@@ -339,11 +339,17 @@
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
     nere.x = e.clientX;
     nere.y = e.clientY;
+    nere.svepte = true;
     if (Math.abs(dx) > Math.abs(dy)) svang(dx > 0 ? 'hoger' : 'vanster');
     else svang(dy > 0 ? 'ner' : 'upp');
   });
   function slapp() { nere = null; }
-  bana.addEventListener('pointerup', slapp);
+  // Ett tryck utan svep startar rundan: ormen åker åt höger som den står.
+  bana.addEventListener('pointerup', function (e) {
+    var tryck = nere && e.pointerId === nere.id && !nere.svepte;
+    slapp();
+    if (tryck && runda && !runda.igang) svang('hoger');
+  });
   bana.addEventListener('pointercancel', slapp);
   // Hindrar att sidan scrollar eller zoomar när man sveper (äldre Safari bryr sig inte om touch-action).
   bana.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
@@ -496,7 +502,7 @@
       return tips('Bästa hittills: längd ' + s.basta.langd + '. Det längsta av ' + FORSOK + ' försök räknas.');
     }
     if (!ovning && s.slut) return tips('');
-    tips('Svep för att börja. Klockan startar då.');
+    tips('Tryck eller svep för att börja. Klockan startar då.');
   }
 
   function ritaSlut() {
