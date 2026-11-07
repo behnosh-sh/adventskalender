@@ -2060,7 +2060,7 @@
         var tips = ['Min gran är inte bara snygg, vet ni. Titta noga på den.', 'Den blinkar i fyra färger, en i taget. Säg dem högt för de andra.'];
         var n = Math.min(s.fargTips || 0, tips.length);
         function nasta() { s.fargTips = n + 1; spara(); ritaHjalp(); }
-        if (n === 0) return visaHjalp(hjalp, 'pyssel', 'Granen är klar! Fastnat på färglåset?', [['Ge ett tips', nasta]]);
+        if (n === 0) return visaHjalp(hjalp, 'pyssel', 'Granen är klar! Fastnat?', [['Ge ett tips', nasta]]);
         return visaHjalp(hjalp, 'pyssel', tips[n - 1], n < tips.length ? [['Ett tips till', nasta]] : []);
       }
       var j = s.granHjalp;
