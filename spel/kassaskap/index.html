@@ -271,6 +271,7 @@
   }
   .listbit p { margin: 0 0 6px; }
   .listbit p:last-child { margin: 0; }
+  .listbit .rubrik { display: block; margin: -4px 0 8px; font: 600 12px/1.2 var(--text-typsnitt); letter-spacing: .04em; text-transform: uppercase; color: #8A7A62; }
   /* Anteckningsboken under skåpet: en matris som i logikpussel, man fyller i själv. */
   /* I akt 3 växer skåpet med innehållet, så att inget tomrum blir kvar och journalen ligger längst ner. */
   .skap.akt3 { aspect-ratio: auto; height: auto; }
@@ -602,35 +603,35 @@
           'klocka:rod', 'stjarna:silver', '', 'kula:bla', '', 'kapp:rod', 'klocka:guld', 'stjarna:bla', ''],
         blink: ['guld', 'rod', 'silver', 'bla']
       },
-      // Tomtens paket: plats 1 till 4 från vänster, 'namn:bandfärg'. bitar = listbiten på telefon {A}, {B}, {C}, {D} (tre ledtrådar var).
+      // Tomtens paket: plats 1 till 4 från vänster, 'namn:bandfärg'. bitar = lappen på telefon {A}, {B}, {C}, {D} (tre rader var). Kallas alltid lapp i texterna, hjälpen kallas tips.
       // Kontrollerat med kodlaset/sok.py: exakt en lösning, och varje bit behövs.
       // Gåtans knuffar: ledtråd, tydligare ledtråd, antal bokstäver och första bokstaven.
       gataKnuffar: ['Det är en gåta. Vad har nålar men syr aldrig?', 'Den står i stugan i december.', 'Svaret har fyra bokstäver och börjar på G.'],
       paket: {
         svar: 'Daniel:rod Josefin:guld Behnosh:bla Joel:gron',
         // Lösningsordning för hjälpen i anteckningarna: [ruta, ✕ eller ✓, varför]. Ruta: 'namn|plats', 'namn|band' eller 'band|plats' (plats 1–4).
-        // Hjälpen tar första rutan i ordningen som inte är rätt ifylld. {A}–{D} = den som har biten.
+        // Hjälpen tar första rutan i ordningen som inte är rätt ifylld. {A}–{D} = den som har lappen.
         ordning: [
-          ['guld|1', '✕', 'Guldbandet sitter inte i en kant, står det på {C}s bit. Alltså inte plats 1.'],
-          ['guld|4', '✕', 'Guldbandet sitter inte i en kant ({C}s bit). Alltså inte plats 4 heller.'],
-          ['rod|2', '✕', 'Det röda bandet sitter i en kant, står det på {A}s bit. Alltså inte plats 2.'],
-          ['rod|3', '✕', 'Det röda bandet sitter i en kant ({A}s bit). Alltså inte plats 3.'],
-          ['Joel|2', '✕', 'Joels paket står i en kant, står det på {C}s bit. Alltså inte plats 2.'],
-          ['Joel|3', '✕', 'Joels paket står i en kant ({C}s bit). Alltså inte plats 3.'],
-          ['Behnosh|rod', '✕', '{A}s bit: Behnoshs paket har inte rött band.'],
-          ['Joel|bla', '✕', '{A}s bit: det blå bandet sitter inte på Joels paket.'],
-          ['Josefin|bla', '✕', '{B}s bit: Josefins paket har inte blått band.'],
-          ['Joel|rod', '✕', '{B}s bit: Joels paket har inte rött band.'],
-          ['Daniel|gron', '✕', '{C}s bit: Daniels paket har inte grönt band.'],
-          ['Daniel|4', '✕', '{D}s bit: Daniels paket står inte längst till höger.'],
-          ['Daniel|guld', '✕', 'Guldbandet står bredvid Daniels paket ({B}s bit). Då kan Daniel inte ha guld själv.'],
+          ['guld|1', '✕', 'På {C}s lapp står det att guldbandet inte sitter i en kant. Alltså inte plats 1.'],
+          ['guld|4', '✕', 'På {C}s lapp står det att guldbandet inte sitter i en kant. Alltså inte plats 4 heller.'],
+          ['rod|2', '✕', 'På {A}s lapp står det att det röda bandet sitter i en kant. Alltså inte plats 2.'],
+          ['rod|3', '✕', 'På {A}s lapp står det att det röda bandet sitter i en kant. Alltså inte plats 3.'],
+          ['Joel|2', '✕', 'På {C}s lapp står det att Joels paket står i en kant. Alltså inte plats 2.'],
+          ['Joel|3', '✕', 'På {C}s lapp står det att Joels paket står i en kant. Alltså inte plats 3.'],
+          ['Behnosh|rod', '✕', 'På {A}s lapp står det att Behnoshs paket inte har rött band.'],
+          ['Joel|bla', '✕', 'På {A}s lapp står det att det blå bandet inte sitter på Joels paket.'],
+          ['Josefin|bla', '✕', 'På {B}s lapp står det att Josefins paket inte har blått band.'],
+          ['Joel|rod', '✕', 'På {B}s lapp står det att Joels paket inte har rött band.'],
+          ['Daniel|gron', '✕', 'På {C}s lapp står det att Daniels paket inte har grönt band.'],
+          ['Daniel|4', '✕', 'På {D}s lapp står det att Daniels paket inte står längst till höger.'],
+          ['Daniel|guld', '✕', 'På {B}s lapp står det att guldbandet står bredvid Daniels paket. Då kan Daniel inte ha guld själv.'],
           ['Joel|guld', '✕', 'Joel står i en kant, och guld sitter aldrig i en kant. Alltså har Joel inte guld.'],
           ['Joel|gron', '✓', 'Joel kan inte ha rött, blått eller guld. Då återstår grönt.'],
           ['gron|2', '✕', 'Grönt är Joels, och Joel står i en kant. Alltså inte plats 2.'],
           ['gron|3', '✕', 'Grönt är Joels, och Joel står i en kant. Alltså inte plats 3.'],
           ['bla|1', '✕', 'Kanterna har grönt (Joel) och rött. Då sitter blått inte på plats 1.'],
           ['bla|4', '✕', 'Kanterna har grönt (Joel) och rött. Då sitter blått inte på plats 4.'],
-          ['Daniel|bla', '✕', 'Om Daniel hade blått skulle Behnosh få guld, och då står de bredvid varandra i mitten. Det säger {D}s bit nej till.'],
+          ['Daniel|bla', '✕', 'Om Daniel hade blått skulle Behnosh få guld, och då står de bredvid varandra i mitten. Det säger {D}s lapp nej till.'],
           ['Daniel|rod', '✓', 'Daniel kan inte ha grönt, guld eller blått. Då återstår rött.'],
           ['Daniel|1', '✓', 'Rött sitter i en kant, och Daniel står inte längst till höger. Alltså plats 1.'],
           ['rod|1', '✓', 'Daniel har rött och står på plats 1.'],
@@ -638,7 +639,7 @@
           ['gron|4', '✓', 'Joel har grönt och står på plats 4.'],
           ['guld|2', '✓', 'Guldbandet står bredvid Daniel, som står på plats 1. Alltså plats 2.'],
           ['bla|3', '✓', 'Blått sitter i mitten, och plats 2 har guld. Alltså plats 3.'],
-          ['Behnosh|2', '✕', 'Behnosh står inte bredvid Daniel ({D}s bit). Alltså inte plats 2.'],
+          ['Behnosh|2', '✕', 'På {D}s lapp står det att Behnosh inte står bredvid Daniel. Alltså inte plats 2.'],
           ['Behnosh|3', '✓', 'Plats 1 och 4 är tagna, och plats 2 står bredvid Daniel. Alltså plats 3.'],
           ['Behnosh|bla', '✓', 'Behnosh står på plats 3, och där sitter det blå bandet.'],
           ['Josefin|2', '✓', 'Bara plats 2 är kvar för Josefin.'],
@@ -1841,8 +1842,8 @@
     if (!svar().ord) { horn.textContent = ''; return; }
     function nasta() { s.gataLedtrad = n + 1; spara(); rita(); }
     if (n > gk.length) return visaHjalp(horn, 'trassel', 'Svaret är ' + svar().ord + '.');
-    if (n === 0) return visaHjalp(horn, 'trassel', (forst ? forst + ' ' : '') + 'Fastnat på gåtan?', [[gk.length ? 'En ledtråd' : 'Visa svaret', nasta]]);
-    visaHjalp(horn, 'trassel', gk[n - 1], [[n < gk.length ? 'En ledtråd till' : 'Visa svaret', nasta]]);
+    if (n === 0) return visaHjalp(horn, 'trassel', (forst ? forst + ' ' : '') + 'Fastnat på gåtan?', [[gk.length ? 'Ge ett tips' : 'Visa svaret', nasta]]);
+    visaHjalp(horn, 'trassel', gk[n - 1], [[n < gk.length ? 'Ett tips till' : 'Visa svaret', nasta]]);
   }
 
   // Bläddrar med ‹ och ›. sida(n) ritar sida n i ruta. Sidan sparas i s[nyckel].
@@ -2339,7 +2340,7 @@
 
   // Pyssels och Trassels hjälp i akt 3 bor i anteckningarna (Behnosh 2026-11-07):
   // tomt → tips att använda dem; fel ✓/✕ → den rutan blinkar; inga fel → nästa ruta i lösningsordningen blinkar.
-  // Sedan som vid granen: vad är fel / vad säger bitarna, och fixa den.
+  // Sedan som vid granen: varför, och fixa den. Hjälpen säger alltid tips, pappersbitarna heter lappar.
   var matrisSnyggt = 0;
   function paketHjalp(inne, scen, lag, namn, farger, g) {
     var horn = el('div', 'tittar granhjalp iflode');
@@ -2403,7 +2404,7 @@
         var fel = s.matrisHjalpTyp === 'fel';
         if (!s.matrisHjalpSteg) {
           return visaHjalp(horn, 'bada', fel ? 'Kolla rutan som blinkar.' : 'Vad ska stå i rutan som blinkar?', [
-            [fel ? 'Vad är fel?' : 'Vad säger bitarna?', function () { s.matrisHjalpSteg = 1; spara(); rita(); }],
+            ['Varför?', function () { s.matrisHjalpSteg = 1; spara(); rita(); }],
             ['Fixa den', fixa]
           ]);
         }
@@ -2414,12 +2415,12 @@
       if (tomt) {
         var val = [];
         if (!s.matrisOppen) val.push(['Öppna anteckningarna', function () { s.matrisOppen = true; spara(); ritaAnteckningar(scen, namn, farger, scen.querySelector('.anteckningar')); rita(); }]);
-        val.push(['En ledtråd', function () { var k = nastaTom(); if (k) peka(k, 'ledtrad'); }]);
+        val.push(['Ge ett tips', function () { var k = nastaTom(); if (k) peka(k, 'ledtrad'); }]);
         return visaHjalp(horn, 'bada', 'Skriv i anteckningarna! Börja med det som är säkert.', val);
       }
       if (felen.length) return visaHjalp(horn, 'bada', 'Behöver ni hjälp?', [['Visa ett fel', function () { peka(alltFel()[0], 'fel'); }]]);
       var k = nastaTom();
-      if (k) return visaHjalp(horn, 'bada', 'Inga fel än. Behöver ni hjälp?', [['En ledtråd', function () { var k2 = nastaTom(); if (k2) peka(k2, 'ledtrad'); }]]);
+      if (k) return visaHjalp(horn, 'bada', 'Inga fel än. Behöver ni hjälp?', [['Ge ett tips', function () { var k2 = nastaTom(); if (k2) peka(k2, 'ledtrad'); }]]);
       visaHjalp(horn, 'bada', 'Anteckningarna räcker. Lägg namnlapparna efter dem.');
     }
     matrisAndrad = rita;
@@ -2442,7 +2443,7 @@
       ['pyssel', 'Öhm… Trassel? Berätta du.'],
       ['trassel', 'Okej, så… vi kanske råkade blanda ihop morfars paket.'],
       ['pyssel', 'Och riva hans lista.'],
-      ['trassel', 'I fyra bitar. Ni har en bit var nu.'],
+      ['trassel', 'I fyra lappar. Ni har en lapp var nu.'],
       ['pyssel', 'Han får inte veta. Ställ paketen rätt innan han kommer tillbaka, snälla!']
     ], function () { s.sett.akt3 = true; spara(); visaPaket(); });
 
@@ -2490,7 +2491,9 @@
         scen.appendChild(lagg);
         scen.appendChild(el('p', 'hemligt', '🙈 Bara för dina ögon.'));
         var bit = el('div', 'listbit');
-        bit.setAttribute('aria-label', 'Din bit av tomtens lista');
+        bit.setAttribute('aria-label', 'Din lapp från tomtens lista');
+        // Pappersbitarna heter alltid lappar, så att de inte blandas ihop med hjälpens tips.
+        bit.appendChild(el('span', 'rubrik', 'Din lapp från tomtens lista'));
         var roll = Math.max(0, minRoll(lag));
         (g.bitar[roll] || []).forEach(function (rad) { bit.appendChild(el('p', null, rad)); });
         scen.appendChild(bit);
