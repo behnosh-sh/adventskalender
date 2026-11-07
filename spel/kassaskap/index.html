@@ -472,6 +472,9 @@
   .granhjalp .titta.trassel { border-color: #6FD49A; }
   .granhjalp:has(.trassel) .titta-fraga .val button { color: #9BE8BC; }
   .granhjalp .titta-fraga { max-width: 150px; }
+  .granhjalp .figurer { display: flex; gap: 3px; }
+  .matris .cell.fel-blink { background: #FFD9D9; box-shadow: inset 0 0 0 2px #E5484D; animation: cellblink 1s ease-in-out infinite; }
+  @keyframes cellblink { 50% { background: #fff; box-shadow: inset 0 0 0 2px rgba(229,72,77,.2); } }
   @keyframes felblink { 50% { fill: rgba(229,72,77,.05); stroke-opacity: .2; } }
   .paketplats.pekad .ask svg { filter: drop-shadow(0 0 6px #FFD66B) drop-shadow(0 0 12px #FFD66B); }
   .figur.pyssel { border-color: #B58CFF; }
@@ -605,7 +608,42 @@
       gataKnuffar: ['Det är en gåta. Vad har nålar men syr aldrig?', 'Den står i stugan i december.', 'Svaret har fyra bokstäver och börjar på G.'],
       paket: {
         svar: 'Daniel:rod Josefin:guld Behnosh:bla Joel:gron',
-        pekar: [[1, 'Josefin', 'guld'], [3, 'Joel', 'gron']],   // knuff 2 och 3: [plats, namn, band]
+        // Lösningsordning för hjälpen i anteckningarna: [ruta, ✕ eller ✓, varför]. Ruta: 'namn|plats', 'namn|band' eller 'band|plats' (plats 1–4).
+        // Hjälpen tar första rutan i ordningen som inte är rätt ifylld. {A}–{D} = den som har biten.
+        ordning: [
+          ['guld|1', '✕', 'Guldbandet sitter inte i en kant, står det på {C}s bit. Alltså inte plats 1.'],
+          ['guld|4', '✕', 'Guldbandet sitter inte i en kant ({C}s bit). Alltså inte plats 4 heller.'],
+          ['rod|2', '✕', 'Det röda bandet sitter i en kant, står det på {A}s bit. Alltså inte plats 2.'],
+          ['rod|3', '✕', 'Det röda bandet sitter i en kant ({A}s bit). Alltså inte plats 3.'],
+          ['Joel|2', '✕', 'Joels paket står i en kant, står det på {C}s bit. Alltså inte plats 2.'],
+          ['Joel|3', '✕', 'Joels paket står i en kant ({C}s bit). Alltså inte plats 3.'],
+          ['Behnosh|rod', '✕', '{A}s bit: Behnoshs paket har inte rött band.'],
+          ['Joel|bla', '✕', '{A}s bit: det blå bandet sitter inte på Joels paket.'],
+          ['Josefin|bla', '✕', '{B}s bit: Josefins paket har inte blått band.'],
+          ['Joel|rod', '✕', '{B}s bit: Joels paket har inte rött band.'],
+          ['Daniel|gron', '✕', '{C}s bit: Daniels paket har inte grönt band.'],
+          ['Daniel|4', '✕', '{D}s bit: Daniels paket står inte längst till höger.'],
+          ['Daniel|guld', '✕', 'Guldbandet står bredvid Daniels paket ({B}s bit). Då kan Daniel inte ha guld själv.'],
+          ['Joel|guld', '✕', 'Joel står i en kant, och guld sitter aldrig i en kant. Alltså har Joel inte guld.'],
+          ['Joel|gron', '✓', 'Joel kan inte ha rött, blått eller guld. Då återstår grönt.'],
+          ['gron|2', '✕', 'Grönt är Joels, och Joel står i en kant. Alltså inte plats 2.'],
+          ['gron|3', '✕', 'Grönt är Joels, och Joel står i en kant. Alltså inte plats 3.'],
+          ['bla|1', '✕', 'Kanterna har grönt (Joel) och rött. Då sitter blått inte på plats 1.'],
+          ['bla|4', '✕', 'Kanterna har grönt (Joel) och rött. Då sitter blått inte på plats 4.'],
+          ['Daniel|bla', '✕', 'Om Daniel hade blått skulle Behnosh få guld, och då står de bredvid varandra i mitten. Det säger {D}s bit nej till.'],
+          ['Daniel|rod', '✓', 'Daniel kan inte ha grönt, guld eller blått. Då återstår rött.'],
+          ['Daniel|1', '✓', 'Rött sitter i en kant, och Daniel står inte längst till höger. Alltså plats 1.'],
+          ['rod|1', '✓', 'Daniel har rött och står på plats 1.'],
+          ['Joel|4', '✓', 'Joel står i en kant, och plats 1 är Daniels. Alltså plats 4.'],
+          ['gron|4', '✓', 'Joel har grönt och står på plats 4.'],
+          ['guld|2', '✓', 'Guldbandet står bredvid Daniel, som står på plats 1. Alltså plats 2.'],
+          ['bla|3', '✓', 'Blått sitter i mitten, och plats 2 har guld. Alltså plats 3.'],
+          ['Behnosh|2', '✕', 'Behnosh står inte bredvid Daniel ({D}s bit). Alltså inte plats 2.'],
+          ['Behnosh|3', '✓', 'Plats 1 och 4 är tagna, och plats 2 står bredvid Daniel. Alltså plats 3.'],
+          ['Behnosh|bla', '✓', 'Behnosh står på plats 3, och där sitter det blå bandet.'],
+          ['Josefin|2', '✓', 'Bara plats 2 är kvar för Josefin.'],
+          ['Josefin|guld', '✓', 'Josefin står på plats 2, där guldbandet sitter.']
+        ],
         bitar: [
           ['Det röda bandet sitter i en kant.', 'Behnoshs paket har inte rött band.', 'Det blå bandet sitter inte på Joels paket.'],
           ['Paketet med guldband står bredvid Daniels paket.', 'Josefins paket har inte blått band.', 'Joels paket har inte rött band.'],
@@ -715,8 +753,9 @@
   // En liten figur med kort text under sig, och valen som länkar. val: [[text, funktion], ...]
   function visaHjalp(horn, vem, text, val) {
     horn.textContent = '';
-    var fig = el('div', 'titta ' + vem, FIGURER[vem].emoji);
+    var fig = el('div', 'figurer');
     fig.setAttribute('aria-hidden', 'true');
+    (vem === 'bada' ? ['trassel', 'pyssel'] : [vem]).forEach(function (v) { fig.appendChild(el('div', 'titta ' + v, FIGURER[v].emoji)); });
     var bubbla = el('div', 'titta-fraga');
     bubbla.setAttribute('aria-live', 'polite');
     bubbla.appendChild(el('span', 'text', text));
@@ -2211,11 +2250,12 @@
   // Anteckningsboken: namn mot plats och band, och band mot plats. Tryck = ✕, igen = ✓, igen = ?, igen = tomt.
   // Inget fylls i automatiskt. Varje telefon har sin egen, och den sparas.
   // Den ligger som en liten journal längst ner i skåpet. Tryck = den öppnas, × = den stängs.
+  var matrisAndrad = null;   // anropas när något ändras i anteckningarna (hjälpen ritas om)
   function ritaAnteckningar(scen, namn, farger, gammal) {
     if (!s.matris) s.matris = {};
     var ruta = el('div', 'anteckningar' + (s.matrisOppen ? ' oppen' : ''));
     if (gammal) scen.replaceChild(ruta, gammal); else scen.appendChild(ruta);
-    function vaxla() { s.matrisOppen = !s.matrisOppen; spara(); ritaAnteckningar(scen, namn, farger, ruta); }
+    function vaxla() { s.matrisOppen = !s.matrisOppen; spara(); ritaAnteckningar(scen, namn, farger, ruta); if (matrisAndrad) matrisAndrad(); }
     if (!s.matrisOppen) {
       var bok = el('button', 'liten-journal');
       bok.type = 'button';
@@ -2237,6 +2277,7 @@
     function cell(nyckel, klasser, etikett) {
       var c = el('button', 'cell ' + klasser);
       c.type = 'button';
+      c.dataset.nyckel = nyckel;
       function visa() {
         var v = s.matris[nyckel] || 0;
         c.textContent = MARK[v] || '';
@@ -2250,6 +2291,7 @@
         if (v) s.matris[nyckel] = v; else delete s.matris[nyckel];
         spara();
         visa();
+        if (matrisAndrad) matrisAndrad();
       });
       visa();
       return c;
@@ -2284,9 +2326,98 @@
     blad.appendChild(m);
     var sudda = el('button', 'sudda', 'Sudda allt');
     sudda.type = 'button';
-    sudda.addEventListener('click', function () { s.matris = {}; spara(); ritaAnteckningar(scen, namn, farger, ruta); });
+    sudda.addEventListener('click', function () { s.matris = {}; spara(); ritaAnteckningar(scen, namn, farger, ruta); if (matrisAndrad) matrisAndrad(); });
     blad.appendChild(sudda);
     ruta.appendChild(blad);
+  }
+
+  // Pyssels och Trassels hjälp i akt 3 bor i anteckningarna (Behnosh 2026-11-07):
+  // tomt → tips att använda dem; fel ✓/✕ → den rutan blinkar; inga fel → nästa ruta i lösningsordningen blinkar.
+  // Sedan som vid granen: vad är fel / vad säger bitarna, och fixa den.
+  var matrisSnyggt = 0;
+  function paketHjalp(inne, scen, lag, namn, farger, g) {
+    var horn = el('div', 'tittar granhjalp iflode');
+    horn.style.alignSelf = 'flex-end';
+    scen.insertBefore(horn, scen.querySelector('.anteckningar'));   // precis ovanför anteckningarna
+    var svarLista = g.svar.split(' ').map(function (x) { var d = x.split(':'); return { n: d[0], f: d[1] }; });
+    // 'Joel|4' → 'n2p3', 'Joel|gron' → 'n2fgron', 'gron|4' → 'fgronp3'
+    function nyckel(r) {
+      var d = r.split('|'), a = BAND_FARG[d[0]] ? 'f' + d[0] : 'n' + namn.indexOf(d[0]);
+      return a + (/^\d$/.test(d[1]) ? 'p' + (d[1] - 1) : 'f' + d[1]);
+    }
+    function sant(k) {
+      var m = k.match(/^(n(\d)|f(\w+?))(p(\d)|f(\w+))$/);
+      var n = m[2] != null ? namn[+m[2]] : null, fa = m[3], p = m[5] != null ? +m[5] : null, fb = m[6];
+      return svarLista.some(function (x, j) {
+        return (n == null || x.n === n) && (p == null || j === p) && (fa == null || x.f === fa) && (fb == null || x.f === fb);
+      });
+    }
+    function ratt(k) { return sant(k) ? 2 : 1; }
+    var ordning = (g.ordning || []).map(function (o) { return { k: nyckel(o[0]), varfor: lagText(o[2], lag) }; });
+    function varfor(k) {
+      var o = ordning.filter(function (x) { return x.k === k; })[0];
+      if (o) return o.varfor;
+      return sant(k) ? 'Den här stämmer faktiskt. Läs alla bitar igen.' : 'Det finns redan en ✓ i samma rad eller kolumn.';
+    }
+    function alltFel() { return Object.keys(s.matris || {}).filter(function (k) { var v = s.matris[k]; return (v === 1 || v === 2) && v !== ratt(k); }); }
+    function nastaTom() { var o = ordning.filter(function (x) { return (s.matris || {})[x.k] !== ratt(x.k); })[0]; return o ? o.k : null; }
+    function blinka(k) {
+      scen.querySelectorAll('.matris .cell').forEach(function (c) { c.classList.toggle('fel-blink', c.dataset.nyckel === k); });
+    }
+    function peka(k, typ) {
+      s.matrisHjalp = k;
+      s.matrisHjalpTyp = typ;
+      s.matrisHjalpSteg = 0;
+      if (!s.matrisOppen) { s.matrisOppen = true; ritaAnteckningar(scen, namn, farger, scen.querySelector('.anteckningar')); }
+      spara();
+      rita();
+      var c = scen.querySelector('.matris .cell.fel-blink');
+      if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+    function rita() {
+      if (!horn.isConnected) { matrisAndrad = null; return; }
+      if (!s.matris) s.matris = {};
+      var j = s.matrisHjalp;
+      if (j != null && s.matris[j] === ratt(j)) {
+        j = s.matrisHjalp = null;
+        s.matrisHjalpSteg = 0;
+        spara();
+        matrisSnyggt = Date.now() + 1600;
+        setTimeout(rita, 1650);
+      }
+      blinka(j);
+      function fixa() {
+        s.matris[j] = ratt(j);
+        spara();
+        ritaAnteckningar(scen, namn, farger, scen.querySelector('.anteckningar'));
+        rita();
+      }
+      if (Date.now() < matrisSnyggt) return visaHjalp(horn, 'bada', 'Snyggt!');
+      if (j != null) {
+        var fel = s.matrisHjalpTyp === 'fel';
+        if (!s.matrisHjalpSteg) {
+          return visaHjalp(horn, 'bada', fel ? 'Kolla rutan som blinkar.' : 'Vad ska stå i rutan som blinkar?', [
+            [fel ? 'Vad är fel?' : 'Vad säger bitarna?', function () { s.matrisHjalpSteg = 1; spara(); rita(); }],
+            ['Fixa den', fixa]
+          ]);
+        }
+        return visaHjalp(horn, 'bada', varfor(j), [['Fixa den', fixa]]);
+      }
+      var tomt = !Object.keys(s.matris).length;
+      var felen = alltFel();
+      if (tomt) {
+        var val = [];
+        if (!s.matrisOppen) val.push(['Öppna anteckningarna', function () { s.matrisOppen = true; spara(); ritaAnteckningar(scen, namn, farger, scen.querySelector('.anteckningar')); rita(); }]);
+        val.push(['En ledtråd', function () { var k = nastaTom(); if (k) peka(k, 'ledtrad'); }]);
+        return visaHjalp(horn, 'bada', 'Skriv i anteckningarna! Börja med det som är säkert.', val);
+      }
+      if (felen.length) return visaHjalp(horn, 'bada', 'Behöver ni hjälp?', [['Visa ett fel', function () { peka(alltFel()[0], 'fel'); }]]);
+      var k = nastaTom();
+      if (k) return visaHjalp(horn, 'bada', 'Inga fel än. Behöver ni hjälp?', [['En ledtråd', function () { var k2 = nastaTom(); if (k2) peka(k2, 'ledtrad'); }]]);
+      visaHjalp(horn, 'bada', 'Anteckningarna räcker. Lägg namnlapparna efter dem.');
+    }
+    matrisAndrad = rita;
+    rita();
   }
 
   function ritaAkt3(inne, scen) {
@@ -2390,23 +2521,7 @@
         });
         uppdatera();
         startaTimer();
-        pekade();
-        knuff(inne, 'paket', {
-          vem: 'bada', forsta: 10, mellan: 5,
-          nivaer: [['pyssel', 'Börja med det som är säkert. Vem står i en kant?']].concat((g.pekar || []).map(function (p) {
-            return function () {
-              s.paket[p[0]] = { n: p[1], f: p[2] };
-              s.paketPekat = (s.paketPekat || []).concat([p[0]]);
-              spara();
-              ritaInne(inne);
-              return ['trassel', 'Psst. Det där paketet som lyser står rätt. Vi lovar.'];
-            };
-          }))
-        });
-        // Paket som barnbarnen har pekat ut lyser, så att man ser vilka som är säkra.
-        function pekade() {
-          (s.paketPekat || []).forEach(function (i) { var pl = hylla.children[i]; if (pl) pl.classList.add('pekad'); });
-        }
+        paketHjalp(inne, scen, lag, namn, farger, g);
       });
     }
   }
@@ -2692,7 +2807,7 @@
     nu.addEventListener('click', function () { var st = aktivKnuff && s.knuff && s.knuff[aktivKnuff.id]; if (st) { st.sedan = 0; spara(); } });
     var noll = el('button', null, 'Nollställ knuffarna');
     noll.type = 'button';
-    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; spara(); rita(); });
+    noll.addEventListener('click', function () { s.knuff = {}; s.paketPekat = null; s.matrisHjalp = null; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; spara(); rita(); });
     rad.appendChild(nu);
     rad.appendChild(noll);
     return rad;
