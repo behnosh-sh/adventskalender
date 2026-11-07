@@ -1163,7 +1163,7 @@
     },
     17: {
       namn: 'Memory', sokvag: '../memory/',
-      kort: function (v) { return '≤ ' + Math.floor(v / 100000); },
+      kort: function (v) { return Math.floor(v / 100000); },
       malText: function (v) { return 'Memory. Högst ' + Math.floor(v / 100000) + ' drag.'; },
       sank: function (v) { return Math.floor(Math.floor(v / 100000) * 1.4) * 100000 + 99999; },
       nar: function (v, mal) { return Math.floor(v / 100000) <= Math.floor(mal / 100000); },
@@ -1215,7 +1215,7 @@
     14: {
       // värdet är tiden i tiondelar × 10 000 + drag, tiden jämförs i hela sekunder som den visas
       namn: 'Femtonspel', sokvag: '../femton/',
-      kort: function (v) { return '≤ ' + Advent.formateraTid(this.sek(v)); },
+      kort: function (v) { return Advent.formateraTid(this.sek(v)); },
       sek: function (v) { return Math.round(Math.floor(v / 10000) / 10); },
       malText: function (v) { return 'Femtonspel. Högst ' + Advent.formateraTid(this.sek(v)) + '.'; },
       sank: function (v) { return Math.round(this.sek(v) * 1.4) * 10 * 10000 + 9999; },
@@ -1227,7 +1227,7 @@
     12: {
       // värdet är den sammanlagda tiden för de tre banorna i tiondelar
       namn: 'Labyrinten', sokvag: '../labyrint/',
-      kort: function (v) { return '≤ ' + Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10); },
+      kort: function (v) { return Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10); },
       malText: function (v) { return 'Labyrinten. Högst ' + Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10) + '.'; },
       sank: function (v) { return Math.round(v * 1.4); },
       nar: function (v, mal) { return v <= mal; },
@@ -1238,7 +1238,7 @@
     10: {
       // värdet är tiden i sekunder med en decimal, samma bana som den 10 december; en mina är en missad runda
       namn: 'Minesweeper', sokvag: '../minesweeper/',
-      kort: function (v) { return '≤ ' + v.toFixed(1).replace('.', ','); },
+      kort: function (v) { return v.toFixed(1).replace('.', ','); },
       malText: function (v) { return 'Minesweeper. Högst ' + v.toFixed(1).replace('.', ',') + ' s.'; },
       sank: function (v) { return Math.round(v * 14) / 10; },
       nar: function (v, mal) { return Math.round(v * 10) <= Math.round(mal * 10); },
