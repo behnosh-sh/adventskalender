@@ -391,6 +391,7 @@
   .kodbrev input:focus { outline: 2px solid #E5484D; outline-offset: 1px; }
   .brevscen .falt { margin-top: 4px; }
   .topprad { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; }
+  .topprad .bakat { flex: none; white-space: nowrap; }
   .tittar.granhjalp.iflode { position: static; flex-direction: row-reverse; align-items: flex-start; gap: 6px; }
   .granhjalp.iflode .titta-fraga { max-width: 190px; padding-top: 2px; }
   .granhjalp.iflode .titta-fraga .val { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; column-gap: 10px; }
@@ -1554,23 +1555,7 @@
         under.appendChild(gataFalt(inne));
         return;
       }
-      // Färglåsets tips: Pyssel vid dörrarna, ett tips i taget när man trycker (inga tidsstyrda knuffar).
-      // Syns bara här vid dörrarna, aldrig inne vid granen.
       stoppaKnuff();
-      var tips = [
-        'Min gran är inte bara snygg, vet ni.',
-        lagText('När granen är rätt pyntad lyser den. Titta på {B}s telefon.', lag),
-        'Fyra färger, en i taget, i den ordning de lyser.'
-      ];
-      var horn = el('div', 'tittar granhjalp iflode');
-      horn.style.alignSelf = 'flex-end';
-      under.appendChild(horn);
-      (function ritaTips() {
-        var n = Math.min(s.fargTips || 0, tips.length);
-        function nasta() { s.fargTips = n + 1; spara(); ritaTips(); }
-        if (n === 0) return visaHjalp(horn, 'pyssel', 'Fastnat på färglåset?', [['Ge ett tips', nasta]]);
-        visaHjalp(horn, 'pyssel', tips[n - 1], n < tips.length ? [['Ett tips till', nasta]] : []);
-      })();
       farglas(lag);
     }
     // Rätt färgkod låser upp: dörren glider upp på glänt, precis som Pyssels. Ett tryck öppnar den helt.
@@ -1967,7 +1952,10 @@
     var bakat = el('button', 'bakat', '← Dörrarna');
     bakat.type = 'button';
     bakat.addEventListener('click', function () { stoppaBlink(); s.vy = null; spara(); ritaInne(inne); });
-    scen.appendChild(bakat);
+    // Överst: tillbaka till vänster, Pyssels hjälp till höger (i flödet, så den inte täcker granen).
+    var topp = el('div', 'topprad');
+    topp.appendChild(bakat);
+    scen.appendChild(topp);
     function visa() {
       if (!g) { scen.appendChild(el('p', 'platshallare', 'Granen är inte klar än.')); return; }
       if (roll === 0) {
@@ -2050,8 +2038,8 @@
     }
     // Pyssels hjälp: hon står framme hela tiden och frågar om man vill ha en ledtråd.
     // 1) en plats som är fel blinkar, 2) hon säger vad som är fel, 3) hon fixar den. Blir platsen rätt slutar den blinka.
-    var hjalp = el('div', 'tittar granhjalp');
-    inne.appendChild(hjalp);
+    var hjalp = el('div', 'tittar granhjalp iflode');
+    (scen.querySelector('.topprad') || inne).appendChild(hjalp);
     function forstaFel() { for (var j = 0; j < g.pynt.length; j++) if (s.gran[j] !== g.pynt[j]) return j; return -1; }
     function vadArFel(j) {
       var nu = s.gran[j], ratt = g.pynt[j];
@@ -2066,7 +2054,15 @@
     function ritaHjalp() {
       hjalp.textContent = '';
       gran.querySelectorAll('.plats').forEach(function (pl) { pl.classList.remove('fel-blink'); });
-      if (s.granKlar) return;
+      // När granen är klar och blinkar: färglåsets tips, bara här på pyntarens telefon (Behnosh 2026-11-07).
+      if (s.granKlar) {
+        if (s.fargKlar) return;
+        var tips = ['Min gran är inte bara snygg, vet ni. Titta noga på den.', 'Den blinkar i fyra färger, en i taget. Säg dem högt för de andra.'];
+        var n = Math.min(s.fargTips || 0, tips.length);
+        function nasta() { s.fargTips = n + 1; spara(); ritaHjalp(); }
+        if (n === 0) return visaHjalp(hjalp, 'pyssel', 'Granen är klar! Fastnat på färglåset?', [['Ge ett tips', nasta]]);
+        return visaHjalp(hjalp, 'pyssel', tips[n - 1], n < tips.length ? [['Ett tips till', nasta]] : []);
+      }
       var j = s.granHjalp;
       if (j != null && s.gran[j] === g.pynt[j]) {
         j = s.granHjalp = null;
