@@ -457,13 +457,11 @@
   @keyframes titta { 0%, 100% { transform: translateY(16px) rotate(-6deg); } 35%, 65% { transform: translateY(-4px) rotate(4deg); } }
   .titta-fraga { position: absolute; left: 72px; bottom: 14px; max-width: 200px; padding: 8px 12px; border: 0; border-radius: 14px 14px 14px 4px; background: #EADFFF; color: #2A2233; font: 600 14px/1.25 var(--text-typsnitt); text-align: left; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.3); animation: upp .3s ease-out; }
   /* Vid granen står Pyssel uppe i högra hörnet, bredvid ← Dörrarna, så att hon inte skymmer lådan. */
-  .tittar.granhjalp { top: 8px; right: 8px; bottom: auto; left: auto; height: auto; display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 6px; }
-  .granhjalp .titta { position: static; width: 42px; height: 42px; font-size: 23px; animation: none; }
-  .granhjalp .titta { cursor: default; }
-  .granhjalp .titta-fraga { position: static; max-width: 200px; padding: 6px 10px 8px; font-size: 13.5px; border-radius: 14px 4px 14px 14px; cursor: default; display: flex; flex-direction: column; gap: 2px; }
-  .granhjalp .titta-fraga .vem { font-size: 12px; font-weight: 600; color: #5E5168; }
-  .granhjalp .titta-fraga .val { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-  .granhjalp .titta-fraga .val button { padding: 5px 9px; border: 0; border-radius: 999px; background: #7B5BC4; color: #fff; font: 600 12.5px/1.1 var(--text-typsnitt); cursor: pointer; }
+  .tittar.granhjalp { top: 10px; right: 10px; bottom: auto; left: auto; height: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
+  .granhjalp .titta { position: static; width: 32px; height: 32px; font-size: 17px; border-width: 2px; animation: none; box-shadow: none; cursor: default; }
+  .granhjalp .titta-fraga { position: static; max-width: 112px; padding: 0; background: none; box-shadow: none; color: rgba(255,255,255,.72); font: 400 12px/1.3 var(--text-typsnitt); text-align: right; cursor: default; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: auto; animation: none; }
+  .granhjalp .titta-fraga .val { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .granhjalp .titta-fraga .val button { padding: 2px 0; border: 0; background: none; color: #CDB8FF; text-decoration: underline; text-underline-offset: 2px; font: 600 12px/1.2 var(--text-typsnitt); cursor: pointer; }
   .gran-svg .plats.fel-blink circle:first-child { fill: rgba(229,72,77,.3); stroke: #FF6B6B; stroke-width: 3; animation: felblink 1s ease-in-out infinite; }
   @keyframes felblink { 50% { fill: rgba(229,72,77,.05); stroke-opacity: .2; } }
   .paketplats.pekad .ask svg { filter: drop-shadow(0 0 6px #FFD66B) drop-shadow(0 0 12px #FFD66B); }
@@ -1986,7 +1984,6 @@
       fig.setAttribute('aria-hidden', 'true');
       var bubbla = el('div', 'titta-fraga');
       bubbla.setAttribute('aria-live', 'polite');
-      bubbla.appendChild(el('span', 'vem', 'Pyssel'));
       bubbla.appendChild(el('span', 'text', text));
       if (val.length) {
         var rad = el('span', 'val');
