@@ -994,6 +994,7 @@
           dorr.classList.add('oppen');
           s.steg = 'akt2';
           spara();
+          hamtaLagIForvag();
           setTimeout(function () { ritaInne(inne); }, 700);
         }, 400);
         return;
@@ -1588,18 +1589,25 @@
       return Promise.resolve(lag);
     }
     if (s.lag) return Promise.resolve(s.lag);
+    if (lagLaddar) return lagLaddar;   // frågan är redan på väg (startad när dörren öppnades)
     var fro = LAG_FRO + (rep ? '-repetition' : '');
     function satt(spelare) { s.lag = blandaFast(spelare, fro); spara(); return s.lag; }
-    return Advent.Resultat.hamta(24).then(function (svar) { return satt(svar.spelare); }, function (fel) {
+    lagLaddar = Advent.Resultat.hamta(24).then(function (svar) { return satt(svar.spelare); }, function (fel) {
       var sparad = Advent.Resultat.spelare();   // senaste listan som arket gav, om arket inte svarar nu
       if (sparad && sparad.length) return satt(sparad);
       throw fel;
     });
+    lagLaddar.then(function () { lagLaddar = null; }, function () { lagLaddar = null; });
+    return lagLaddar;
   }
+  var lagLaddar = null;
+  // Lagen hämtas i förväg, så att Pyssel inte står och väntar på arket när hon ska dela upp er.
+  function hamtaLagIForvag() { hamtaLag().catch(function () {}); }
   function minRoll(lag) { return test ? (s.testRoll || 0) : lag.indexOf(Advent.Resultat.namn()); }
   function lagText(t, lag) { return t.replace(/\{([ABCD])\}/g, function (m, b) { return lag['ABCD'.indexOf(b)] || ''; }); }
 
   function ritaAkt2(inne, scen) {
+    hamtaLagIForvag();
     inne.parentNode.classList.remove('hog');
     stoppaBlink();
     var dorrar = el('div', 'smadorrar');
@@ -3159,6 +3167,7 @@
     if (!s.sett) s.sett = {};
     if (STEG.indexOf(s.steg) === -1) s = nyttTillstand();   // sparat från en äldre version av skåpet
     tur = { spelare: test ? null : Advent.Resultat.spelare(), antal: 0 };
+    lagLaddar = null;
     clearTimeout(skick.timer);
     clearTimeout(skick.statusTimer);
     skick = { timer: null, upptagen: false, forsok: 0, sedan: 0 };
