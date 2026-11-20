@@ -1,8 +1,8 @@
 // Gemensam kod för startsidan och alla spel.
 // Ladda med <script src="../../js/gemensam.js"></script> från spel/<namn>/index.html.
 (function () {
-  // Byt den här strängen senare så att ingen (inte ens den som byggt) vet dagens banor.
-  var FRO_PREFIX = 'adventskalender-2026-dag-';
+  // Bytt 2026-11-20 (nedlåsningen), så att banorna i december inte är de som provades under bygget.
+  var FRO_PREFIX = 'advent-2026-2d688d1c3ab1-dag-';
 
   // Dag 1–24 från ?dag=N. Saknas eller fel värde blir det null.
   function hamtaDag() {
@@ -10,7 +10,7 @@
     return n >= 1 && n <= 24 ? n : null;
   }
 
-  // Dagens frösträng, t.ex. "adventskalender-2026-dag-2".
+  // Dagens frösträng: FRO_PREFIX + dagens nummer.
   function froForDag(dag) {
     return FRO_PREFIX + dag;
   }
@@ -96,6 +96,29 @@
   function spara(nyckel, varde) {
     try { localStorage.setItem(nyckel, JSON.stringify(varde)); } catch (e) { /* ignorera */ }
   }
+
+  // Engångsrensning: första gången en sida öppnas från 1 december glömmer telefonen allt som sparats om
+  // luckorna under bygget (spelade luckor, banor, skickat, öppnade luckor, kassaskåpet).
+  // Inloggningen (advent-kod, advent-namn) och namnlistan (advent-spelare) ligger kvar. Arket rörs inte.
+  // Bara kalenderns egna nycklar tas bort, eftersom andra sidor på samma adress kan dela lagringen.
+  var RENSA_FRAN = new Date(2026, 11, 1).getTime();
+  var RENSAD_NYCKEL = 'advent-rensad-dec-2026';
+  var RENSA_PREFIX = ['2048:', 'cirkel:', 'connections:', 'femton:', 'flygande-tomten:', 'gissning:', 'kodkryss:',
+    'labyrint:', 'memory:', 'monster:', 'simon:', 'snake:', 'snoflingor:', 'sudoku:', 'tidskanslan:', 'wordle:',
+    'minesweeper', 'kassaskap', 'advent-oppnade'];
+  function rensaFranBygget() {
+    if (Date.now() < RENSA_FRAN || lasa(RENSAD_NYCKEL, false) === true) return;
+    try {
+      var bort = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && RENSA_PREFIX.some(function (p) { return k.indexOf(p) === 0; })) bort.push(k);
+      }
+      bort.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) { /* ignorera */ }
+    spara(RENSAD_NYCKEL, true);
+  }
+  rensaFranBygget();
 
   // Markerar en lucka som öppnad (granen visas "vänd" på startsidan).
   function markeraOppnad(dag) {

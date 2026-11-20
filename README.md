@@ -7,7 +7,7 @@ Familjens digitala adventskalender. Statisk sida på GitHub Pages, inga konton o
 - `index.html` – startsidan med 24 granvimplar på snöre.
 - `js/luckor.js` – vilket spel som ligger bakom varje lucka, och `ALLA_OPPNA` (byggläge).
 - `js/gemensam.js` – delad kod: `Advent.hamtaDag()` läser `?dag=N`, dagens frö
-  (`"adventskalender-2026-dag-N"`, prefixet i `FRO_PREFIX`), slumpgenerator m.m.
+  (prefixet i `FRO_PREFIX` + dagens nummer, bytt vid nedlåsningen), slumpgenerator m.m.
   `Advent.pausKlocka()` pausar spelets klocka och döljer brädet när man lämnar sidan; nya spel med klocka ska använda den.
 - `js/resultat.js` – familjens resultattavla: kodruta, "Skicka till familjen", dagens tavla. Se kommentaren överst.
 - `resultat/index.html` – alla luckors resultat. Andras resultat syns bara för luckor man själv har skickat in.
