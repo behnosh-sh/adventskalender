@@ -584,7 +584,7 @@
 
 </main>
 
-<script src="../../js/gemensam.js?v=5"></script>
+<script src="../../js/gemensam.js?v=6"></script>
 <script src="../../js/luckor.js?v=27"></script>
 <script src="../../js/resultat.js?v=4"></script>
 <script>
@@ -609,10 +609,10 @@
       '<circle cx="50" cy="50" r="4" fill="#7D899C"/></svg>';
   })();   // sekunder som hjulen är låsta efter fel kod
 
-  // Svaren jämförs som hashar, så att de riktiga svaren inte står i klartext här.
-  // Exempelsvaren i testläget får synas. De riktiga fylls i när pusslen är byggda (null = inte klart än).
-  var SALT = 'kassaskap-2026:';
-  function hash(svar) { return String(Advent.hashStrang(SALT + svar)); }
+  // Exempelsvaren (repetitionen) står i klartext. De riktiga svaren ligger förvrängda längst ner i SVAR
+  // (samma sätt som tävlingsfrågorna i de andra luckorna), så att ingen ser dem av misstag.
+  // Båda jämförs på samma sätt, så repetitionen provar samma kod som julafton.
+  // ord: gåtans svar (det som Trassel visar), ordOcksa: andra svar som också räknas.
   var SVAR = {
     test: {
       kod: '3816', ord: 'GRAN',
@@ -673,8 +673,89 @@
         ]
       }
     },
-    riktig: { kod: null, ord: null, siffror: null, gran: null, brev: null, gataKnuffar: null, paket: null }   // siffror: koden i klartext, fylls i vid nedlåsningen
+    riktig: avvrang(
+      '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')
   };
+  function avvrang(text) {
+    var bin = atob(text), slump = Advent.skapaSlump('kassaskap-forvrangning');
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ Math.floor(slump() * 256);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
 
   // ===== Tillstånd =====
   // steg: kuvert → las (ytterdörren) → akt2 → akt3 → oppet
@@ -708,9 +789,9 @@
 
   // Versaler, mellanslag och skiljetecken spelar ingen roll.
   function stada(t) { return String(t).toUpperCase().replace(/[^A-ZÅÄÖÉÜ0-9]/g, ''); }
-  function stammer(gissning, facit) {
+  function stammer(gissning, facit, andra) {
     if (facit == null) return false;
-    return exempel() ? stada(gissning) === stada(facit) : hash(stada(gissning)) === facit;
+    return [facit].concat(andra || []).some(function (f) { return stada(gissning) === stada(f); });
   }
 
   function el(tagg, klass, text) {
@@ -1041,7 +1122,7 @@
   // Nödtändningen (s.nodTand) tänder lampan oavsett vad arket säger.
   function minTur() { var p = minPlats(); return p >= 0 && !s.provKlar && (klaraNu() === p || !!s.nodTand); }
   function siffraFor(plats) {
-    var k = exempel() ? SVAR.test.kod : SVAR.riktig.siffror;
+    var k = svar().kod;
     return k ? k.charAt(plats) : '?';
   }
 
@@ -1782,7 +1863,7 @@
   function gataFalt(inne) {
     var trassel = roterande(['Haha. Nej.', 'Fel. Men kreativt.', 'Pyssel, de har inte knäckt koden än.', 'Morfar hade gissat samma sak.', 'Läs gåtan en gång till. Långsamt.']);
     return falt('Gåtans svar', function (text) {
-      if (stammer(text, svar().ord)) {
+      if (stammer(text, svar().ord, svar().ordOcksa)) {
         prata(inne, [['trassel', 'Va?! Det har ingen klarat förut. Okej. Ni är bättre än vi trodde.']], function () {
           s.steg = 'akt3';
           s.vy = null;
