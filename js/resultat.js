@@ -15,10 +15,15 @@
 
   var KOD_NYCKEL = 'advent-kod';
   var NAMN_NYCKEL = 'advent-namn';
+  var SPELARE_NYCKEL = 'advent-spelare';   // senaste listan med namn från arket, om arket inte svarar senare
   var MEDALJ_EMOJI = { guld: '🥇', silver: '🥈', brons: '🥉' };
   var MEDALJ_NAMN = { guld: 'Guld', silver: 'Silver', brons: 'Brons' };
 
   var monterade = [];
+  // Repetitionen av lucka 24: varje fråga får rep: true, och scriptet använder då bara fliken Resultat-test.
+  // Första gången kontrolleras att scriptet verkligen förstår det (svaret har rep: true), annars skickas inget mer.
+  var repLage = false, repKoll = null;
+  var senaste = null;   // { tid, ok, fel } för lägesraden
 
   function arInkopplad() { return !!ADRESS; }
   function kod() { return Advent.lasa(KOD_NYCKEL, null); }
@@ -28,6 +33,22 @@
     if (!arInkopplad()) return Promise.reject(new Error('Resultattavlan är inte inkopplad än.'));
     var kropp = { atgard: atgard, kod: (data && data.kod) || kod() };
     for (var k in data) if (k !== 'kod') kropp[k] = data[k];
+    // Utan kod frågar telefonen aldrig arket (en tom kod får inte räknas som en felaktig kod).
+    if (!kropp.kod) return Promise.reject(new Error('Telefonen är inte inloggad.'));
+    if (!repLage) return skickaAnrop(kropp, false);
+    kropp.rep = true;
+    if (atgard === 'repKoll') return skickaAnrop(kropp, true);
+    if (!repKoll) {
+      repKoll = skickaAnrop({ atgard: 'repKoll', kod: kropp.kod, rep: true }, true).catch(function (fel) {
+        repKoll = null;
+        if (fel.message === 'Okänd åtgärd.') throw new Error('Scriptet i arket är inte uppdaterat för repetitionen.');
+        throw fel;
+      });
+    }
+    return repKoll.then(function () { return skickaAnrop(kropp, true); });
+  }
+
+  function skickaAnrop(kropp, rep) {
     return fetch(ADRESS, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -39,19 +60,32 @@
           if (svar.fel === 'Koden stämmer inte.') glomKod();
           throw new Error(svar.fel || 'Något gick fel.');
         }
+        if (rep && svar.rep !== true) throw new Error('Scriptet i arket är inte uppdaterat för repetitionen.');
         if (svar.namn) Advent.spara(NAMN_NYCKEL, svar.namn);
+        if (svar.spelare && svar.spelare.length) Advent.spara(SPELARE_NYCKEL, svar.spelare);
+        senaste = { tid: Date.now(), ok: true };
         return svar;
+      })
+      .catch(function (fel) {
+        senaste = { tid: Date.now(), ok: false, fel: fel.message };
+        throw fel;
       });
   }
 
   function glomKod() {
     Advent.spara(KOD_NYCKEL, null);
     Advent.spara(NAMN_NYCKEL, null);
+    document.dispatchEvent(new Event('advent-utloggad'));
   }
+
+  function spelare() { return Advent.lasa(SPELARE_NYCKEL, null); }
+  function repetition(pa) { repLage = !!pa; repKoll = null; }
+  function nollstallRepetition() { return repLage ? anrop('repNollstall', {}) : Promise.reject(new Error('Inte i repetitionen.')); }
 
   function loggaIn(nyKod) {
     return anrop('vem', { kod: nyKod }).then(function (svar) {
       Advent.spara(KOD_NYCKEL, nyKod);
+      document.dispatchEvent(new Event('advent-inloggad'));
       return svar;
     });
   }
@@ -234,6 +268,10 @@
     tavla: tavla,
     ritaRader: ritaRader,
     ordna: ordna,
-    medaljBricka: medaljBricka
+    medaljBricka: medaljBricka,
+    spelare: spelare,
+    repetition: repetition,
+    nollstallRepetition: nollstallRepetition,
+    senaste: function () { return senaste; }
   };
 })();
