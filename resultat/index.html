@@ -42,7 +42,7 @@
 </main>
 
 <script src="../js/gemensam.js?v=5"></script>
-<script src="../js/luckor.js?v=24"></script>
+<script src="../js/luckor.js?v=25"></script>
 <script src="../js/resultat.js?v=4"></script>
 <script>
 (function () {
@@ -50,7 +50,7 @@
 
   // Samma regel som startsidan: under bygget är alla luckor öppna, sedan bara t.o.m. dagens datum.
   var nu = new Date();
-  var idag = nu.getFullYear() === 2026 && nu.getMonth() === 11 ? Math.min(nu.getDate(), 24) : (nu.getFullYear() > 2026 ? 24 : 0);
+  var idag = window.oppnaTill(nu);
   function synlig(n) { return window.LUCKOR[n] && (window.ALLA_OPPNA || n <= idag); }
 
   function el(tagg, klass, text) {

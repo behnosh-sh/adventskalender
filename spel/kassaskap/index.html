@@ -588,7 +588,7 @@
 </main>
 
 <script src="../../js/gemensam.js?v=5"></script>
-<script src="../../js/luckor.js?v=24"></script>
+<script src="../../js/luckor.js?v=25"></script>
 <script src="../../js/resultat.js?v=4"></script>
 <script>
 (function () {
@@ -683,6 +683,7 @@
   // steg: kuvert → las (ytterdörren) → akt2 → akt3 → oppet
   var STEG = ['kuvert', 'las', 'akt2', 'akt3', 'oppet'];
   var STEG_NAMN = { kuvert: 'Kuvertet', las: 'Sifferlåset', akt2: 'Akt 2', akt3: 'Akt 3', oppet: 'Öppet' };
+  if (new URLSearchParams(location.search).get('testlage') === '1') Advent.spara('kassaskap-testlage', true);
   var test = Advent.lasa('kassaskap-testlage', false);
   // Repetitionen: riktiga mekaniken (lampor, Mästarprov, prisutdelning) mot fliken Resultat-test, med exempelpusslen.
   // Startas med ?repetition=1 och avslutas med ?repetition=0 eller knappen. Fungerar bara före julafton.

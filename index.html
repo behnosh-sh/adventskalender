@@ -91,10 +91,13 @@
   var svg = document.getElementById('kalender');
   var nu = new Date();
 
-  // Dagens lucka: datumet i december 2026. ?idag=N går att använda för att testa.
+  // Dagens lucka: datumet i kalendermånaden (js/luckor.js). ?idag=N går att använda för att testa.
+  // oppenTill: luckor t.o.m. detta nummer går att öppna (alla 24 även efter julafton).
   var testIdag = parseInt(new URLSearchParams(location.search).get('idag'), 10);
-  var idag = testIdag >= 1 && testIdag <= 24 ? testIdag
-    : (nu.getFullYear() === 2026 && nu.getMonth() === 11 && nu.getDate() <= 24 ? nu.getDate() : null);
+  var giltigTest = testIdag >= 1 && testIdag <= 24;
+  var oppenTill = giltigTest ? testIdag : window.oppnaTill(nu);
+  var idag = giltigTest ? testIdag
+    : (nu.getFullYear() === window.KALENDER.ar && nu.getMonth() === window.KALENDER.manad && nu.getDate() <= 24 ? nu.getDate() : null);
 
   document.getElementById('datum').textContent =
     nu.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -102,7 +105,7 @@
   var oppnade = Advent.lasa('advent-oppnade', []);
 
   function arOppningsbar(n) {
-    return window.ALLA_OPPNA || (idag !== null && n <= idag);
+    return window.ALLA_OPPNA || n <= oppenTill;
   }
   function adress(n) {
     var l = window.LUCKOR[n];
