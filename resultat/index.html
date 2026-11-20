@@ -42,13 +42,13 @@
 </main>
 
 <script src="../js/gemensam.js?v=5"></script>
-<script src="../js/luckor.js?v=25"></script>
+<script src="../js/luckor.js?v=27"></script>
 <script src="../js/resultat.js?v=4"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
 
-  // Samma regel som startsidan: under bygget är alla luckor öppna, sedan bara t.o.m. dagens datum.
+  // Samma regel som startsidan: bara luckor t.o.m. dagens datum (js/luckor.js).
   var nu = new Date();
   var idag = window.oppnaTill(nu);
   function synlig(n) { return window.LUCKOR[n] && (window.ALLA_OPPNA || n <= idag); }

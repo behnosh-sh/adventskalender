@@ -28,12 +28,13 @@ window.LUCKOR = {
   24: { titel: 'Tomtens kassaskåp', sokvag: 'spel/kassaskap/' }
 };
 
-// Under bygget är alla luckor öppna. Sätt till false när datumlåset ska gälla.
+// Datumlåset gäller (true öppnar alla luckor).
 window.ALLA_OPPNA = false;
 
 // Datumlåset: lucka N öppnas den N:e i den här månaden (telefonens klocka). 11 = december.
-// TEST 2026-11-20: november (10), så att Behnosh kan prova låset. Ändras tillbaka till 11 efter testet.
-window.KALENDER = { ar: 2026, manad: 10 };
+window.KALENDER = { ar: 2026, manad: 11 };
+// Kassaskåpets repetition (?repetition=1 mot fliken Resultat-test). Avstängd: sätt till true för att kunna repetera igen.
+window.REPETITION_PA = false;
 
 // Hur många luckor som är öppna nu: 0 före månaden, dagens datum (högst 24) under månaden, 24 efter.
 window.oppnaTill = function (nu) {
@@ -46,8 +47,7 @@ window.oppnaTill = function (nu) {
 
 // Stängd lucka: en spelsida som öppnas före sitt datum (t.ex. via en sparad länk) visar bara ett kort
 // med datumet och en väg tillbaka. Spelet körs aldrig: resten av sidan läses in som dold text.
-// Undantag: kassaskåpets repetition och testläge (?testlage=1, tas bort i steg 11) och Mästarprovets spel (?prov=1),
-// som ska gå att köra före julafton.
+// Undantag: kassaskåpets repetition och Mästarprovets spel (?prov=1), som ska gå att köra före julafton.
 (function () {
   if (window.ALLA_OPPNA) return;
   if (new URLSearchParams(location.search).get('prov') === '1') return;
@@ -63,10 +63,9 @@ window.oppnaTill = function (nu) {
     }
   }
   if (!dag || dag <= window.oppnaTill()) return;
-  if (sokvag.indexOf('/spel/kassaskap/') !== -1) {
+  if (window.REPETITION_PA && sokvag.indexOf('/spel/kassaskap/') !== -1) {
     var rep = q.get('repetition');
-    if (rep === '1' || q.get('testlage') === '1') return;
-    try { if (JSON.parse(localStorage.getItem('kassaskap-testlage')) === true) return; } catch (e) { /* ignorera */ }
+    if (rep === '1') return;
     try { if (rep !== '0' && JSON.parse(localStorage.getItem('kassaskap-repetition')) === true) return; } catch (e) { /* ignorera */ }
   }
   // Resten av sidan (spelets HTML och skript) blir till dold text och körs aldrig.
