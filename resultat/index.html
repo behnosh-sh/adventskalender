@@ -78,7 +78,8 @@
     var lista = $('dagar');
     lista.textContent = '';
     var visade = 0;
-    for (var n = 24; n >= 1; n--) {
+    // Dag 24 (kassaskåpet) har inga egna resultat på tavlan, bara Mästarprovens rader, så den visas inte.
+    for (var n = 23; n >= 1; n--) {
       if (!synlig(n)) continue;
       var d = svar.dagar[n];
       var titel = window.LUCKOR[n].titel;
