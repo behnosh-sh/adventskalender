@@ -33,6 +33,8 @@ window.ALLA_OPPNA = false;
 
 // Datumlåset: lucka N öppnas den N:e i den här månaden (telefonens klocka). 11 = december.
 window.KALENDER = { ar: 2026, manad: 11 };
+// Kassaskåpets repetition (?repetition=1 mot fliken Resultat-test). Avstängd: sätt till true för att kunna repetera igen.
+window.REPETITION_PA = false;
 
 // Hur många luckor som är öppna nu: 0 före månaden, dagens datum (högst 24) under månaden, 24 efter.
 window.oppnaTill = function (nu) {
@@ -61,7 +63,7 @@ window.oppnaTill = function (nu) {
     }
   }
   if (!dag || dag <= window.oppnaTill()) return;
-  if (sokvag.indexOf('/spel/kassaskap/') !== -1) {
+  if (window.REPETITION_PA && sokvag.indexOf('/spel/kassaskap/') !== -1) {
     var rep = q.get('repetition');
     if (rep === '1') return;
     try { if (rep !== '0' && JSON.parse(localStorage.getItem('kassaskap-repetition')) === true) return; } catch (e) { /* ignorera */ }

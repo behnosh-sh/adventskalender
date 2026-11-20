@@ -585,7 +585,7 @@
 </main>
 
 <script src="../../js/gemensam.js?v=5"></script>
-<script src="../../js/luckor.js?v=26"></script>
+<script src="../../js/luckor.js?v=27"></script>
 <script src="../../js/resultat.js?v=4"></script>
 <script>
 (function () {
@@ -684,16 +684,17 @@
   var test = false;
   Advent.spara('kassaskap-testlage', null);
   // Repetitionen: riktiga mekaniken (lampor, Mästarprov, prisutdelning) mot fliken Resultat-test, med exempelpusslen.
-  // Startas med ?repetition=1 och avslutas med ?repetition=0 eller knappen. Fungerar bara före julafton.
+  // Startas med ?repetition=1 och avslutas med ?repetition=0 eller knappen. Fungerar bara före julafton,
+  // och bara när window.REPETITION_PA är true i js/luckor.js (avstängd sedan repetitionen är klar).
   var REP_SLUT = new Date(2026, 11, 24).getTime();   // midnatt mot julafton, telefonens tid
   (function () {
     var q = new URLSearchParams(location.search).get('repetition');
-    if (q === '1') Advent.spara('kassaskap-repetition', true);
-    if (q === '0' || Date.now() >= REP_SLUT) Advent.spara('kassaskap-repetition', false);
+    if (q === '1' && window.REPETITION_PA) Advent.spara('kassaskap-repetition', true);
+    if (q === '0' || !window.REPETITION_PA || Date.now() >= REP_SLUT) Advent.spara('kassaskap-repetition', false);
   })();
   var rep = false;
   function valjLage() {
-    rep = !test && Date.now() < REP_SLUT && Advent.lasa('kassaskap-repetition', false) === true;
+    rep = !test && !!window.REPETITION_PA && Date.now() < REP_SLUT && Advent.lasa('kassaskap-repetition', false) === true;
     Advent.Resultat.repetition(rep);
   }
   valjLage();
