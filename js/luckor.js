@@ -29,4 +29,63 @@ window.LUCKOR = {
 };
 
 // Under bygget är alla luckor öppna. Sätt till false när datumlåset ska gälla.
-window.ALLA_OPPNA = true;
+window.ALLA_OPPNA = false;
+
+// Datumlåset: lucka N öppnas den N:e i den här månaden (telefonens klocka). 11 = december.
+// TEST 2026-11-20: november (10), så att Behnosh kan prova låset. Ändras tillbaka till 11 efter testet.
+window.KALENDER = { ar: 2026, manad: 10 };
+
+// Hur många luckor som är öppna nu: 0 före månaden, dagens datum (högst 24) under månaden, 24 efter.
+window.oppnaTill = function (nu) {
+  nu = nu || new Date();
+  var k = window.KALENDER, ar = nu.getFullYear(), m = nu.getMonth();
+  if (ar < k.ar || (ar === k.ar && m < k.manad)) return 0;
+  if (ar === k.ar && m === k.manad) return Math.min(nu.getDate(), 24);
+  return 24;
+};
+
+// Stängd lucka: en spelsida som öppnas före sitt datum (t.ex. via en sparad länk) visar bara ett kort
+// med datumet och en väg tillbaka. Spelet körs aldrig: resten av sidan läses in som dold text.
+// Undantag: kassaskåpets repetition och testläge (?testlage=1, tas bort i steg 11) och Mästarprovets spel (?prov=1),
+// som ska gå att köra före julafton.
+(function () {
+  if (window.ALLA_OPPNA) return;
+  if (new URLSearchParams(location.search).get('prov') === '1') return;
+  var sokvag = location.pathname, i = sokvag.indexOf('/spel/');
+  if (i === -1) return;
+  var q = new URLSearchParams(location.search);
+  var dag = parseInt(q.get('dag'), 10);
+  if (!(dag >= 1 && dag <= 24)) {
+    dag = null;
+    for (var n = 1; n <= 24; n++) {
+      var l = window.LUCKOR[n];
+      if (l && sokvag.slice(i + 1).indexOf(l.sokvag) === 0) { dag = n; break; }
+    }
+  }
+  if (!dag || dag <= window.oppnaTill()) return;
+  if (sokvag.indexOf('/spel/kassaskap/') !== -1) {
+    var rep = q.get('repetition');
+    if (rep === '1' || q.get('testlage') === '1') return;
+    try { if (JSON.parse(localStorage.getItem('kassaskap-testlage')) === true) return; } catch (e) { /* ignorera */ }
+    try { if (rep !== '0' && JSON.parse(localStorage.getItem('kassaskap-repetition')) === true) return; } catch (e) { /* ignorera */ }
+  }
+  // Resten av sidan (spelets HTML och skript) blir till dold text och körs aldrig.
+  if (document.readyState === 'loading') document.write('<plaintext hidden style="display:none">');
+  var rot = sokvag.slice(0, i + 1);
+  var datum = new Date(window.KALENDER.ar, window.KALENDER.manad, dag)
+    .toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
+  function visa() {
+    document.title = 'Lucka ' + dag + ' är stängd';
+    document.body.innerHTML = '';
+    var main = document.createElement('main');
+    main.className = 'spalt';
+    main.innerHTML = '<a class="tillbaka" href="' + rot + '">← Kalendern</a>' +
+      '<div class="kort stangd-lucka" style="text-align:center;padding:28px 20px;margin-top:24px">' +
+      '<p style="font-size:44px;margin:0 0 6px" aria-hidden="true">🔒</p>' +
+      '<h1 style="font-size:24px;margin:0 0 8px">Lucka ' + dag + ' är inte öppen än.</h1>' +
+      '<p style="margin:0 0 20px">Den öppnas ' + datum + '.</p>' +
+      '<a class="knapp" href="' + rot + '">Till kalendern</a></div>';
+    document.body.appendChild(main);
+  }
+  document.addEventListener('DOMContentLoaded', visa);
+})();
