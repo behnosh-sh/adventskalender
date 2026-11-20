@@ -11,6 +11,19 @@
 <link rel="stylesheet" href="../../css/gemensam.css?v=7">
 <style>
   h1 { margin: 4px 0 14px; font-size: 30px; line-height: 1.1; }
+  h1 { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .lagesrad { margin: -8px 0 14px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,.06); font-size: 13px; line-height: 1.5; color: var(--himmel-dampad); }
+  .skickstatus { margin: 10px 0 0; text-align: center; font-size: 13px; color: var(--himmel-dampad); }
+  .kodkort { margin: 0 0 16px; padding: 14px; border-radius: 14px; background: rgba(255,255,255,.06); }
+  .kodkort p { margin: 0 0 10px; }
+  .kodkort form { display: flex; gap: 8px; }
+  .kodkort input { flex: 1; min-width: 0; font: inherit; font-size: 18px; padding: 8px 10px; border-radius: 10px; border: 2px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: inherit; }
+  .kodkort .knapp { width: auto; margin: 0; }
+  .kodkort .fel { margin: 8px 0 0; font-size: 14px; color: #FFB4A8; }
+  .repruta { margin: 0 0 16px; padding: 12px 14px; border: 2px dashed #8FB7FF; border-radius: 14px; font-size: 14px; }
+  .repruta p { margin: 0 0 8px; }
+  .repruta .hopp button { margin: 0 6px 6px 0; }
+  .ovning.rep { background: #8FB7FF; }
   .ovning { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--glod); color: var(--text); font-size: 14px; vertical-align: middle; }
 
   @keyframes skaka {
@@ -550,7 +563,16 @@
 <body>
 <main class="spalt">
   <a class="tillbaka" href="../../">← Kalendern</a>
-  <h1>Tomtens kassaskåp <span class="ovning" id="testmarke" hidden>Testläge</span></h1>
+  <h1 id="rubrik">Tomtens kassaskåp <span class="ovning" id="testmarke" hidden>Testläge</span><span class="ovning rep" id="repmarke" hidden>Repetition</span></h1>
+  <div class="lagesrad" id="lagesrad" hidden></div>
+
+  <div class="repruta" id="repruta" hidden>
+    <p><b>Repetition.</b> Riktiga lampor, Mästarprov och prisutdelning mot fliken Resultat-test, med exempelpusslen. Inget skrivs i fliken Resultat.</p>
+    <div class="hopp">
+      <button type="button" id="repOm">Börja om repetitionen</button>
+      <button type="button" id="repSlut">Avsluta repetitionen</button>
+    </div>
+  </div>
 
   <div class="testruta" id="testruta" hidden>
     <p>Exempelkod till sifferlåset: <b id="testKod"></b>. Exempelord för akt 2: <b id="testOrd"></b>. Exempelfärger: <b id="testFarg"></b>.</p>
@@ -567,7 +589,7 @@
 
 <script src="../../js/gemensam.js?v=5"></script>
 <script src="../../js/luckor.js?v=24"></script>
-<script src="../../js/resultat.js?v=3"></script>
+<script src="../../js/resultat.js?v=4"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -662,17 +684,33 @@
   var STEG = ['kuvert', 'las', 'akt2', 'akt3', 'oppet'];
   var STEG_NAMN = { kuvert: 'Kuvertet', las: 'Sifferlåset', akt2: 'Akt 2', akt3: 'Akt 3', oppet: 'Öppet' };
   var test = Advent.lasa('kassaskap-testlage', false);
-  function nyckel() { return 'kassaskap:' + (test ? 'test' : dag); }
+  // Repetitionen: riktiga mekaniken (lampor, Mästarprov, prisutdelning) mot fliken Resultat-test, med exempelpusslen.
+  // Startas med ?repetition=1 och avslutas med ?repetition=0 eller knappen. Fungerar bara före julafton.
+  var REP_SLUT = new Date(2026, 11, 24).getTime();   // midnatt mot julafton, telefonens tid
+  (function () {
+    var q = new URLSearchParams(location.search).get('repetition');
+    if (q === '1') Advent.spara('kassaskap-repetition', true);
+    if (q === '0' || Date.now() >= REP_SLUT) Advent.spara('kassaskap-repetition', false);
+  })();
+  var rep = false;
+  function valjLage() {
+    rep = !test && Date.now() < REP_SLUT && Advent.lasa('kassaskap-repetition', false) === true;
+    Advent.Resultat.repetition(rep);
+  }
+  valjLage();
+  // Julafton sparas under en ny nyckel, så att det som telefonerna sparat under bygget inte följer med.
+  function nyckel() { return 'kassaskap:' + (test ? 'test' : rep ? 'rep' : dag + ':v2'); }
+  function exempel() { return test || rep; }   // exempelpusslen och exempelsvaren
   function nyttTillstand() { return { steg: 'kuvert', hjul: [0, 0, 0, 0], lastTill: 0, sett: {}, testPlats: 0, testAntal: 0 }; }
   var s;
   function spara() { Advent.spara(nyckel(), s); ritaTest(); }
-  function svar() { return SVAR[test ? 'test' : 'riktig']; }
+  function svar() { return SVAR[exempel() ? 'test' : 'riktig']; }
 
   // Versaler, mellanslag och skiljetecken spelar ingen roll.
   function stada(t) { return String(t).toUpperCase().replace(/[^A-ZÅÄÖÉÜ0-9]/g, ''); }
   function stammer(gissning, facit) {
     if (facit == null) return false;
-    return test ? stada(gissning) === stada(facit) : hash(stada(gissning)) === facit;
+    return exempel() ? stada(gissning) === stada(facit) : hash(stada(gissning)) === facit;
   }
 
   function el(tagg, klass, text) {
@@ -872,11 +910,27 @@
     lampraden.appendChild(el('div', 'springa'));
     dorr.appendChild(lampraden);
     ritaLampa(lampa, lampraden);
+    var tryck = [];
     lampa.addEventListener('click', function () {
       var kuv = lampraden.querySelector('.provkuvert');
       if (kuv) { kuv.classList.remove('knuff'); void kuv.offsetWidth; kuv.classList.add('knuff'); return; }
       dorr.classList.remove('ryck'); void dorr.offsetWidth; dorr.classList.add('ryck');
       if (vakt.stoppad) borjaFraga(lampa, lampraden);   // tryck på en matt lampa startar frågandet igen
+      // Nödtändning: fem snabba tryck på en släckt lampa, sedan en fråga.
+      if (test || s.provKlar) return;
+      var nu = Date.now();
+      tryck = tryck.filter(function (t) { return nu - t < 4000; });
+      tryck.push(nu);
+      if (tryck.length < 5) return;
+      tryck = [];
+      Advent.fraga({ rubrik: 'Tänd lampan ändå?', text: 'Gör det bara om lampan borde lysa men inte gör det.', ja: 'Tänd lampan', nej: 'Avbryt' }).then(function (ok) {
+        if (!ok) return;
+        s.nodTand = true;
+        spara();
+        if (minPlats() >= 0) { ritaLampa(lampa, lampraden); return; }
+        // Telefonen vet inte vilka som spelar än: fråga arket en gång.
+        Advent.Resultat.hamta(24).then(function (svar) { tur.spelare = svar.spelare; ritaLampa(lampa, lampraden); }, function () {});
+      });
     });
     borjaFraga(lampa, lampraden);
 
@@ -964,7 +1018,8 @@
   var ORDNING_FRO = 'kassaskap-ordning-2026';
   var tur = { spelare: null, antal: 0 };   // från arket: vilka som finns och hur många som är klara med dag 24
 
-  function ordning(spelare) { return blandaFast(spelare, ORDNING_FRO); }
+  // Repetitionen lottar med ett eget frö, så att den inte avslöjar julaftons ordning.
+  function ordning(spelare) { return blandaFast(spelare, ORDNING_FRO + (rep ? '-repetition' : '')); }
   // Blandar namnen likadant på alla telefoner: sorterar först, sedan en blandning med fast frö.
   function blandaFast(spelare, fro) {
     var lista = spelare.slice().sort(function (a, b) { return a.localeCompare(b, 'sv'); });
@@ -982,9 +1037,10 @@
     return tur.spelare && namn ? ordning(tur.spelare).indexOf(namn) : -1;
   }
   function klaraNu() { return test ? (s.testAntal || 0) : tur.antal; }
-  function minTur() { var p = minPlats(); return p >= 0 && !s.provKlar && klaraNu() === p; }
+  // Nödtändningen (s.nodTand) tänder lampan oavsett vad arket säger.
+  function minTur() { var p = minPlats(); return p >= 0 && !s.provKlar && (klaraNu() === p || !!s.nodTand); }
   function siffraFor(plats) {
-    var k = test ? SVAR.test.kod : SVAR.riktig.siffror;
+    var k = exempel() ? SVAR.test.kod : SVAR.riktig.siffror;
     return k ? k.charAt(plats) : '?';
   }
 
@@ -1054,17 +1110,20 @@
   }
 
   // Frågar arket hur många som är klara. Bara när sidan syns, bara medan man väntar på sin egen lampa,
-  // aldrig i testläget eller före julafton. Var 5:e sekund i 10 minuter, sedan var 20:e, stopp efter en timme.
-  // En fråga i taget, 30 sekunders paus efter fel.
-  var vakt = { timer: null, start: 0, upptagen: false, stoppad: false, lampa: null, rad: null };
+  // aldrig i testläget eller före julafton (utom i repetitionen). Var 5:e sekund de första 10 minuterna,
+  // sedan var 20:e. Tiden räknas bara medan sidan syns, och efter tre timmar slutar den fråga
+  // (ett tryck på lampan eller en omladdning startar om). En fråga i taget, 30 sekunders paus efter fel.
+  var FRAGA_GRANS = 3 * 3600000;
+  var vakt = { timer: null, synlig: 0, forra: 0, upptagen: false, stoppad: false, lampa: null, rad: null };
   function arJulafton() { var d = new Date(); return d.getMonth() === 11 && d.getDate() >= 24; }
   function stoppaFraga() { clearTimeout(vakt.timer); vakt.timer = null; vakt.lampa = null; }
   function borjaFraga(lampa, lampraden) {
     stoppaFraga();
-    if (test || !arJulafton() || s.provKlar || !Advent.Resultat.kod()) return;
+    if (test || (!rep && !arJulafton()) || s.provKlar || !Advent.Resultat.kod()) return;
     vakt.lampa = lampa;
     vakt.rad = lampraden;
-    vakt.start = Date.now();
+    vakt.synlig = 0;
+    vakt.forra = Date.now();
     vakt.stoppad = false;
     fragaArket();
   }
@@ -1072,8 +1131,11 @@
     vakt.timer = null;
     if (!vakt.lampa || !document.body.contains(vakt.lampa)) return;
     if (document.hidden) return;   // fortsätter när sidan syns igen
-    var gatt = Date.now() - vakt.start;
-    if (gatt > 3600000) { vakt.stoppad = true; return; }
+    var nu = Date.now();
+    vakt.synlig += Math.min(Math.max(0, nu - vakt.forra), 30000);
+    vakt.forra = nu;
+    var gatt = vakt.synlig;
+    if (gatt > FRAGA_GRANS) { vakt.stoppad = true; return; }
     if (vakt.upptagen) return;
     vakt.upptagen = true;
     Advent.Resultat.hamta(24).then(function (svar) {
@@ -1091,7 +1153,10 @@
     });
   }
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && vakt.lampa && !vakt.timer && !vakt.upptagen && !vakt.stoppad) fragaArket();
+    if (document.hidden) return;
+    vakt.forra = Date.now();   // tiden då sidan inte syntes räknas inte
+    if (vakt.lampa && !vakt.timer && !vakt.upptagen && !vakt.stoppad) fragaArket();
+    if (s && s.skickVantar && !skick.timer && !skick.upptagen) skickaVantande();
   });
 
   // ===== Mästarprovet =====
@@ -1110,7 +1175,7 @@
       reserv: 15 * 10000
     },
     17: {
-      namn: 'Memory', sokvag: '../memory/',
+      namn: 'Memory', sokvag: '../memory/', langRunda: true,
       kort: function (v) { return Math.floor(v / 100000); },
       malText: function (v) { return 'Memory. Högst ' + Math.floor(v / 100000) + ' drag.'; },
       sank: function (v) { return Math.floor(Math.floor(v / 100000) * 1.4) * 100000 + 99999; },
@@ -1162,7 +1227,7 @@
     },
     14: {
       // värdet är tiden i tiondelar × 10 000 + drag, tiden jämförs i hela sekunder som den visas
-      namn: 'Femtonspel', sokvag: '../femton/',
+      namn: 'Femtonspel', sokvag: '../femton/', langRunda: true,
       kort: function (v) { return Advent.formateraTid(this.sek(v)); },
       sek: function (v) { return Math.round(Math.floor(v / 10000) / 10); },
       malText: function (v) { return 'Femtonspel. Högst ' + Advent.formateraTid(this.sek(v)) + '.'; },
@@ -1174,7 +1239,7 @@
     },
     12: {
       // värdet är den sammanlagda tiden för de tre banorna i tiondelar
-      namn: 'Labyrinten', sokvag: '../labyrint/',
+      namn: 'Labyrinten', sokvag: '../labyrint/', langRunda: true,
       kort: function (v) { return Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10); },
       malText: function (v) { return 'Labyrinten. Högst ' + Math.floor(v / 600) + ':' + ('0' + Math.floor(v / 10) % 60).slice(-2) + ',' + (v % 10) + '.'; },
       sank: function (v) { return Math.round(v * 1.4); },
@@ -1227,7 +1292,7 @@
   };
   // Sänk målet: efter 4 missade rundor eller 2 minuters spel. Hoppa över: efter 10 rundor eller 5 minuter.
   // Det som kommer först gäller, så att långsamma spel som Memory inte drar ut på tiden.
-  // Knapparna visas först när rundan man håller på med är slut.
+  // Knapparna visas när rundan man håller på med är slut, i Memory, Femtonspel och Labyrinten även mitt i en runda.
   var SANK_EFTER = 4, HOPPA_EFTER = 10, SANK_TID = 120000, HOPPA_TID = 300000;
 
   // Vilket spel var och en får: först ett spel man vann (bäst medalj först), i turordning.
@@ -1277,7 +1342,7 @@
 
   function hamtaMittProv() {
     if (s.prov && s.prov.dag) return Promise.resolve(s.prov);
-    var val = test ? Promise.resolve(TEST_PROV[s.testSpel || 1]) : Advent.Resultat.alla().then(function (svar) {
+    var val = test ? Promise.resolve(TEST_PROV[s.testSpel || 1]) : hamtaAret().then(function (svar) {
       return tilldelaProv(svar)[Advent.Resultat.namn()];
     });
     return val.then(function (t) {
@@ -1357,6 +1422,7 @@
     }
     // Efter fyra missar dyker Sänk målet upp, efter tio försök Hoppa över. Första gången med en
     // fråga, sedan ligger knapparna kvar under målet tillsammans med Spela igen.
+    // I spel där en runda inte kan misslyckas (langRunda) visas de när tiden gått, även mitt i en runda.
     var ritat = null;
     function ritaHjalp() {
       var tid = p.tid || 0;
@@ -1427,7 +1493,8 @@
       if (!document.hidden) p.tid = (p.tid || 0) + Math.min(nu - forra, 5000);
       forra = nu;
       if (Math.floor(p.tid / 1000) % 5 === 0) spara();
-    }, 1000);   // knapparna visas först när en runda är slut (tagEmot), aldrig mitt i en runda
+      if (spel.langRunda) ritaHjalp();
+    }, 1000);   // i övriga spel visas knapparna först när en runda är slut (tagEmot)
     ritaHjalp();
   }
 
@@ -1438,8 +1505,10 @@
     if (test) s.testAntal = Math.max(s.testAntal || 0, plats + 1);
     spara();
     if (!test) {
-      Advent.Resultat.skicka({ dag: 24, spel: 'mästarprov ' + PROV_SPEL[s.prov.dag].namn, status: 'klar', varde: 0, medalj: '',
-        text: { fullt: 'fullt mål', sankt: 'sänkt mål', hoppat: 'hoppade över' }[hur] }).catch(function () {});
+      s.skickVantar = { dag: 24, spel: 'mästarprov ' + PROV_SPEL[s.prov.dag].namn, status: 'klar', varde: 0, medalj: '',
+        text: { fullt: 'fullt mål', sankt: 'sänkt mål', hoppat: 'hoppade över' }[hur] };
+      spara();
+      skickaVantande();
     }
     var v = visaSiffran(skap);
     v.stang.addEventListener('click', function () {
@@ -1448,6 +1517,62 @@
       // och lampan slocknar långsamt, ungefär tio sekunder.
       ritaLampa(lampa, lampraden);
       laggSvarskuvert(skap);
+    });
+  }
+
+  // ===== Skicket efter Mästarprovet =====
+  // Raden för dag 24 skickas tills arket har svarat ja, även efter en omladdning (s.skickVantar sparas).
+  // Arket tar bara emot en rad per person och dag, så ett omskick kan inte bli en dubblett.
+  // Efter en minut utan svar står en liten rad under skåpet.
+  var skick = { timer: null, upptagen: false, forsok: 0, sedan: 0 };
+  function skickaVantande() {
+    clearTimeout(skick.timer);
+    skick.timer = null;
+    if (!s.skickVantar || skick.upptagen || test) return;
+    if (document.hidden) return;   // fortsätter när sidan syns igen
+    if (!skick.sedan) skick.sedan = Date.now();
+    skick.upptagen = true;
+    var nyckelNu = nyckel();
+    Advent.Resultat.skicka(s.skickVantar).then(function (svar) {
+      skick.upptagen = false;
+      if (nyckelNu !== nyckel()) return;
+      if (svar && svar.dag) tur.antal = svar.dag.antal;
+      s.skickVantar = null;
+      skick.forsok = 0;
+      skick.sedan = 0;
+      spara();
+      ritaSkickStatus();
+    }, function () {
+      skick.upptagen = false;
+      if (nyckelNu !== nyckel()) return;
+      skick.forsok++;
+      ritaSkickStatus();
+      clearTimeout(skick.statusTimer);
+      skick.statusTimer = setTimeout(ritaSkickStatus, Math.max(0, 60000 - (Date.now() - skick.sedan)) + 100);
+      skick.timer = setTimeout(skickaVantande, Math.min(30000, 5000 * Math.pow(2, skick.forsok - 1)));
+    });
+  }
+  function ritaSkickStatus() {
+    var gammal = $('skickstatus');
+    var visa = !test && s.skickVantar && skick.sedan && Date.now() - skick.sedan >= 60000;
+    if (!visa) { if (gammal) gammal.remove(); return; }
+    if (gammal) return;
+    var p = el('p', 'skickstatus', 'Tomten når inte sitt ark, försöker igen…');
+    p.id = 'skickstatus';
+    $('scen').appendChild(p);
+  }
+
+  // Hela årets resultat från arket. Sparas i telefonen, så att prisutdelningen fungerar även om arket
+  // inte svarar senare. Repetitionen sparar under en egen nyckel.
+  function arsNyckel() { return 'kassaskap-aret' + (rep ? '-rep' : ''); }
+  function hamtaAret() {
+    return Advent.Resultat.alla().then(function (svar) {
+      Advent.spara(arsNyckel(), svar);
+      return svar;
+    }, function (fel) {
+      var sparat = Advent.lasa(arsNyckel(), null);
+      if (sparat && sparat.dagar) return sparat;
+      throw fel;
     });
   }
 
@@ -1463,10 +1588,12 @@
       return Promise.resolve(lag);
     }
     if (s.lag) return Promise.resolve(s.lag);
-    return Advent.Resultat.hamta(24).then(function (svar) {
-      s.lag = blandaFast(svar.spelare, LAG_FRO);
-      spara();
-      return s.lag;
+    var fro = LAG_FRO + (rep ? '-repetition' : '');
+    function satt(spelare) { s.lag = blandaFast(spelare, fro); spara(); return s.lag; }
+    return Advent.Resultat.hamta(24).then(function (svar) { return satt(svar.spelare); }, function (fel) {
+      var sparad = Advent.Resultat.spelare();   // senaste listan som arket gav, om arket inte svarar nu
+      if (sparad && sparad.length) return satt(sparad);
+      throw fel;
     });
   }
   function minRoll(lag) { return test ? (s.testRoll || 0) : lag.indexOf(Advent.Resultat.namn()); }
@@ -2622,7 +2749,7 @@
     inne.appendChild(pris);
     var info = el('p', 'info', 'Tomten letar fram sitt kalkylark…');
     pris.appendChild(info);
-    var hamta = test ? Promise.resolve(exempelData(s.exempel || 'vanlig')) : Advent.Resultat.alla();
+    var hamta = test ? Promise.resolve(exempelData(s.exempel || 'vanlig')) : hamtaAret();
     hamta.then(function (svar) {
       info.remove();
       utdelning(inne, pris, arsStatistik(svar));
@@ -2915,14 +3042,115 @@
     });
   }
 
+  // ===== Inloggningen =====
+  // Utan personlig kod kan telefonen inte fråga arket. Då visas kodrutan direkt i luckan.
+  function ritaKodkort(yta) {
+    var kort = el('div', 'kodkort');
+    kort.appendChild(el('p', null, 'Tomten känner inte igen den här telefonen. Skriv in din personliga kod.'));
+    var form = el('form');
+    var inmatning = el('input');
+    inmatning.type = 'password';
+    inmatning.inputMode = 'numeric';
+    inmatning.autocomplete = 'off';
+    inmatning.maxLength = 8;
+    inmatning.setAttribute('aria-label', 'Din personliga kod');
+    var knapp = el('button', 'knapp', 'Spara');
+    knapp.type = 'submit';
+    form.appendChild(inmatning);
+    form.appendChild(knapp);
+    kort.appendChild(form);
+    var fel = el('p', 'fel');
+    kort.appendChild(fel);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = inmatning.value.trim();
+      if (!v) return;
+      knapp.disabled = true;
+      fel.textContent = '';
+      Advent.Resultat.loggaIn(v).catch(function (f) { knapp.disabled = false; fel.textContent = f.message; });
+    });
+    yta.appendChild(kort);
+  }
+  function behoverKod() { return !test && Advent.Resultat.arInkopplad() && !Advent.Resultat.kod(); }
+  document.addEventListener('advent-inloggad', function () { if (s) { tur.spelare = Advent.Resultat.spelare() || tur.spelare; rita(); skickaVantande(); } });
+  document.addEventListener('advent-utloggad', function () { if (s && !test && !document.querySelector('.kodkort')) rita(); });
+
+  // ===== Lägesraden =====
+  // Ett långt tryck på rubriken visar hur telefonen mår. Inga svar syns här.
+  var lageTimer = null;
+  function ritaLage() {
+    var rad = $('lagesrad');
+    if (rad.hidden) { clearInterval(lageTimer); lageTimer = null; return; }
+    function klocka(ms) { var d = new Date(ms); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2); }
+    var sen = Advent.Resultat.senaste();
+    var p = minPlats();
+    var rader = [
+      'Läge: ' + (test ? 'test' : rep ? 'repetition (fliken Resultat-test)' : 'julafton'),
+      'Inloggad som: ' + (Advent.Resultat.namn() || 'ingen'),
+      'Arket svarade senast: ' + (!sen ? 'inte frågat än' : klocka(sen.tid) + (sen.ok ? ', ok' : ', fel: ' + sen.fel)),
+      'Klara med Mästarprovet: ' + klaraNu() + ' av ' + ((tur.spelare && tur.spelare.length) || 4),
+      'Min plats i turordningen: ' + (p >= 0 ? p + 1 : 'okänd') + (s.nodTand ? ' (nödtänd)' : ''),
+      'Mitt prov: ' + (s.provKlar ? 'klart' : 'inte klart') + (s.skickVantar ? ', skicket väntar' : ''),
+      'Lampan frågar arket: ' + (vakt.stoppad ? 'stoppad (tryck på lampan)' : vakt.timer || vakt.upptagen ? 'ja' : 'nej')
+    ];
+    rad.textContent = '';
+    rader.forEach(function (r, i) { if (i) rad.appendChild(document.createElement('br')); rad.appendChild(document.createTextNode(r)); });
+  }
+  (function () {
+    var h = $('rubrik'), timer = null;
+    function slapp() { clearTimeout(timer); timer = null; }
+    h.addEventListener('pointerdown', function () {
+      slapp();
+      timer = setTimeout(function () {
+        timer = null;
+        var rad = $('lagesrad');
+        rad.hidden = !rad.hidden;
+        ritaLage();
+        if (!rad.hidden && !lageTimer) lageTimer = setInterval(ritaLage, 1000);
+      }, 700);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (h2) { h.addEventListener(h2, slapp); });
+    h.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  })();
+
+  // ===== Repetitionen =====
+  function ritaRep() {
+    $('repmarke').hidden = !rep;
+    $('repruta').hidden = !rep;
+  }
+  $('repOm').addEventListener('click', function () {
+    Advent.fraga({ rubrik: 'Börja om repetitionen?', text: 'Dag 24 töms i fliken Resultat-test, och den här telefonen börjar om från kuvertet. Gör det på varje telefon.', ja: 'Börja om', nej: 'Avbryt' }).then(function (ok) {
+      if (!ok) return;
+      var knapp = $('repOm');
+      knapp.disabled = true;
+      Advent.Resultat.nollstallRepetition().then(function () {
+        knapp.disabled = false;
+        Advent.spara(arsNyckel(), null);
+        Advent.spara(nyckel(), null);
+        start();
+      }, function (fel) {
+        knapp.disabled = false;
+        Advent.fraga({ rubrik: 'Det gick inte', text: fel.message, ja: 'OK', nej: 'Stäng' });
+      });
+    });
+  });
+  $('repSlut').addEventListener('click', function () {
+    Advent.spara('kassaskap-repetition', false);
+    valjLage();
+    start();
+  });
+
   function rita() {
     var yta = $('scen');
     yta.textContent = '';
     pratRuta = null;
     stoppaFraga();
     stoppaBlink();
+    ritaRep();
+    if (behoverKod()) ritaKodkort(yta);
     if (s.steg === 'kuvert') ritaKuvert(yta);
     else ritaSkap(yta);
+    ritaSkickStatus();
     ritaTest();
   }
 
@@ -2930,12 +3158,18 @@
     s = Advent.lasa(nyckel(), null) || nyttTillstand();
     if (!s.sett) s.sett = {};
     if (STEG.indexOf(s.steg) === -1) s = nyttTillstand();   // sparat från en äldre version av skåpet
+    tur = { spelare: test ? null : Advent.Resultat.spelare(), antal: 0 };
+    clearTimeout(skick.timer);
+    clearTimeout(skick.statusTimer);
+    skick = { timer: null, upptagen: false, forsok: 0, sedan: 0 };
     rita();
+    if (s.skickVantar) skickaVantande();
   }
 
   $('vaxla').addEventListener('click', function () {
     test = !test;
     Advent.spara('kassaskap-testlage', test);
+    valjLage();
     start();
   });
 
