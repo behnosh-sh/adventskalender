@@ -2384,6 +2384,7 @@
       c.addEventListener('click', function () {
         var v = ((s.matris[nyckel] || 0) + 1) % 4;
         if (v) s.matris[nyckel] = v; else delete s.matris[nyckel];
+        s.matrisInget = false;   // "Inga fel än" gällde anteckningarna som de var, inte efter ändringen
         spara();
         visa();
         if (matrisAndrad) matrisAndrad();
@@ -2506,16 +2507,26 @@
         return visaHjalp(horn, 'bada', varfor(j), [['Fixa den', fixa]]);
       }
       var tomt = !Object.keys(s.matris).length;
-      var felen = alltFel();
       if (tomt) {
         var val = [];
         if (!s.matrisOppen) val.push(['Öppna anteckningarna', function () { s.matrisOppen = true; spara(); ritaAnteckningar(scen, namn, farger, scen.querySelector('.anteckningar')); rita(); }]);
         val.push(['Ge ett tips', function () { var k = nastaTom(); if (k) peka(k, 'ledtrad'); }]);
         return visaHjalp(horn, 'bada', 'Skriv i anteckningarna! Börja med det som är säkert.', val);
       }
-      if (felen.length) return visaHjalp(horn, 'bada', 'Behöver ni hjälp?', [['Visa ett fel', function () { peka(alltFel()[0], 'fel'); }]]);
-      var k = nastaTom();
-      if (k) return visaHjalp(horn, 'bada', 'Inga fel än. Behöver ni hjälp?', [['Ge ett tips', function () { var k2 = nastaTom(); if (k2) peka(k2, 'ledtrad'); }]]);
+      // Texten är densamma oavsett om det finns fel, så att den inte avslöjar om ett ✓ eller ✕ stämmer
+      // medan man trycker. Först när man trycker Ja avgörs det: ett fel blinkar, annars ett tips.
+      if (s.matrisInget) {
+        return visaHjalp(horn, 'bada', 'Inga fel än.', [['Ge ett tips', function () { s.matrisInget = false; var k2 = nastaTom(); if (k2) peka(k2, 'ledtrad'); else rita(); }]]);
+      }
+      if (alltFel().length || nastaTom()) {
+        return visaHjalp(horn, 'bada', 'Behöver ni hjälp?', [['Ja', function () {
+          var f = alltFel();
+          if (f.length) { peka(f[0], 'fel'); return; }
+          s.matrisInget = true;
+          spara();
+          rita();
+        }]]);
+      }
       visaHjalp(horn, 'bada', 'Anteckningarna räcker. Lägg namnlapparna efter dem.');
     }
     matrisAndrad = rita;
@@ -2916,7 +2927,7 @@
     rad.appendChild(el('span', null, 'Hjälpen:'));
     var noll = el('button', null, 'Nollställ hjälpen');
     noll.type = 'button';
-    noll.addEventListener('click', function () { s.matrisHjalp = null; s.fargTips = 0; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; s.granHjalp = null; s.granHjalpSteg = 0; s.paketFastnat = false; s.paketStart = 0; spara(); rita(); });
+    noll.addEventListener('click', function () { s.matrisHjalp = null; s.fargTips = 0; s.gataLedtrad = 0; s.brevHjalp = null; s.brevHjalpSteg = 0; s.granHjalp = null; s.granHjalpSteg = 0; s.paketFastnat = false; s.paketStart = 0; s.matrisInget = false; spara(); rita(); });
     rad.appendChild(noll);
     return rad;
   }
