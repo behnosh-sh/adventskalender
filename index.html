@@ -61,9 +61,6 @@
   .lampa { animation: blinka 3s ease-in-out infinite; }
   @keyframes blinka { 50% { opacity: .55; } }
 
-  .utv { text-align: center; font-size: 14px; color: var(--himmel-dampad); margin: 8px 16px 0; }
-  .utv button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
-
   @media (prefers-reduced-motion: reduce) {
     .gunga, .vand, .lampa, .idag .vand { animation: none !important; }
   }
@@ -77,12 +74,11 @@
     <a class="resultatlank" href="resultat/">Resultat</a>
   </header>
   <svg id="kalender" viewBox="0 0 390 620" role="list" aria-label="Luckor 1 till 24"></svg>
-  <p class="utv" id="utv" hidden>Byggläge: alla luckor är öppna. <button type="button" id="nollstall">Vänd tillbaka granarna</button></p>
 </div>
 
 <script src="js/gemensam.js?v=5"></script>
 <script>
-  // Listan över luckor ändras ofta under bygget. Hämta den alltid färsk så att nya luckor syns direkt.
+  // Hämta listan över luckor färsk, så att ändringar syns direkt.
   document.write('<script src="js/luckor.js?t=' + Date.now() + '"><\/script>');
 </script>
 <script>
@@ -91,13 +87,10 @@
   var svg = document.getElementById('kalender');
   var nu = new Date();
 
-  // Dagens lucka: datumet i kalendermånaden (js/luckor.js). ?idag=N går att använda för att testa.
+  // Dagens lucka: datumet i kalendermånaden (js/luckor.js).
   // oppenTill: luckor t.o.m. detta nummer går att öppna (alla 24 även efter julafton).
-  var testIdag = parseInt(new URLSearchParams(location.search).get('idag'), 10);
-  var giltigTest = testIdag >= 1 && testIdag <= 24;
-  var oppenTill = giltigTest ? testIdag : window.oppnaTill(nu);
-  var idag = giltigTest ? testIdag
-    : (nu.getFullYear() === window.KALENDER.ar && nu.getMonth() === window.KALENDER.manad && nu.getDate() <= 24 ? nu.getDate() : null);
+  var oppenTill = window.oppnaTill(nu);
+  var idag = nu.getFullYear() === window.KALENDER.ar && nu.getMonth() === window.KALENDER.manad && nu.getDate() <= 24 ? nu.getDate() : null;
 
   document.getElementById('datum').textContent =
     nu.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -206,15 +199,6 @@
     g.vand.classList.add('vander');
     setTimeout(function () { ritaGran(n); }, 300);
     setTimeout(function () { location.href = dit; }, 750);
-  }
-
-  if (window.ALLA_OPPNA) {
-    document.getElementById('utv').hidden = false;
-    document.getElementById('nollstall').addEventListener('click', function () {
-      oppnade = [];
-      Advent.spara('advent-oppnade', []);
-      for (var n = 1; n <= 24; n++) ritaGran(n);
-    });
   }
 
   // Tillbaka med bakåtknappen: läs om vilka luckor som är öppnade.

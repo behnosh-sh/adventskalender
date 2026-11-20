@@ -582,13 +582,10 @@
 
   <div id="scen"></div>
 
-  <div class="knappar">
-    <button class="knapp diskret" id="vaxla" type="button"></button>
-  </div>
 </main>
 
 <script src="../../js/gemensam.js?v=5"></script>
-<script src="../../js/luckor.js?v=25"></script>
+<script src="../../js/luckor.js?v=26"></script>
 <script src="../../js/resultat.js?v=4"></script>
 <script>
 (function () {
@@ -683,8 +680,9 @@
   // steg: kuvert → las (ytterdörren) → akt2 → akt3 → oppet
   var STEG = ['kuvert', 'las', 'akt2', 'akt3', 'oppet'];
   var STEG_NAMN = { kuvert: 'Kuvertet', las: 'Sifferlåset', akt2: 'Akt 2', akt3: 'Akt 3', oppet: 'Öppet' };
-  if (new URLSearchParams(location.search).get('testlage') === '1') Advent.spara('kassaskap-testlage', true);
-  var test = Advent.lasa('kassaskap-testlage', false);
+  // Testläget (exempelpussel utan ark) är avstängt sedan bygget. Gammalt sparat val glöms.
+  var test = false;
+  Advent.spara('kassaskap-testlage', null);
   // Repetitionen: riktiga mekaniken (lampor, Mästarprov, prisutdelning) mot fliken Resultat-test, med exempelpusslen.
   // Startas med ?repetition=1 och avslutas med ?repetition=0 eller knappen. Fungerar bara före julafton.
   var REP_SLUT = new Date(2026, 11, 24).getTime();   // midnatt mot julafton, telefonens tid
@@ -2935,7 +2933,6 @@
   function ritaTest() {
     $('testmarke').hidden = !test;
     $('testruta').hidden = !test;
-    $('vaxla').textContent = test ? 'Lämna testläget' : 'Testläge';
     if (!test) return;
     $('testKod').textContent = SVAR.test.kod.split('').join(' ');
     $('testOrd').textContent = SVAR.test.ord;
@@ -3187,12 +3184,7 @@
     if (s.skickVantar) skickaVantande();
   }
 
-  $('vaxla').addEventListener('click', function () {
-    test = !test;
-    Advent.spara('kassaskap-testlage', test);
-    valjLage();
-    start();
-  });
+
 
   start();
 })();
