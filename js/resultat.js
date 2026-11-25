@@ -57,7 +57,7 @@
       .then(function (r) { return r.json(); }, function () { throw new Error('Kunde inte nå resultattavlan. Har du nät?'); })
       .then(function (svar) {
         if (!svar.ok) {
-          if (svar.fel === 'Koden stämmer inte.') glomKod();
+          if (svar.fel === 'Koden stämmer inte.' || svar.fel === 'Koden ska vara 4 siffror.') glomKod();
           throw new Error(svar.fel || 'Något gick fel.');
         }
         if (rep && svar.rep !== true) throw new Error('Scriptet i arket är inte uppdaterat för repetitionen.');
@@ -172,7 +172,7 @@
     inmatning.type = 'password';
     inmatning.inputMode = 'numeric';
     inmatning.autocomplete = 'off';
-    inmatning.maxLength = 8;
+    inmatning.maxLength = 4;
     var knapp = el('button', 'knapp', 'Spara');
     knapp.type = 'submit';
     var meddelande = el('p', 'tavla-fel');
@@ -185,6 +185,7 @@
       e.preventDefault();
       var v = inmatning.value.trim();
       if (!v) return;
+      if (!/^\d{4}$/.test(v)) { meddelande.textContent = 'Koden ska vara 4 siffror.'; return; }
       knapp.disabled = true;
       meddelande.textContent = '';
       loggaIn(v).then(function () { ladda(m); }, function (fel) {
