@@ -586,7 +586,7 @@
 
 <script src="../../js/gemensam.js?v=6"></script>
 <script src="../../js/luckor.js?v=27"></script>
-<script src="../../js/resultat.js?v=4"></script>
+<script src="../../js/resultat.js?v=5"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -3151,7 +3151,7 @@
     inmatning.type = 'password';
     inmatning.inputMode = 'numeric';
     inmatning.autocomplete = 'off';
-    inmatning.maxLength = 8;
+    inmatning.maxLength = 4;
     inmatning.setAttribute('aria-label', 'Din personliga kod');
     var knapp = el('button', 'knapp', 'Spara');
     knapp.type = 'submit';
@@ -3164,6 +3164,7 @@
       e.preventDefault();
       var v = inmatning.value.trim();
       if (!v) return;
+      if (!/^\d{4}$/.test(v)) { fel.textContent = 'Koden ska vara 4 siffror.'; return; }
       knapp.disabled = true;
       fel.textContent = '';
       Advent.Resultat.loggaIn(v).catch(function (f) { knapp.disabled = false; fel.textContent = f.message; });
