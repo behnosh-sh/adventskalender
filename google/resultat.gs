@@ -175,10 +175,8 @@ function tavlaForDag(dag, namn, alla, allt) {
 
 // En tom kod (telefonen är inte inloggad) räknas inte som ett fel och väntar inte.
 function vemArDet(kod, spelare) {
-  if (String(kod == null ? '' : kod).trim() === '') return { fel: 'Telefonen är inte inloggad.' };
-  // Fel format (bokstäver, för få eller för många siffror) räknas inte som ett fel och väntar inte.
-  if (!giltigtFormat(kod)) return { fel: 'Koden ska vara 4 siffror.' };
-  kod = String(kod).trim();
+  kod = rensaKod(kod);
+  if (!kod) return { fel: 'Telefonen är inte inloggad.' };
   var cache = CacheService.getScriptCache();
   var fel = Number(cache.get('fel') || 0);
   if (fel >= maxFel()) return { fel: 'För många felaktiga koder. Vänta en timme och försök igen.' };
@@ -224,11 +222,6 @@ function rensaKod(k) {
   k = String(k == null ? '' : k).trim();
   if (/^\d{1,3}$/.test(k)) k = ('0000' + k).slice(-4);
   return /^\d{4,8}$/.test(k) ? k : '';
-}
-
-// Det som skrivs in på telefonen fylls aldrig ut: "12" är fel format, inte "0012".
-function giltigtFormat(k) {
-  return /^\d{4}$/.test(String(k == null ? '' : k).trim());
 }
 
 function giltigDag(d) {

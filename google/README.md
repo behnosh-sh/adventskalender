@@ -51,7 +51,7 @@ Klart. Sidan kontrollerar själv att scriptet är uppdaterat innan repetitionen 
 
 ## Säkerhet
 
-- Utan rätt kod gör scriptet ingenting. Efter 10 felaktiga koder på en timme spärras alla försök i en timme (50 den 24–26 december). En tom kod räknas inte, och inte heller en kod i fel format (allt som inte är exakt fyra siffror). Det som skrivs in fylls aldrig ut med nollor.
+- Utan rätt kod gör scriptet ingenting. Efter 10 felaktiga koder på en timme spärras alla försök i en timme (50 den 24–26 december). En tom kod räknas inte.
 - Scriptet lämnar bara ut andras resultat för en dag till den som själv har skickat in den dagen. Från julafton (24 december) visar hela årets lista allt för alla, så att prisutdelningen i lucka 24 blir likadan på varje telefon.
 - Bara det första resultatet per person och dag sparas. Ändringar görs direkt i arket.
 - Vill du nollställa efter testandet: radera raderna i fliken Resultat (inte rubrikraden).
